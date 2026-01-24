@@ -429,7 +429,7 @@ assets/         # Enron email dataset
 
 ### Shell Script Test (End-to-End Acceptance)
 
-- [ ] T074a [US2] Write end-to-end integration test in `tests/integration/test_user_story_2.sh`:
+- [X] T074a [US2] Write end-to-end integration test in `tests/integration/test_user_story_2.sh`:
   - Setup: Start database and server (docker-compose)
   - Pre-populate test data via loader (from US1)
   - Test: Query specific person by name via API (curl)

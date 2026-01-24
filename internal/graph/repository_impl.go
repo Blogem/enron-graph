@@ -2,6 +2,8 @@ package graph
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	"github.com/Blogem/enron-graph/ent"
@@ -15,11 +17,24 @@ import (
 // entRepository implements the Repository interface using ent
 type entRepository struct {
 	client *ent.Client
+	db     *sql.DB
 }
 
 // NewRepository creates a new ent-based repository
 func NewRepository(client *ent.Client) Repository {
-	return &entRepository{client: client}
+	return &entRepository{
+		client: client,
+		db:     nil, // No SQL DB for raw queries
+	}
+}
+
+// NewRepositoryWithDB creates a new ent-based repository with a direct SQL connection
+// The SQL connection is needed for raw pgvector queries
+func NewRepositoryWithDB(client *ent.Client, db *sql.DB) Repository {
+	return &entRepository{
+		client: client,
+		db:     db,
+	}
 }
 
 // CreateEmail creates a new email entity
@@ -197,29 +212,151 @@ func (r *entRepository) FindShortestPath(ctx context.Context, fromID, toID int) 
 
 // SimilaritySearch finds entities similar to the given embedding using pgvector
 func (r *entRepository) SimilaritySearch(ctx context.Context, embedding []float32, topK int, threshold float64) ([]*ent.DiscoveredEntity, error) {
-	// For POC, we'll use a simpler approach: return empty results
-	// Full pgvector integration would require raw SQL with the driver
-	// This would be implemented in production with:
-	// 1. Get the underlying sql.DB from ent client
-	// 2. Execute raw SQL query with pgvector operators
-	// 3. Map results back to ent entities
+	// Convert embedding to JSON array string for pgvector
+	embeddingJSON, err := json.Marshal(embedding)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal embedding: %w", err)
+	}
 
-	// Placeholder: return empty results for now
-	// Full implementation would look like:
-	/*
-		db := r.client.Driver().(*sql.DB)
-		query := `
-			SELECT id, unique_id, type_category, name, properties, embedding, confidence_score, created_at
+	// Check if we have access to the underlying database
+	if r.db == nil {
+		return nil, fmt.Errorf("database connection not available for raw SQL queries")
+	}
+
+	// Build the query with pgvector distance operator
+	// Convert JSONB to vector via text casting
+	query := `
+		SELECT id, unique_id, type_category, name, properties, embedding, confidence_score, created_at
+		FROM discovered_entities
+		WHERE embedding IS NOT NULL
+		ORDER BY embedding::text::vector <-> $1::vector
+		LIMIT $2
+	`
+
+	// Execute the raw SQL query
+	rows, err := r.db.QueryContext(ctx, query, string(embeddingJSON), topK)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute similarity search: %w", err)
+	}
+	defer rows.Close()
+
+	// Parse results into ent entities
+	entities := make([]*ent.DiscoveredEntity, 0)
+	for rows.Next() {
+		var (
+			id              int
+			uniqueID        string
+			typeCategory    string
+			name            string
+			propertiesJSON  []byte
+			embeddingJSON   []byte
+			confidenceScore float64
+			createdAt       sql.NullTime
+		)
+
+		if err := rows.Scan(&id, &uniqueID, &typeCategory, &name, &propertiesJSON, &embeddingJSON, &confidenceScore, &createdAt); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+
+		// Parse properties JSON
+		var properties map[string]interface{}
+		if len(propertiesJSON) > 0 {
+			if err := json.Unmarshal(propertiesJSON, &properties); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal properties: %w", err)
+			}
+		}
+
+		// Create ent entity (simplified, doesn't include edges)
+		entity := &ent.DiscoveredEntity{
+			ID:              id,
+			UniqueID:        uniqueID,
+			TypeCategory:    typeCategory,
+			Name:            name,
+			Properties:      properties,
+			ConfidenceScore: confidenceScore,
+		}
+
+		if createdAt.Valid {
+			entity.CreatedAt = createdAt.Time
+		}
+
+		entities = append(entities, entity)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+
+	// Apply threshold filter if specified
+	// For cosine distance: 0 = identical, 2 = opposite
+	// threshold of 0.7 similarity means distance <= 0.3
+	if threshold > 0 {
+		maxDistance := 1.0 - threshold
+		filteredQuery := fmt.Sprintf(`
+			SELECT id, unique_id, type_category, name, properties, embedding, confidence_score, created_at,
+			       embedding::text::vector <-> $1::vector as distance
 			FROM discovered_entities
 			WHERE embedding IS NOT NULL
-			ORDER BY embedding <-> $1
+			  AND embedding::text::vector <-> $1::vector <= %f
+			ORDER BY distance
 			LIMIT $2
-		`
-		rows, err := db.QueryContext(ctx, query, embeddingStr, topK)
-		...
-	*/
+		`, maxDistance)
 
-	return []*ent.DiscoveredEntity{}, nil
+		rows2, err := r.db.QueryContext(ctx, filteredQuery, string(embeddingJSON), topK)
+		if err != nil {
+			return nil, fmt.Errorf("failed to execute filtered similarity search: %w", err)
+		}
+		defer rows2.Close()
+
+		filtered := make([]*ent.DiscoveredEntity, 0)
+		for rows2.Next() {
+			var (
+				id              int
+				uniqueID        string
+				typeCategory    string
+				name            string
+				propertiesJSON  []byte
+				embeddingJSON   []byte
+				confidenceScore float64
+				createdAt       sql.NullTime
+				distance        float64
+			)
+
+			if err := rows2.Scan(&id, &uniqueID, &typeCategory, &name, &propertiesJSON, &embeddingJSON, &confidenceScore, &createdAt, &distance); err != nil {
+				return nil, fmt.Errorf("failed to scan filtered row: %w", err)
+			}
+
+			var properties map[string]interface{}
+			if len(propertiesJSON) > 0 {
+				if err := json.Unmarshal(propertiesJSON, &properties); err != nil {
+					return nil, fmt.Errorf("failed to unmarshal properties: %w", err)
+				}
+			}
+
+			entity := &ent.DiscoveredEntity{
+				ID:              id,
+				UniqueID:        uniqueID,
+				TypeCategory:    typeCategory,
+				Name:            name,
+				Properties:      properties,
+				ConfidenceScore: confidenceScore,
+			}
+
+			if createdAt.Valid {
+				entity.CreatedAt = createdAt.Time
+			}
+
+			filtered = append(filtered, entity)
+		}
+
+		if err := rows2.Err(); err != nil {
+			return nil, fmt.Errorf("error iterating filtered rows: %w", err)
+		}
+
+		return filtered, nil
+	}
+
+	return entities, nil
 }
 
 // Close closes the database connection

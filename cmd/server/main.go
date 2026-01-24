@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -71,8 +72,16 @@ func main() {
 	}
 	defer entClient.Close()
 
-	// Create repository
-	repo := graph.NewRepository(entClient)
+	// Also open a direct SQL connection for raw queries (like pgvector search)
+	sqlDB, err := sql.Open("postgres", cfg.DatabaseURL)
+	if err != nil {
+		logger.Error("Failed to open SQL database connection", slog.Any("error", err))
+		os.Exit(1)
+	}
+	defer sqlDB.Close()
+
+	// Create repository with both ent client and SQL connection
+	repo := graph.NewRepositoryWithDB(entClient, sqlDB)
 
 	logger.Info("Connected to database")
 
