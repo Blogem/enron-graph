@@ -31,13 +31,14 @@ All implementation MUST follow this workflow:
 
 ### Test Organization
 
-**77 test tasks (49% of total tasks)** organized by type:
+**79 test tasks (49% of total tasks)** organized by type:
 - **Unit Tests** (22 tasks): Test isolated functions and logic
 - **Contract Tests** (6 tasks): Test API request/response schemas
 - **Integration Tests** (11 tasks): Test multi-component workflows
 - **Performance Tests** (7 tasks): Validate success criteria benchmarks
 - **Acceptance Tests** (29 tasks): Verify user story requirements
 - **Manual Tests** (2 tasks): TUI and exploratory testing
+- **Shell Script Tests** (2 tasks): End-to-end acceptance tests via bash
 
 ### Test Files Structure
 
@@ -426,6 +427,24 @@ assets/         # Enron email dataset
 - [X] T073 [US2] Verify: SC-003 - Entity lookup <500ms for 100k nodes
 - [X] T074 [US2] Verify: SC-004 - Shortest path <2s for 6 degrees
 
+### Shell Script Test (End-to-End Acceptance)
+
+- [ ] T074a [US2] Write end-to-end integration test in `tests/integration/test_user_story_2.sh`:
+  - Setup: Start database and server (docker-compose)
+  - Pre-populate test data via loader (from US1)
+  - Test: Query specific person by name via API (curl)
+  - Verify: Entity returned with correct properties
+  - Test: Query relationships for entity via API
+  - Verify: Connected entities returned
+  - Test: Find shortest path between two entities via API
+  - Verify: Path chain returned
+  - Test: Filter entities by type via API
+  - Verify: Only matching type entities returned
+  - Test: Measure query performance (time command)
+  - Verify: Meets SC-003 and SC-004 criteria
+  - Report: Summary with ✓/❌ for each acceptance scenario
+  - Cleanup: Stop services and clean test data
+
 **Checkpoint**: User Story 2 complete - graph querying functional via API
 
 ---
@@ -540,6 +559,26 @@ assets/         # Enron email dataset
 - [ ] T095 [US3] Verify: SC-005 - 3+ candidates identified from 10k emails
 - [ ] T096 [US3] Verify: SC-006 - 1+ type successfully promoted
 - [ ] T097 [US3] Verify: SC-010 - Audit log is complete
+
+### Shell Script Test (End-to-End Acceptance)
+
+- [ ] T097a [US3] Write end-to-end integration test in `tests/integration/test_user_story_3.sh`:
+  - Setup: Start database with populated graph from US1/US2
+  - Test: Run analyst CLI to identify promotion candidates (go run cmd/analyst/main.go analyze)
+  - Verify: At least 3 candidates identified
+  - Verify: Candidates ranked with metrics (frequency, density, consistency)
+  - Query: Display top candidate details from database
+  - Test: Execute promotion workflow (go run cmd/analyst/main.go promote --type=<candidate>)
+  - Verify: New ent schema file created in ent/schema/
+  - Verify: New database table created (check via psql)
+  - Verify: Data migrated from discovered_entities to new table
+  - Verify: Entities validated against schema (check validation errors)
+  - Test: Query SchemaPromotion audit log
+  - Verify: Promotion event recorded with timestamp and criteria
+  - Test: Extract new entity of promoted type
+  - Verify: New entity validated and stored in typed table
+  - Report: Summary with ✓/❌ for each acceptance scenario
+  - Cleanup: Remove generated schema files and test data
 
 **Checkpoint**: User Story 3 complete - schema evolution demonstrated
 
