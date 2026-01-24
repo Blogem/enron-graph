@@ -65,6 +65,8 @@ go run cmd/migrate/main.go
 
 ### Load Enron Emails
 
+Download the emails.csv from [Kaggle](https://www.kaggle.com/datasets/wcukierski/enron-email-dataset).
+
 ```bash
 # Load emails from CSV
 go run cmd/loader/main.go --csv-path assets/enron-emails/emails.csv --batch-size 100 --workers 50

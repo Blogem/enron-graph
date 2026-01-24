@@ -192,35 +192,35 @@ assets/         # Enron email dataset
 
 ### Unit Tests (TDD - Write First)
 
-- [ ] T026 [P] [US1] Write unit tests for CSV parser in `internal/loader/parser_test.go`:
+- [X] T026 [P] [US1] Write unit tests for CSV parser in `internal/loader/parser_test.go`:
   - Test streaming CSV rows
   - Test parsing `file` and `message` columns
   - Test handling malformed CSV
   - Test empty files and missing columns
-- [ ] T027 [P] [US1] Write unit tests for email header parser in `internal/loader/headers_test.go`:
+- [X] T027 [P] [US1] Write unit tests for email header parser in `internal/loader/headers_test.go`:
   - Test Message-ID extraction
   - Test From/To/CC/BCC parsing
   - Test date parsing with various formats
   - Test UTF-8 and Latin-1 encoding handling
   - Test malformed headers
-- [ ] T028 [P] [US1] Write unit tests for LLM client in `pkg/llm/ollama_test.go`:
+- [X] T028 [P] [US1] Write unit tests for LLM client in `pkg/llm/ollama_test.go`:
   - Test GenerateCompletion with mock responses
   - Test GenerateEmbedding with mock responses
   - Test retry logic (3 retries, exponential backoff)
   - Test timeout handling (30s completion, 10s embedding)
   - Test error cases (connection failures, invalid JSON)
-- [ ] T029 [P] [US1] Write unit tests for entity extractor in `internal/extractor/extractor_test.go`:
+- [X] T029 [P] [US1] Write unit tests for entity extractor in `internal/extractor/extractor_test.go`:
   - Test ExtractFromEmail with sample emails
   - Test JSON response parsing
   - Test confidence score filtering (<0.7 rejected)
   - Test embedding generation
   - Test entity type detection (person, org, concept)
-- [ ] T030 [P] [US1] Write unit tests for deduplication in `internal/extractor/dedup_test.go`:
+- [X] T030 [P] [US1] Write unit tests for deduplication in `internal/extractor/dedup_test.go`:
   - Test person deduplication by email address
   - Test organization name normalization
   - Test concept similarity matching (cosine >0.85)
   - Test edge cases (empty names, special characters)
-- [ ] T031 [P] [US1] Write unit tests for relationship creation in `internal/extractor/relationships_test.go`:
+- [X] T031 [P] [US1] Write unit tests for relationship creation in `internal/extractor/relationships_test.go`:
   - Test SENT relationship creation
   - Test RECEIVED relationship creation
   - Test MENTIONS relationship creation
@@ -228,60 +228,60 @@ assets/         # Enron email dataset
 
 ### Email Loader Implementation
 
-- [ ] T032 [P] [US1] Implement CSV parser in `internal/loader/parser.go`:
+- [X] T032 [P] [US1] Implement CSV parser in `internal/loader/parser.go`:
   - Stream CSV rows (don't load entire file)
   - Parse `file` and `message` columns
   - **Verify**: T026 tests pass
-- [ ] T033 [P] [US1] Implement email header parser in `internal/loader/headers.go`:
+- [X] T033 [P] [US1] Implement email header parser in `internal/loader/headers.go`:
   - Extract Message-ID, Date, From, To, CC, BCC, Subject
   - Use `net/mail` package for parsing
   - Handle encoding issues (UTF-8, Latin-1)
   - **Verify**: T027 tests pass
-- [ ] T034 [US1] Implement batch processor in `internal/loader/processor.go`:
+- [X] T034 [US1] Implement batch processor in `internal/loader/processor.go`:
   - Check for duplicates via message-id
   - Insert emails into database via repository
   - Concurrent processing with 10-100 goroutines
   - Progress logging every 100 emails
-- [ ] T035 [US1] Create loader CLI tool in `cmd/loader/main.go`:
+- [X] T035 [US1] Create loader CLI tool in `cmd/loader/main.go`:
   - Accept flags: `--csv-path`, `--batch-size`, `--workers`, `--extract`
   - Initialize database connection and repository
   - Report summary: processed count, failures, duration
 
 ### LLM Client Implementation
 
-- [ ] T036 [P] [US1] Implement Ollama client in `pkg/llm/ollama.go`:
+- [X] T036 [P] [US1] Implement Ollama client in `pkg/llm/ollama.go`:
   - GenerateCompletion(prompt) using LangChainGo
   - GenerateEmbedding(text) for mxbai-embed-large
   - Retry logic (3 retries, exponential backoff)
   - Timeouts (30s completion, 10s embedding)
   - **Verify**: T028 tests pass
-- [ ] T037 [P] [US1] Create LLM client interface in `pkg/llm/client.go`
+- [X] T037 [P] [US1] Create LLM client interface in `pkg/llm/client.go`
 - [ ] T038 [P] [US1] (Optional) Implement LiteLLM fallback client in `pkg/llm/litelim.go`
 
 ### Entity Extractor Implementation
 
-- [ ] T039 [US1] Design entity extraction prompt template in `internal/extractor/prompts.go`:
+- [X] T039 [US1] Design entity extraction prompt template in `internal/extractor/prompts.go`:
   - Extract persons, organizations, concepts with confidence scores
   - Return structured JSON output
   - Test on 10 sample emails, iterate for 70%+ precision
-- [ ] T040 [US1] Implement `ExtractFromEmail` in `internal/extractor/extractor.go`:
+- [X] T040 [US1] Implement `ExtractFromEmail` in `internal/extractor/extractor.go`:
   - Parse email headers → high-confidence person entities
   - Call LLM with prompt → parse JSON response
   - Generate embeddings for each entity
   - Assign confidence scores, filter below 0.7
   - **Verify**: T029 tests pass
-- [ ] T041 [US1] Implement deduplication logic in `internal/extractor/dedup.go`:
+- [X] T041 [US1] Implement deduplication logic in `internal/extractor/dedup.go`:
   - Person: email address as unique key
   - Organization: normalize name (lowercase, trim)
   - Concept: embedding similarity (cosine >0.85)
   - **Verify**: T030 tests pass
-- [ ] T042 [US1] Implement relationship creation in `internal/extractor/relationships.go`:
+- [X] T042 [US1] Implement relationship creation in `internal/extractor/relationships.go`:
   - SENT: person → email
   - RECEIVED: email → person
   - MENTIONS: email → organization/concept
   - COMMUNICATES_WITH: person ↔ person (inferred)
   - **Verify**: T031 tests pass
-- [ ] T043 [US1] Implement batch extraction in `internal/extractor/batch.go`:
+- [X] T043 [US1] Implement batch extraction in `internal/extractor/batch.go`:
   - Process 10-100 emails concurrently
   - Generate embeddings in batches
   - Handle LLM errors gracefully
@@ -289,19 +289,19 @@ assets/         # Enron email dataset
 
 ### Integration
 
-- [ ] T044 [US1] Integrate extractor with loader in `cmd/loader/main.go`:
+- [X] T044 [US1] Integrate extractor with loader in `cmd/loader/main.go`:
   - Call extractor when `--extract` flag is set
   - Report extraction summary: entities created, relationships created
 
 ### Integration Tests (TDD - Write First)
 
-- [ ] T045 [US1] Write integration test in `tests/integration/loader_test.go`:
+- [X] T045 [US1] Write integration test in `tests/integration/loader_test.go`:
   - Setup: Test database with clean schema
   - Test: Load 100 sample emails from fixture CSV
   - Verify: All emails inserted with correct metadata
   - Verify: No duplicate message-ids
   - Teardown: Clean test database
-- [ ] T046 [US1] Write integration test in `tests/integration/extractor_test.go`:
+- [X] T046 [US1] Write integration test in `tests/integration/extractor_test.go`:
   - Setup: Test database with sample emails
   - Test: Run extraction on emails
   - Verify: Entities created with correct types

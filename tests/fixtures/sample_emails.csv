@@ -1,0 +1,62 @@
+file,message
+test1.txt,"Message-ID: <test1@enron.com>
+Date: Mon, 15 Oct 2001 09:30:00 -0700
+From: jeff.skilling@enron.com
+To: kenneth.lay@enron.com, andrew.fastow@enron.com
+Subject: Q4 Energy Trading Strategy
+
+We need to discuss our energy trading strategy for the upcoming quarter.
+This is critical for Enron Corp's success in the California market.
+
+Best regards,
+Jeff Skilling"
+test2.txt,"Message-ID: <test2@enron.com>
+Date: Mon, 15 Oct 2001 10:15:00 -0700
+From: kenneth.lay@enron.com
+To: jeff.skilling@enron.com
+CC: rebecca.mark@enron.com
+Subject: Re: Q4 Energy Trading Strategy
+
+Agreed. Let's schedule a meeting with the risk management team.
+
+Ken"
+test3.txt,"Message-ID: <test3@enron.com>
+Date: Tue, 16 Oct 2001 08:00:00 -0700
+From: sherron.watkins@enron.com
+To: kenneth.lay@enron.com
+Subject: Accounting Concerns
+
+I have serious concerns about our accounting practices related to
+special purpose entities and off-balance-sheet transactions.
+
+This could pose significant risks to Enron Corporation.
+
+Sherron Watkins"
+test4.txt,"Message-ID: <test4@enron.com>
+Date: Wed, 17 Oct 2001 14:30:00 -0700
+From: louise.kitchen@enron.com
+To: greg.whalley@enron.com, mark.frevert@enron.com
+Subject: EnronOnline Platform Updates
+
+The EnronOnline trading platform processed $2.1B in transactions yesterday.
+We're seeing strong activity in natural gas and power contracts.
+
+System performance metrics attached.
+
+Louise Kitchen
+President, Enron Online"
+test5.txt,"Message-ID: <test5@enron.com>
+Date: Thu, 18 Oct 2001 11:00:00 -0700
+From: vince.kaminski@enron.com
+To: risk-committee@enron.com
+Subject: Portfolio Risk Analysis
+
+Attached is the latest portfolio risk analysis for our energy derivatives.
+
+Key findings:
+- VaR has increased 15% due to California exposure
+- Credit risk on counterparties remains stable
+- Recommend hedging strategies for Q4
+
+Vince Kaminski
+Managing Director, Research"
