@@ -19,7 +19,7 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	config := &Config{
 		DBHost:     getEnv("DB_HOST", "localhost"),
-		DBPort:     getEnv("DB_PORT", "5433"),
+		DBPort:     getEnv("DB_PORT", "5432"),
 		DBUser:     getEnv("DB_USER", "enron"),
 		DBPassword: getEnv("DB_PASSWORD", "enron123"),
 		DBName:     getEnv("DB_NAME", "enron_graph"),

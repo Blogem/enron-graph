@@ -339,33 +339,33 @@ assets/         # Enron email dataset
 
 ### Contract Tests (TDD - Write First)
 
-- [ ] T055 [P] [US2] Write contract tests for entity endpoints in `internal/api/handlers_test.go`:
+- [X] T055 [P] [US2] Write contract tests for entity endpoints in `internal/api/handlers_test.go`:
   - Test GET /entities/:id returns 200 with valid JSON
   - Test GET /entities/:id returns 404 for non-existent ID
   - Test GET /entities?type=person&name=john returns filtered results
   - Test GET /entities validates query parameters
   - Test response schema matches expected structure
-- [ ] T056 [P] [US2] Write contract tests for relationship endpoints in `internal/api/handlers_test.go`:
+- [X] T056 [P] [US2] Write contract tests for relationship endpoints in `internal/api/handlers_test.go`:
   - Test GET /entities/:id/relationships returns 200 with relationship list
   - Test GET /entities/:id/neighbors?depth=1 returns immediate neighbors
   - Test GET /entities/:id/neighbors?depth=3 returns multi-hop neighbors
   - Test depth parameter validation (max depth enforcement)
-- [ ] T057 [P] [US2] Write contract tests for path finding in `internal/api/handlers_test.go`:
+- [X] T057 [P] [US2] Write contract tests for path finding in `internal/api/handlers_test.go`:
   - Test POST /entities/path with valid source/target returns path
   - Test POST /entities/path returns 404 if no path exists
   - Test POST /entities/path returns 400 for invalid request body
-- [ ] T058 [P] [US2] Write contract tests for semantic search in `internal/api/handlers_test.go`:
+- [X] T058 [P] [US2] Write contract tests for semantic search in `internal/api/handlers_test.go`:
   - Test POST /entities/search with text returns similar entities
   - Test POST /entities/search validates request body
   - Test POST /entities/search returns ranked results by similarity
 
 ### Unit Tests for Query Engine (TDD - Write First)
 
-- [ ] T059 [P] [US2] Write unit tests for pagination in `internal/graph/pagination_test.go`:
+- [X] T059 [P] [US2] Write unit tests for pagination in `internal/graph/pagination_test.go`:
   - Test limit/offset calculation
   - Test boundary conditions (offset > total count)
   - Test default pagination values
-- [ ] T060 [P] [US2] Write unit tests for filters in `internal/graph/filters_test.go`:
+- [X] T060 [P] [US2] Write unit tests for filters in `internal/graph/filters_test.go`:
   - Test confidence score filtering
   - Test date range filtering
   - Test type filtering

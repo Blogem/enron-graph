@@ -2,16 +2,12 @@ package integration
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/internal/graph"
 	"github.com/Blogem/enron-graph/internal/loader"
 	"github.com/Blogem/enron-graph/pkg/utils"
-
-	_ "github.com/lib/pq"
 )
 
 // TestLoaderIntegration tests the email loading functionality (T045)
@@ -22,8 +18,7 @@ func TestLoaderIntegration(t *testing.T) {
 
 	// Setup: Connect to test database
 	ctx := context.Background()
-	client, cleanup := setupTestDB(t)
-	defer cleanup()
+	client := SetupTestDB(t)
 
 	// Create repository
 	repo := graph.NewRepository(client)
@@ -83,36 +78,4 @@ func TestLoaderIntegration(t *testing.T) {
 		}
 		messageIDs[email.MessageID] = true
 	}
-}
-
-// setupTestDB creates a test database connection and returns cleanup function
-func setupTestDB(t *testing.T) (*ent.Client, func()) {
-	// Use test database URL from environment or default
-	dbURL := os.Getenv("TEST_DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "postgres://enron:enron123@localhost:5433/enron_graph?sslmode=disable"
-	}
-
-	client, err := ent.Open("postgres", dbURL)
-	if err != nil {
-		t.Fatalf("Failed to connect to test database: %v\nMake sure PostgreSQL is running on port 5433", err)
-	}
-
-	// Run migrations
-	ctx := context.Background()
-	if err := client.Schema.Create(ctx); err != nil {
-		client.Close()
-		t.Fatalf("Failed to create schema: %v", err)
-	}
-
-	cleanup := func() {
-		// Clean up test data
-		ctx := context.Background()
-		client.Email.Delete().ExecX(ctx)
-		client.DiscoveredEntity.Delete().ExecX(ctx)
-		client.Relationship.Delete().ExecX(ctx)
-		client.Close()
-	}
-
-	return client, cleanup
 }
