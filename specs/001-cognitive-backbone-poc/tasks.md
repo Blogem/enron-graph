@@ -407,7 +407,7 @@ assets/         # Enron email dataset
 
 ### Integration Tests
 
-- [ ] T068 [US2] Write integration test in `tests/integration/api_test.go`:
+- [X] T068 [US2] Write integration test in `tests/integration/api_test.go`:
   - Setup: Pre-populate test database with entities and relationships
   - Test: Query entities via API
   - Verify: Correct entities returned
@@ -419,12 +419,12 @@ assets/         # Enron email dataset
 
 **Acceptance Tests** (from spec.md):
 
-- [ ] T069 [US2] Verify: Query person by name returns entity with properties
-- [ ] T070 [US2] Verify: Query relationships returns list of connected entities
-- [ ] T071 [US2] Verify: Shortest path between entities returns relationship chain
-- [ ] T072 [US2] Verify: Filter by entity type returns matching entities
-- [ ] T073 [US2] Verify: SC-003 - Entity lookup <500ms for 100k nodes
-- [ ] T074 [US2] Verify: SC-004 - Shortest path <2s for 6 degrees
+- [X] T069 [US2] Verify: Query person by name returns entity with properties
+- [X] T070 [US2] Verify: Query relationships returns list of connected entities
+- [X] T071 [US2] Verify: Shortest path between entities returns relationship chain
+- [X] T072 [US2] Verify: Filter by entity type returns matching entities
+- [X] T073 [US2] Verify: SC-003 - Entity lookup <500ms for 100k nodes
+- [X] T074 [US2] Verify: SC-004 - Shortest path <2s for 6 degrees
 
 **Checkpoint**: User Story 2 complete - graph querying functional via API
 
