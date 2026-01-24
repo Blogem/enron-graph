@@ -538,7 +538,7 @@ assets/         # Enron email dataset
   - Verify: Candidates identified with correct scores
   - Verify: Ranking by frequency/density/consistency
   - Teardown: Clean test database
-- [ ] T089 [US3] Write integration test in `tests/integration/promoter_test.go`:
+- [X] T089 [US3] Write integration test in `tests/integration/promoter_test.go`:
   - Setup: Test database with candidate type entities
   - Test: Generate schema from candidate
   - Verify: JSON schema has correct properties and types
@@ -551,14 +551,14 @@ assets/         # Enron email dataset
 
 **Acceptance Tests** (from spec.md):
 
-- [ ] T090 [US3] Verify: Analyst identifies frequent/high-connectivity entity types
-- [ ] T091 [US3] Verify: Candidates ranked by frequency, density, consistency
-- [ ] T092 [US3] Verify: Promotion adds type to schema with properties/constraints
-- [ ] T093 [US3] Verify: New entities validated against promoted schema
-- [ ] T094 [US3] Verify: Audit log captures promotion events
-- [ ] T095 [US3] Verify: SC-005 - 3+ candidates identified from 1k emails
-- [ ] T096 [US3] Verify: SC-006 - 1+ type successfully promoted
-- [ ] T097 [US3] Verify: SC-010 - Audit log is complete
+- [X] T090 [US3] Verify: Analyst identifies frequent/high-connectivity entity types
+- [X] T091 [US3] Verify: Candidates ranked by frequency, density, consistency
+- [X] T092 [US3] Verify: Promotion adds type to schema with properties/constraints
+- [X] T093 [US3] Verify: New entities validated against promoted schema
+- [X] T094 [US3] Verify: Audit log captures promotion events
+- [X] T095 [US3] Verify: SC-005 - 3+ candidates identified from 1k emails
+- [X] T096 [US3] Verify: SC-006 - 1+ type successfully promoted
+- [X] T097 [US3] Verify: SC-010 - Audit log is complete
 
 ### Shell Script Test (End-to-End Acceptance)
 

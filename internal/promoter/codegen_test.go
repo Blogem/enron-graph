@@ -11,7 +11,7 @@ import (
 
 func TestGenerateEntSchemaFile(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	schema := SchemaDefinition{
 		Type: "person",
 		Properties: map[string]PropertyDefinition{
@@ -19,35 +19,35 @@ func TestGenerateEntSchemaFile(t *testing.T) {
 			"name":  {Type: "string", Required: true},
 		},
 	}
-	
+
 	err := GenerateEntSchemaFile(schema, tempDir)
 	if err != nil {
 		t.Fatalf("GenerateEntSchemaFile failed: %v", err)
 	}
-	
+
 	// Check file was created
 	filePath := filepath.Join(tempDir, "person.go")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		t.Fatal("Schema file was not created")
 	}
-	
+
 	// Read generated content
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		t.Fatalf("Failed to read generated file: %v", err)
 	}
-	
+
 	output := string(content)
-	
+
 	// Verify basic structure
 	if !strings.Contains(output, "package schema") {
 		t.Error("Generated schema missing 'package schema' declaration")
 	}
-	
+
 	if !strings.Contains(output, "type Person struct") {
 		t.Error("Generated schema missing type Person struct")
 	}
-	
+
 	if !strings.Contains(output, "Fields()") {
 		t.Error("Generated schema missing Fields() method")
 	}
