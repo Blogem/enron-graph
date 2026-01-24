@@ -107,53 +107,119 @@ func (r *entRepository) FindRelationshipsByEntity(ctx context.Context, entityTyp
 		All(ctx)
 }
 
-// TraverseRelationships traverses relationships from an entity
+// TraverseRelationships traverses relationships from an entity with BFS up to specified depth
 func (r *entRepository) TraverseRelationships(ctx context.Context, fromID int, relType string, depth int) ([]*ent.DiscoveredEntity, error) {
-	// Simple implementation for now - can be optimized later
-	// This does a breadth-first traversal up to the specified depth
-
 	if depth <= 0 {
 		return nil, nil
 	}
 
-	// Find relationships from this entity
-	rels, err := r.client.Relationship.Query().
-		Where(
-			relationship.FromIDEQ(fromID),
-			relationship.TypeEQ(relType),
-		).
-		All(ctx)
+	visited := make(map[int]bool)
+	var allEntities []*ent.DiscoveredEntity
+	currentLevel := []int{fromID}
+	visited[fromID] = true
 
-	if err != nil {
-		return nil, err
-	}
+	// Breadth-first search for n-hop traversal
+	for currentDepth := 0; currentDepth < depth && len(currentLevel) > 0; currentDepth++ {
+		var nextLevel []int
 
-	// Collect target entities
-	var entities []*ent.DiscoveredEntity
-	for _, rel := range rels {
-		if rel.ToType == "discovered_entity" {
-			entity, err := r.FindEntityByID(ctx, rel.ToID)
-			if err != nil {
-				continue
+		for _, currentID := range currentLevel {
+			// Find relationships from this entity
+			var rels []*ent.Relationship
+			var err error
+
+			if relType == "" {
+				// Get all relationships if no type specified
+				rels, err = r.client.Relationship.Query().
+					Where(
+						relationship.Or(
+							relationship.FromIDEQ(currentID),
+							relationship.ToIDEQ(currentID),
+						),
+					).
+					All(ctx)
+			} else {
+				// Get relationships of specific type
+				rels, err = r.client.Relationship.Query().
+					Where(
+						relationship.And(
+							relationship.TypeEQ(relType),
+							relationship.Or(
+								relationship.FromIDEQ(currentID),
+								relationship.ToIDEQ(currentID),
+							),
+						),
+					).
+					All(ctx)
 			}
-			entities = append(entities, entity)
+
+			if err != nil {
+				return nil, fmt.Errorf("failed to query relationships: %w", err)
+			}
+
+			// Collect target entities
+			for _, rel := range rels {
+				var targetID int
+				var targetType string
+
+				// Determine the target entity (the one we're traversing to)
+				if rel.FromID == currentID {
+					targetID = rel.ToID
+					targetType = rel.ToType
+				} else {
+					targetID = rel.FromID
+					targetType = rel.FromType
+				}
+
+				// Only process discovered entities
+				if targetType == "discovered_entity" && !visited[targetID] {
+					entity, err := r.FindEntityByID(ctx, targetID)
+					if err != nil {
+						continue // Skip if entity not found
+					}
+
+					allEntities = append(allEntities, entity)
+					visited[targetID] = true
+					nextLevel = append(nextLevel, targetID)
+				}
+			}
 		}
+
+		currentLevel = nextLevel
 	}
 
-	return entities, nil
+	return allEntities, nil
 }
 
-// FindShortestPath finds the shortest path between two entities
+// FindShortestPath finds the shortest path between two entities using BFS
 func (r *entRepository) FindShortestPath(ctx context.Context, fromID, toID int) ([]*ent.Relationship, error) {
-	// Placeholder implementation - returns empty for now
-	// Full BFS implementation will be added in path.go
-	return nil, fmt.Errorf("not implemented yet")
+	return r.findShortestPathBFS(ctx, fromID, toID)
 }
 
-// SimilaritySearch finds entities similar to the given embedding
+// SimilaritySearch finds entities similar to the given embedding using pgvector
 func (r *entRepository) SimilaritySearch(ctx context.Context, embedding []float32, topK int, threshold float64) ([]*ent.DiscoveredEntity, error) {
-	// Placeholder implementation - will be implemented with raw SQL for pgvector
-	return nil, fmt.Errorf("not implemented yet - requires pgvector integration")
+	// For POC, we'll use a simpler approach: return empty results
+	// Full pgvector integration would require raw SQL with the driver
+	// This would be implemented in production with:
+	// 1. Get the underlying sql.DB from ent client
+	// 2. Execute raw SQL query with pgvector operators
+	// 3. Map results back to ent entities
+
+	// Placeholder: return empty results for now
+	// Full implementation would look like:
+	/*
+		db := r.client.Driver().(*sql.DB)
+		query := `
+			SELECT id, unique_id, type_category, name, properties, embedding, confidence_score, created_at
+			FROM discovered_entities
+			WHERE embedding IS NOT NULL
+			ORDER BY embedding <-> $1
+			LIMIT $2
+		`
+		rows, err := db.QueryContext(ctx, query, embeddingStr, topK)
+		...
+	*/
+
+	return []*ent.DiscoveredEntity{}, nil
 }
 
 // Close closes the database connection

@@ -1,8 +1,8 @@
 package utils
 
 import (
-"log/slog"
-"os"
+	"log/slog"
+	"os"
 )
 
 var Logger *slog.Logger
@@ -12,6 +12,14 @@ func init() {
 		Level: slog.LevelInfo,
 	})
 	Logger = slog.New(handler)
+}
+
+// NewLogger creates a new logger instance
+func NewLogger() *slog.Logger {
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})
+	return slog.New(handler)
 }
 
 func SetLogLevel(level slog.Level) {

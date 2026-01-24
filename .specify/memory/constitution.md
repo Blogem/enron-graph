@@ -1,17 +1,22 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: [NONE] → 1.0.0
-Change Type: Initial constitution establishment
-Modified Principles: N/A (initial version)
-Added Sections: All core sections established
+Version Change: 1.0.0 → 1.1.0
+Change Type: MINOR - New principle added
+Modified Principles: N/A
+Added Sections: 
+  - Principle VII: File Editing Discipline (new)
 Removed Sections: N/A
 
+Reason for Amendment: Prevent file corruption caused by misuse of create_file tool on existing files.
+Pattern observed: Using create_file on existing files causes reversed code on single lines and malformed
+syntax. This principle codifies proper tool selection based on file existence.
+
 Templates Status:
-✅ plan-template.md - Constitution Check section aligns with principles
+✅ plan-template.md - Constitution Check section aligns with all principles
 ✅ spec-template.md - User story structure supports Spec-First and Independent Testing
 ✅ tasks-template.md - Phase structure supports TDD and story-based implementation
-⚠️  Command files - Generic structure, no agent-specific references found
+✅ Command files - No changes required (tool usage is implementation detail)
 
 Follow-up TODOs: None
 ==================
@@ -93,6 +98,25 @@ Every feature MUST define success criteria (SC-XXX identifiers) that are:
 
 **Rationale**: Measurable criteria prevent feature bloat, enable objective completion verification,
 align technical work with business value, and provide clear targets for implementation quality.
+
+### VII. File Editing Discipline
+
+When working with files in the codebase, the following rules MUST be strictly observed:
+
+1. **NEVER use `create_file` to modify existing files** - The `create_file` tool is ONLY for creating
+   genuinely new files that do not exist in the workspace
+2. **Always check file existence first** - Use `read_file`, `file_search`, or `grep_search` to verify
+   whether a file exists before deciding which tool to use
+3. **Use `replace_string_in_file` for single edits** to existing files with sufficient context (3-5 lines
+   before and after the target)
+4. **Use `multi_replace_string_in_file` for multiple edits** when performing several independent
+   modifications across one or more files
+5. **Verify edits immediately** - After editing, use `read_file` or compilation checks to confirm the
+   edit was successful and did not corrupt the file
+
+**Rationale**: Using `create_file` on existing files causes severe corruption (reversed code, malformed
+syntax, duplicate package declarations). This principle enforces proper tool selection to maintain code
+integrity and prevent file corruption that blocks progress.
 
 ## Development Workflow
 
@@ -177,4 +201,4 @@ Constitution compliance MUST be verified:
 - During code review of implementation PRs
 - In retrospectives when complexity violations were justified
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24
+**Version**: 1.1.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24

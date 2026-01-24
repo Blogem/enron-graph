@@ -13,7 +13,10 @@ import (
 
 func main() {
 	// Load configuration
-	config := utils.LoadConfig()
+	config, err := utils.LoadConfig()
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
 
 	utils.Info("Connecting to database", "url", config.PostgresURL())
 

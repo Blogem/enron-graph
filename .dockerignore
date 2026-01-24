@@ -1,0 +1,56 @@
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+bin/
+dist/
+build/
+target/
+
+# Dependencies
+vendor/
+
+# Test files
+*_test.go
+tests/
+coverage.txt
+coverage.html
+*.coverprofile
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Project specific
+assets/enron-emails/
+specs/
