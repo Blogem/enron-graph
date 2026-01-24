@@ -592,13 +592,13 @@ assets/         # Enron email dataset
 
 ### Unit Tests (TDD - Write First)
 
-- [ ] T098 [P] [US4] Write unit tests for ASCII graph rendering in `internal/tui/graph_view_test.go`:
+- [X] T098 [P] [US4] Write unit tests for ASCII graph rendering in `internal/tui/graph_view_test.go`:
   - Test node formatting: `[Type: Name]`
   - Test edge formatting: `---[REL_TYPE]-->`
   - Test layout calculation for tree structure
   - Test node limit enforcement (max 50 nodes)
   - Test color-coding by entity type
-- [ ] T099 [P] [US4] Write unit tests for entity list view in `internal/tui/entity_list_test.go`:
+- [X] T099 [P] [US4] Write unit tests for entity list view in `internal/tui/entity_list_test.go`:
   - Test table rendering with columns
   - Test pagination calculation
   - Test filter by type logic
@@ -606,7 +606,7 @@ assets/         # Enron email dataset
 
 ### TUI Framework Setup
 
-- [ ] T100 [P] [US4] Setup Bubble Tea framework in `internal/tui/app.go`:
+- [X] T100 [P] [US4] Setup Bubble Tea framework in `internal/tui/app.go`:
   - Create base model (state container)
   - Implement Update function (message handler)
   - Implement View function (renderer)
@@ -614,26 +614,26 @@ assets/         # Enron email dataset
 
 ### Entity Browser
 
-- [ ] T101 [US4] Implement entity list view in `internal/tui/entity_list.go`:
+- [X] T101 [US4] Implement entity list view in `internal/tui/entity_list.go`:
   - Display entities in table (ID, type, name, confidence)
   - Keyboard navigation (↑↓ arrows, page up/down)
   - Filter by type (F key)
   - Search by name (/ key)
   - **Verify**: T099 tests pass
-- [ ] T102 [US4] Fetch entities from repository with pagination
+- [X] T102 [US4] Fetch entities from repository with pagination
 
 ### Graph Visualization
 
-- [ ] T103 [US4] Implement ASCII graph rendering in `internal/tui/graph_view.go`:
+- [X] T103 [US4] Implement ASCII graph rendering in `internal/tui/graph_view.go`:
   - Node format: `[Type: Name]` (color-coded)
   - Edge format: `---[REL_TYPE]-->` (directional)
   - Simple tree or force-directed layout
   - Limit to 50 nodes (performance)
   - **Verify**: T098 tests pass
-- [ ] T104 [US4] Implement subgraph view around selected entity:
+- [X] T104 [US4] Implement subgraph view around selected entity:
   - Show entity + immediate neighbors (1-hop)
   - Expand node: E key → fetch and add neighbors
-- [ ] T105 [US4] Implement keyboard navigation:
+- [X] T105 [US4] Implement keyboard navigation:
   - Tab: cycle through nodes
   - Enter: select node → show details
   - E: expand node
@@ -641,14 +641,14 @@ assets/         # Enron email dataset
 
 ### Detail Panel
 
-- [ ] T106 [P] [US4] Implement detail view in `internal/tui/detail_view.go`:
+- [X] T106 [P] [US4] Implement detail view in `internal/tui/detail_view.go`:
   - Display entity properties (key-value pairs)
   - Display relationships (list)
   - Actions: V (visualize), R (show related), Q (close)
 
 ### Main Application
 
-- [ ] T107 [US4] Integrate TUI into `cmd/server/main.go`:
+- [X] T107 [US4] Integrate TUI into `cmd/tui/main.go`:
   - Initialize Bubble Tea program
   - Connect to database repository
   - Add welcome screen
