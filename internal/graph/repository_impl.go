@@ -90,6 +90,17 @@ func (r *entRepository) FindEntitiesByType(ctx context.Context, typeCategory str
 		All(ctx)
 }
 
+// GetDistinctEntityTypes returns all unique entity type categories
+func (r *entRepository) GetDistinctEntityTypes(ctx context.Context) ([]string, error) {
+	rows, err := r.client.DiscoveredEntity.Query().
+		GroupBy(discoveredentity.FieldTypeCategory).
+		Strings(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get distinct types: %w", err)
+	}
+	return rows, nil
+}
+
 // CreateRelationship creates a new relationship
 func (r *entRepository) CreateRelationship(ctx context.Context, input *RelationshipInput) (*ent.Relationship, error) {
 	return r.client.Relationship.Create().

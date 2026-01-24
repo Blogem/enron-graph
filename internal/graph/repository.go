@@ -18,6 +18,7 @@ type Repository interface {
 	FindEntityByID(ctx context.Context, id int) (*ent.DiscoveredEntity, error)
 	FindEntityByUniqueID(ctx context.Context, uniqueID string) (*ent.DiscoveredEntity, error)
 	FindEntitiesByType(ctx context.Context, typeCategory string) ([]*ent.DiscoveredEntity, error)
+	GetDistinctEntityTypes(ctx context.Context) ([]string, error)
 
 	// Relationship operations
 	CreateRelationship(ctx context.Context, rel *RelationshipInput) (*ent.Relationship, error)

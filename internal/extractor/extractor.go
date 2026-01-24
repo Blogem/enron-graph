@@ -99,9 +99,16 @@ func (e *Extractor) extractFromHeaders(ctx context.Context, email *ent.Email) ([
 
 // extractFromContent uses LLM to extract entities from email content
 func (e *Extractor) extractFromContent(ctx context.Context, email *ent.Email) ([]*ent.DiscoveredEntity, error) {
-	// Generate extraction prompt
+	// Get previously discovered entity types to enrich the prompt
+	discoveredTypes, err := e.repo.GetDistinctEntityTypes(ctx)
+	if err != nil {
+		e.logger.Warn("Failed to get discovered types, proceeding without them", "error", err)
+		discoveredTypes = []string{}
+	}
+
+	// Generate extraction prompt with discovered types
 	toStr := strings.Join(email.To, ", ")
-	prompt := EntityExtractionPrompt(email.From, toStr, email.Subject, email.Body)
+	prompt := EntityExtractionPrompt(email.From, toStr, email.Subject, email.Body, discoveredTypes)
 
 	// Call LLM
 	response, err := e.llmClient.GenerateCompletion(ctx, prompt)
@@ -122,82 +129,35 @@ func (e *Extractor) extractFromContent(ctx context.Context, email *ent.Email) ([
 
 	var entities []*ent.DiscoveredEntity
 
-	// Process persons (skip if already created from headers)
-	for _, person := range result.Persons {
-		if person.Confidence < 0.7 {
+	// Process all entities uniformly
+	for _, entity := range result.Entities {
+		if entity.Confidence < 0.7 {
 			continue
 		}
 
-		uniqueID := person.Email
-		if uniqueID == "" {
-			// Generate unique ID from name if no email
-			uniqueID = fmt.Sprintf("person:%s", strings.ToLower(strings.TrimSpace(person.Name)))
+		// Generate unique ID based on type and name
+		var uniqueID string
+
+		// Special handling for persons with email
+		if entity.Type == "person" {
+			if email, ok := entity.Properties["email"].(string); ok && email != "" {
+				uniqueID = email
+			} else {
+				uniqueID = fmt.Sprintf("person:%s", strings.ToLower(strings.TrimSpace(entity.Name)))
+			}
+		} else {
+			uniqueID = fmt.Sprintf("%s:%s", entity.Type, strings.ToLower(strings.TrimSpace(entity.Name)))
 		}
 
-		entity, err := e.createOrUpdateEntity(ctx, uniqueID, "person", person.Name, map[string]interface{}{
-			"email": person.Email,
-		}, person.Confidence)
-
+		created, err := e.createOrUpdateEntity(ctx, uniqueID, entity.Type, entity.Name, entity.Properties, entity.Confidence)
 		if err != nil {
-			e.logger.Debug("Failed to create person entity", "name", person.Name, "error", err)
+			e.logger.Debug("Failed to create entity",
+				"type", entity.Type,
+				"name", entity.Name,
+				"error", err)
 			continue
 		}
-		entities = append(entities, entity)
-	}
-
-	// Process organizations
-	for _, org := range result.Organizations {
-		if org.Confidence < 0.7 {
-			continue
-		}
-
-		uniqueID := fmt.Sprintf("org:%s", strings.ToLower(strings.TrimSpace(org.Name)))
-
-		entity, err := e.createOrUpdateEntity(ctx, uniqueID, "organization", org.Name, map[string]interface{}{
-			"domain": org.Domain,
-		}, org.Confidence)
-
-		if err != nil {
-			e.logger.Debug("Failed to create organization entity", "name", org.Name, "error", err)
-			continue
-		}
-		entities = append(entities, entity)
-	}
-
-	// Process concepts
-	for _, concept := range result.Concepts {
-		if concept.Confidence < 0.7 {
-			continue
-		}
-
-		uniqueID := fmt.Sprintf("concept:%s", strings.ToLower(strings.TrimSpace(concept.Name)))
-
-		entity, err := e.createOrUpdateEntity(ctx, uniqueID, "concept", concept.Name, map[string]interface{}{
-			"keywords": concept.Keywords,
-		}, concept.Confidence)
-
-		if err != nil {
-			e.logger.Debug("Failed to create concept entity", "name", concept.Name, "error", err)
-			continue
-		}
-		entities = append(entities, entity)
-	}
-
-	// Process other entities
-	for _, other := range result.Other {
-		if other.Confidence < 0.7 {
-			continue
-		}
-
-		uniqueID := fmt.Sprintf("%s:%s", other.Type, strings.ToLower(strings.TrimSpace(other.Name)))
-
-		entity, err := e.createOrUpdateEntity(ctx, uniqueID, other.Type, other.Name, other.Properties, other.Confidence)
-
-		if err != nil {
-			e.logger.Debug("Failed to create entity", "type", other.Type, "name", other.Name, "error", err)
-			continue
-		}
-		entities = append(entities, entity)
+		entities = append(entities, created)
 	}
 
 	return entities, nil

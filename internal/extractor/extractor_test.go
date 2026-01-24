@@ -10,17 +10,13 @@ import (
 // Tests ExtractFromEmail, JSON parsing, confidence filtering, embedding generation, entity type detection
 
 func TestExtractFromEmail_JSONParsing(t *testing.T) {
-	// Test parsing LLM response JSON
+	// Test parsing LLM response JSON with new flexible structure
 	mockResponse := `{
-		"persons": [
-			{"name": "Alice", "email": "alice@enron.com", "confidence": 0.95},
-			{"name": "Bob", "email": "bob@enron.com", "confidence": 0.90}
-		],
-		"organizations": [
-			{"name": "Enron Energy Trading", "confidence": 0.85}
-		],
-		"concepts": [
-			{"name": "energy trading strategy", "confidence": 0.80}
+		"entities": [
+			{"type": "person", "name": "Alice", "properties": {"email": "alice@enron.com"}, "confidence": 0.95},
+			{"type": "person", "name": "Bob", "properties": {"email": "bob@enron.com"}, "confidence": 0.90},
+			{"type": "organization", "name": "Enron Energy Trading", "confidence": 0.85},
+			{"type": "concept", "name": "energy trading strategy", "confidence": 0.80}
 		]
 	}`
 
@@ -30,29 +26,45 @@ func TestExtractFromEmail_JSONParsing(t *testing.T) {
 		t.Fatalf("JSON parsing failed: %v", err)
 	}
 
-	if len(result.Persons) != 2 {
-		t.Errorf("Expected 2 persons, got %d", len(result.Persons))
+	if len(result.Entities) != 4 {
+		t.Errorf("Expected 4 entities, got %d", len(result.Entities))
 	}
 
-	if len(result.Organizations) != 1 {
-		t.Errorf("Expected 1 organization, got %d", len(result.Organizations))
+	personCount := 0
+	orgCount := 0
+	conceptCount := 0
+	for _, e := range result.Entities {
+		switch e.Type {
+		case "person":
+			personCount++
+		case "organization":
+			orgCount++
+		case "concept":
+			conceptCount++
+		}
 	}
 
-	if len(result.Concepts) != 1 {
-		t.Errorf("Expected 1 concept, got %d", len(result.Concepts))
+	if personCount != 2 {
+		t.Errorf("Expected 2 persons, got %d", personCount)
+	}
+	if orgCount != 1 {
+		t.Errorf("Expected 1 organization, got %d", orgCount)
+	}
+	if conceptCount != 1 {
+		t.Errorf("Expected 1 concept, got %d", conceptCount)
 	}
 }
 
 func TestExtractFromEmail_ConfidenceFiltering(t *testing.T) {
-	entities := []PersonEntity{
-		{Name: "High Confidence", Confidence: 0.95},
-		{Name: "Medium Confidence", Confidence: 0.75},
-		{Name: "Low Confidence", Confidence: 0.60},
-		{Name: "Very Low", Confidence: 0.30},
+	entities := []ExtractedEntity{
+		{Type: "person", Name: "High Confidence", Confidence: 0.95},
+		{Type: "person", Name: "Medium Confidence", Confidence: 0.75},
+		{Type: "person", Name: "Low Confidence", Confidence: 0.60},
+		{Type: "person", Name: "Very Low", Confidence: 0.30},
 	}
 
 	minConfidence := 0.70
-	filtered := []PersonEntity{}
+	filtered := []ExtractedEntity{}
 
 	for _, e := range entities {
 		if e.Confidence >= minConfidence {
@@ -108,14 +120,11 @@ func TestExtractFromEmail_InvalidJSON(t *testing.T) {
 
 func TestExtractFromEmail_EntityTypeDetection(t *testing.T) {
 	mockResponse := `{
-		"persons": [
-			{"name": "John Doe", "email": "john@enron.com", "confidence": 0.95}
-		],
-		"organizations": [
-			{"name": "Enron Corp", "confidence": 0.90}
-		],
-		"concepts": [
-			{"name": "risk management", "confidence": 0.85}
+		"entities": [
+			{"type": "person", "name": "John Doe", "properties": {"email": "john@enron.com"}, "confidence": 0.95},
+			{"type": "organization", "name": "Enron Corp", "confidence": 0.90},
+			{"type": "concept", "name": "risk management", "confidence": 0.85},
+			{"type": "project", "name": "Project Phoenix", "confidence": 0.82}
 		]
 	}`
 
@@ -126,16 +135,29 @@ func TestExtractFromEmail_EntityTypeDetection(t *testing.T) {
 		t.Fatalf("JSON parsing failed: %v", err)
 	}
 
-	if len(result.Persons) != 1 {
-		t.Errorf("Expected 1 person, got %d", len(result.Persons))
+	if len(result.Entities) != 4 {
+		t.Errorf("Expected 4 entities, got %d", len(result.Entities))
 	}
 
-	if len(result.Organizations) != 1 {
-		t.Errorf("Expected 1 organization, got %d", len(result.Organizations))
+	typeCount := make(map[string]int)
+	for _, e := range result.Entities {
+		typeCount[e.Type]++
 	}
 
-	if len(result.Concepts) != 1 {
-		t.Errorf("Expected 1 concept, got %d", len(result.Concepts))
+	if typeCount["person"] != 1 {
+		t.Errorf("Expected 1 person, got %d", typeCount["person"])
+	}
+
+	if typeCount["organization"] != 1 {
+		t.Errorf("Expected 1 organization, got %d", typeCount["organization"])
+	}
+
+	if typeCount["concept"] != 1 {
+		t.Errorf("Expected 1 concept, got %d", typeCount["concept"])
+	}
+
+	if typeCount["project"] != 1 {
+		t.Errorf("Expected 1 project (custom type), got %d", typeCount["project"])
 	}
 }
 
