@@ -1,22 +1,22 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.1.0 → 1.2.0
+Version Change: 1.2.0 → 1.3.0
 Change Type: MINOR - New principle added
 Modified Principles: N/A
 Added Sections: 
-  - Principle VIII: Terminal Command Discipline (new)
+  - Principle IX: Commit Confirmation (new)
 Removed Sections: N/A
 
-Reason for Amendment: Prevent terminal connection breaks caused by large multi-line commands.
-Pattern observed: Commands with heredocs, long strings, or >200 chars cause terminal disconnection.
-Solution: Use file creation tools for complex content, split commands into atomic operations.
+Reason for Amendment: Enforce user control over version control operations.
+Pattern observed: Assistant should never auto-commit changes without explicit user approval.
+Solution: Require explicit user confirmation after completing task sets before running git commit.
 
 Templates Status:
 ✅ plan-template.md - Constitution Check section aligns with all principles
 ✅ spec-template.md - User story structure supports Spec-First and Independent Testing
 ✅ tasks-template.md - Phase structure supports TDD and story-based implementation
-✅ Command files - No changes required (command discipline is implementation detail)
+✅ Command files - No changes required (commit discipline is implementation detail)
 
 Follow-up TODOs: None
 ==================
@@ -136,6 +136,22 @@ When executing commands in the terminal, the following rules MUST be strictly ob
 buffer limits or contain complex multi-line input. Breaking commands into simple, atomic operations
 ensures reliable execution and prevents connection loss that interrupts workflow.
 
+### IX. Commit Confirmation
+
+After completing a set of tasks, the assistant MUST ask the user for explicit confirmation before
+committing changes to version control. The workflow MUST be:
+
+1. **Complete all tasks** in the current work batch
+2. **Summarize changes** made during the task set (files modified, features added, tests passing)
+3. **Ask the user** whether they want to commit the changes
+4. **Wait for user approval** before executing any `git add`, `git commit`, or `git push` commands
+5. **Never auto-commit** without explicit user instruction
+
+**Rationale**: Users may want to review changes, test manually, or make additional modifications before
+committing. Auto-committing removes user control over version control history and can create unwanted
+commits that are difficult to undo. Asking for confirmation respects user agency and enables careful
+curation of the commit history.
+
 ## Development Workflow
 
 ### Feature Lifecycle
@@ -219,4 +235,4 @@ Constitution compliance MUST be verified:
 - During code review of implementation PRs
 - In retrospectives when complexity violations were justified
 
-**Version**: 1.2.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24
+**Version**: 1.3.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24
