@@ -127,11 +127,16 @@ As a user exploring the knowledge graph, I need to search for concepts using nat
 - **FR-006**: System MUST maintain both "discovered" entities (untyped/loosely-typed) and "promoted" entities (schema-validated)
 
 #### Email Loader
-- **FR-007**: System MUST parse Enron email corpus files (in csv format).
+- **FR-007**: System MUST parse Enron email corpus files in CSV format with columns: `file` (email identifier) and `message` (full email content including headers and body as raw text)
+- **FR-007a**: System MUST parse email headers from the message field including: Message-ID, Date (RFC 2822 format), From, To, CC, BCC, Subject
 - **FR-008**: System MUST extract metadata from emails: sender, recipients (To/CC/BCC), date, subject, message ID
 - **FR-009**: System MUST handle batch processing of multiple emails (thousands to hundreds of thousands)
+- **FR-009a**: System SHOULD process emails concurrently (10-100 emails in parallel) with last-write-wins conflict resolution
 - **FR-010**: System MUST track which emails have been processed to avoid duplicate ingestion
 - **FR-011**: System MUST handle encoding issues and malformed email data gracefully (log errors, continue processing)
+- **FR-011a**: System MUST maintain email processing failure rate below 2% of total emails
+- **FR-011b**: System MUST halt processing on critical errors (e.g., database connection failure)
+- **FR-011c**: System MUST log error messages only (no stack traces required for POC)
 
 #### Entity Extractor
 - **FR-012**: System MUST extract person entities from email headers (sender, recipients) with email addresses as unique identifiers as "discovered" (loose) entities
@@ -139,16 +144,22 @@ As a user exploring the knowledge graph, I need to search for concepts using nat
 - **FR-014**: System MUST extract topic/concept entities from email subject lines and bodies using keyword extraction or NLP as "discovered" (loose) entities
 - **FR-014a**: System MUST continuously discover new entity types from content (not limited to predefined types), storing them as loosely-typed entities with flexible properties
 - **FR-014b**: System MUST tag discovered entities with their inferred type category (e.g., "person", "organization", "concept", "event", "location") even before promotion to core schema
-- **FR-015**: System MUST create relationships between entities: SENT (person -> email), RECEIVED (person <- email), MENTIONS (email -> organization/topic), COMMUNICATES_WITH (person -> person)
+- **FR-015**: System MUST create relationships between entities: SENT (person -> email), RECEIVED (person <- email), MENTIONS (email -> organization/topic), COMMUNICATES_WITH (person <-> person, bidirectional)
+- **FR-015a**: System MUST include timestamp (from email date) and confidence score properties on all relationships
+- **FR-015b**: MENTIONS relationships MUST be extracted using both keyword matching and LLM-based extraction methods
 - **FR-016**: System MUST structure extracted data in a standard format (e.g., JSON) with entity type, properties, and relationships before graph insertion
 - **FR-017**: System MUST assign confidence scores to extracted entities and relationships based on extraction method quality
-- **FR-017a**: Extractor MUST differentiate between "discovered" entities (flexible schema, awaiting promotion) and "promoted" entities (validated against core schema)
+- **FR-017a**: System MUST filter entities and relationships with confidence scores below 0.7 (minimum acceptable threshold)
+- **FR-017b**: System MUST generate vector embeddings for all extracted entities (not for email bodies)
+- **FR-017c**: Extractor MUST differentiate between "discovered" entities (flexible schema, awaiting promotion) and "promoted" entities (validated against core schema)
 
 #### Schema Analyst
 - **FR-018**: System MUST analyze the graph to identify patterns in discovered entities (frequency, relationship density, property consistency)
 - **FR-019**: System MUST rank candidate entity types for promotion using configurable metrics (minimum occurrence threshold, relationship importance, property completeness)
 - **FR-020**: System MUST generate schema definitions for promoted types including property names, data types, and validation rules inferred from existing entities
-- **FR-021**: System MUST provide a mechanism (automated or manual approval) to promote candidate types to the core schema
+- **FR-021**: System MUST provide a manual approval mechanism via CLI/TUI interface to promote candidate types to the core schema
+- **FR-021a**: System MUST present ranked promotion candidates to the user with metrics (frequency, relationship density, property consistency)
+- **FR-021b**: System MUST require explicit user confirmation before executing type promotion
 - **FR-022**: System MUST apply the new schema to existing discovered entities, converting them to typed entities and validating properties
 - **FR-023**: System MUST maintain an audit log of schema evolution events: what was promoted, when, by what criteria, and how many entities were affected
 
@@ -156,14 +167,21 @@ As a user exploring the knowledge graph, I need to search for concepts using nat
 - **FR-024**: System MUST expose a query API (REST, GraphQL, or similar) for retrieving entities and relationships
 - **FR-025**: System MUST support query filtering by entity type, property values, and relationship types
 - **FR-026**: System MUST return query results in structured formats (JSON, graph serialization)
-- **FR-027**: System SHOULD provide a basic web-based visualization interface displaying nodes and edges
-- **FR-028**: Visualization SHOULD support interactive exploration: click to expand nodes, filter by type, zoom/pan
+- **FR-027**: System MUST provide a basic visualization interface displaying nodes and edges, prioritizing TUI (Terminal User Interface) with web-based interface as fallback if graph rendering is not feasible in TUI
+- **FR-027a**: ASCII graph rendering is acceptable for POC if using TUI approach
+- **FR-028**: Visualization SHOULD support interactive exploration: click to expand nodes, filter by type, zoom/pan (or keyboard navigation equivalent in TUI)
 
 #### Natural Language Search & Chat Interface
 - **FR-029**: System SHOULD provide a chat interface for natural language queries against the knowledge graph
 - **FR-030**: System SHOULD interpret natural language queries and translate them into graph queries (entity lookups, relationship traversals, pattern matching)
 - **FR-031**: System SHOULD maintain conversation context to handle follow-up queries ("Tell me more", "Who else?", "What about X?")
-- **FR-032**: System SHOULD support common query patterns: entity lookup by name/description, relationship discovery, path finding, concept search
+- **FR-032**: System SHOULD support common query patterns including:
+  - Entity lookup: "Who is [person name]?" or "Show me information about [organization]"
+  - Relationship discovery: "Who did [person] email?" or "Show me [person]'s contacts"
+  - Path finding: "How are [person A] and [person B] connected?"
+  - Concept search: "Find emails about [topic]" or "What topics did [person] discuss?"
+  - Simple aggregations: "How many emails did [person] send?" or "Who sent the most emails?"
+- **FR-032a**: System MAY support temporal queries ("Emails from [date/month/year]") but this is optional for POC
 - **FR-033**: Chat interface SHOULD integrate with visualization to display query results graphically
 - **FR-034**: System SHOULD handle query ambiguity by asking clarifying questions or presenting multiple options
 
@@ -173,14 +191,14 @@ As a user exploring the knowledge graph, I need to search for concepts using nat
 - **Person**: Represents an individual with properties: name, email address(es), organization affiliation (inferred or explicit)
 - **Organization**: Represents a company or entity with properties: name, domain, relationships to persons
 - **Topic/Concept**: Represents a subject or theme with properties: name/label, keywords, relevance score
-- **Relationship**: Represents connections with properties: type (SENT, RECEIVED, MENTIONS, COMMUNICATES_WITH), timestamp, weight/strength, confidence score
+- **Relationship**: Represents connections with properties: type (SENT, RECEIVED, MENTIONS, COMMUNICATES_WITH), timestamp (from email date), confidence score (no weight/strength needed for POC)
 - **EntityType**: Represents a promoted schema definition with properties: typeName, requiredProperties, optionalProperties, validationRules, promotionDate, promotionCriteria
 
 ## Success Criteria
 
 ### Measurable Outcomes
 
-- **SC-001**: System successfully ingests at least 10,000 Enron emails and extracts entities within 10 minutes on standard hardware
+- **SC-001**: System successfully ingests at least 10,000 Enron emails and extracts entities within 10 minutes on standard hardware (MacBook Air M4 with 24GB RAM)
 - **SC-002**: Entity extraction achieves at least 90% precision for person entities (email addresses) and 70% precision for organization entities (verified against sample)
 - **SC-003**: Graph queries for entity lookup by property return results in under 500ms for graphs up to 100,000 nodes
 - **SC-004**: Graph queries for shortest path between entities complete in under 2 seconds for paths up to 6 degrees of separation
@@ -215,10 +233,10 @@ The POC is considered **COMPLETE** when:
 - User interface can be minimal/prototype quality (not production-ready UX)
 
 ### Assumptions
-- Enron email dataset is available and accessible (public dataset)
-- Development environment has sufficient resources to process the dataset (16GB+ RAM recommended)
-- Graph database choice (Neo4j, Apache AGE, or similar) will be determined during planning phase
-- Schema evolution is demonstrated with at least one promotion cycle (not required to be fully automated)
+- Enron email dataset is available and accessible (public dataset, located at `assets/enron-emails/emails.csv`)
+- Development environment: MacBook Air M4 with 24GB RAM, Docker available
+- Graph database choice will be determined during planning phase
+- Schema evolution is demonstrated with at least one promotion cycle using manual approval workflow
 
 ## Out of Scope
 
