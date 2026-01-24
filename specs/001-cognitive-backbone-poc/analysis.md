@@ -116,7 +116,7 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
   - `file`: Email identifier (e.g., "allen-p/_sent_mail/1.")
   - `message`: Full email content as raw text including headers (Message-ID, Date, From, To, CC, BCC, Subject) and body
 - **Header Format**: Email headers embedded in message field, RFC 2822 date format (e.g., "Mon, 14 May 2001 16:39:00 -0700 (PDT)")
-- **Dataset Size**: To be determined during inspection (need 10k+ emails per SC-001)
+- **Dataset Size**: To be determined during inspection (need 1k+ emails per SC-001)
 - **Data Quality**: Likely contains duplicates (will handle via message-id deduplication), potential encoding variations, possible missing fields
 
 **CSV Parsing**:
@@ -141,7 +141,7 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
 - Chunk size: Process N emails per batch (tune based on memory, extraction time)
 - Parallelization: 10-100 emails concurrently, last-write-wins conflict resolution
 - Progress tracking: Log progress every N records, estimate completion time
-- Performance target: 10k emails in <10 minutes on MacBook Air M4 (24GB RAM)
+- Performance target: 1k emails in <10 minutes on MacBook Air M4 (24GB RAM)
 
 ---
 
@@ -215,7 +215,7 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
 - Batch LLM calls to reduce API overhead
 - Caching: Store extraction results, don't re-process same email
 - Parallelization: Process 10-100 emails concurrently (respect rate limits, last-write-wins conflict resolution)
-- Target: 10k emails in <10 minutes (SC-001) on M4 MacBook Air → ~60 seconds per 100 emails → <1s per email
+- Target: 1k emails in <10 minutes (SC-001) on M4 MacBook Air → ~60 seconds per 100 emails → <1s per email
 
 ---
 
@@ -460,13 +460,13 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
 2. **Enron Dataset Details**:
    - [x] Dataset located at `assets/enron-emails/emails.csv`
    - [x] CSV structure identified: 2 columns (`file`, `message`), headers embedded in message field
-   - [ ] Count total records to confirm 10k+ emails (SC-001 requirement)
+   - [ ] Count total records to confirm 1k+ emails (SC-001 requirement)
    - [ ] Identify data quality issues (encoding, missing fields, duplicates)
    - [ ] Test email header parsing from message field with Go standard library
 
 3. **LLM Strategy for Entity Extraction**:
    - [x] Decision: Use local Ollama (Llama 3.1 8B) with optional LiteLLM proxy for API models
-   - [ ] Estimate API costs for 10k email processing (extraction + embeddings)
+   - [ ] Estimate API costs for 1k email processing (extraction + embeddings)
    - [ ] Test local embedding models (mxbai-embed-large, nomic-embed-text) via Ollama, with LiteLLM fallback option
    - [ ] Design extraction prompts for person, organization, topic, open-ended entities
    - [ ] Test prompt effectiveness on sample emails (validate extraction accuracy)

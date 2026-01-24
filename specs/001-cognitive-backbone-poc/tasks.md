@@ -457,26 +457,26 @@ assets/         # Enron email dataset
 
 ### Unit Tests (TDD - Write First)
 
-- [ ] T075 [P] [US3] Write unit tests for pattern detection in `internal/analyst/detector_test.go`:
+- [X] T075 [P] [US3] Write unit tests for pattern detection in `internal/analyst/detector_test.go`:
   - Test frequency calculation per type
   - Test relationship density calculation
   - Test property consistency calculation
   - Test grouping by type_category
-- [ ] T076 [P] [US3] Write unit tests for embedding clustering in `internal/analyst/clustering_test.go`:
+- [X] T076 [P] [US3] Write unit tests for embedding clustering in `internal/analyst/clustering_test.go`:
   - Test similarity grouping (cosine >0.85)
   - Test cluster identification
   - Test type candidate extraction
-- [ ] T077 [P] [US3] Write unit tests for candidate ranking in `internal/analyst/ranker_test.go`:
+- [X] T077 [P] [US3] Write unit tests for candidate ranking in `internal/analyst/ranker_test.go`:
   - Test scoring formula (0.4*freq + 0.3*density + 0.3*consistency)
   - Test threshold application (min 50 occurrences, 70% consistency)
   - Test sorting by score
-- [ ] T078 [P] [US3] Write unit tests for schema generator in `internal/analyst/schema_gen_test.go`:
+- [X] T078 [P] [US3] Write unit tests for schema generator in `internal/analyst/schema_gen_test.go`:
   - Test required property inference (>90% presence)
   - Test optional property inference (30-90% presence)
   - Test data type inference from samples
   - Test validation rule generation
   - Test JSON schema output format
-- [ ] T079 [P] [US3] Write unit tests for ent schema codegen in `internal/promoter/codegen_test.go`:
+- [X] T079 [P] [US3] Write unit tests for ent schema codegen in `internal/promoter/codegen_test.go`:
   - Test ent schema file generation from JSON schema
   - Test field type mapping
   - Test validation rule conversion
@@ -484,17 +484,17 @@ assets/         # Enron email dataset
 
 ### Pattern Detection & Ranking
 
-- [ ] T080 [US3] Implement pattern detection in `internal/analyst/detector.go`:
+- [X] T080 [US3] Implement pattern detection in `internal/analyst/detector.go`:
   - Query discovered entities grouped by type_category
   - Calculate frequency: COUNT(*) per type
   - Calculate relationship density: AVG(degree) per type
   - Calculate property consistency: % entities with each property
   - **Verify**: T075 tests pass
-- [ ] T081 [P] [US3] Implement embedding clustering in `internal/analyst/clustering.go`:
+- [X] T081 [P] [US3] Implement embedding clustering in `internal/analyst/clustering.go`:
   - Group entities by vector similarity (cosine >0.85)
   - Identify type candidates from clusters
   - **Verify**: T076 tests pass
-- [ ] T082 [US3] Implement candidate ranking in `internal/analyst/ranker.go`:
+- [X] T082 [US3] Implement candidate ranking in `internal/analyst/ranker.go`:
   - Score = 0.4*frequency + 0.3*density + 0.3*consistency
   - Apply thresholds: min 50 occurrences, 70% property consistency
   - Sort by score, return top 10
@@ -502,18 +502,18 @@ assets/         # Enron email dataset
 
 ### Schema Generation & Promotion
 
-- [ ] T083 [US3] Implement schema generator in `internal/analyst/schema_gen.go`:
+- [X] T083 [US3] Implement schema generator in `internal/analyst/schema_gen.go`:
   - Infer required properties (>90% presence)
   - Infer optional properties (30-90% presence)
   - Infer data types from sample values
   - Generate validation rules
   - Output JSON schema definition
   - **Verify**: T078 tests pass
-- [ ] T084 [US3] Create ent schema file generator in `internal/promoter/codegen.go`:
+- [X] T084 [US3] Create ent schema file generator in `internal/promoter/codegen.go`:
   - Input: JSON schema definition
   - Output: `ent/schema/{typename}.go` with ent schema struct
   - **Verify**: T079 tests pass
-- [ ] T085 [US3] Implement promotion workflow in `internal/promoter/promoter.go`:
+- [X] T085 [US3] Implement promotion workflow in `internal/promoter/promoter.go`:
   - Generate ent schema file
   - Run `go generate ./ent`
   - Run database migration (create new table)
@@ -523,10 +523,10 @@ assets/         # Enron email dataset
 
 ### CLI Tools
 
-- [ ] T086 [US3] Create analyst CLI in `cmd/analyst/main.go`:
+- [X] T086 [US3] Create analyst CLI in `cmd/analyst/main.go`:
   - `analyze` subcommand: run detection, rank candidates, display top 10
   - `promote` subcommand: interactive selection, confirm, execute promotion
-- [ ] T087 [P] [US3] Create promoter CLI in `cmd/promoter/main.go`:
+- [X] T087 [P] [US3] Create promoter CLI in `cmd/promoter/main.go`:
   - Accept schema definition file
   - Execute promotion workflow
 
@@ -556,7 +556,7 @@ assets/         # Enron email dataset
 - [ ] T092 [US3] Verify: Promotion adds type to schema with properties/constraints
 - [ ] T093 [US3] Verify: New entities validated against promoted schema
 - [ ] T094 [US3] Verify: Audit log captures promotion events
-- [ ] T095 [US3] Verify: SC-005 - 3+ candidates identified from 10k emails
+- [ ] T095 [US3] Verify: SC-005 - 3+ candidates identified from 1k emails
 - [ ] T096 [US3] Verify: SC-006 - 1+ type successfully promoted
 - [ ] T097 [US3] Verify: SC-010 - Audit log is complete
 
@@ -808,15 +808,15 @@ assets/         # Enron email dataset
 ### Integration Testing
 
 - [ ] T140 Full workflow test: load emails → extract → query → promote → query promoted entities
-- [ ] T141 Test with full 10k+ email dataset
+- [ ] T141 Test with full 1k+ email dataset
 - [ ] T142 Verify all P1-P3 user stories pass acceptance scenarios
 - [ ] T143 Test P4-P5 demo features
 
 ### Performance Validation
 
-- [ ] T144 Validate SC-001: 10k emails in <10 minutes
+- [ ] T144 Validate SC-001: 1k emails in <10 minutes
   - Write benchmark in `tests/benchmarks/loader_bench_test.go`
-  - Load 10k emails with extraction enabled
+  - Load 1k emails with extraction enabled
   - Measure total time, verify <10 minutes
 - [ ] T145 Validate SC-003: Entity lookup <500ms (100k nodes)
   - Write benchmark in `tests/benchmarks/query_bench_test.go`

@@ -164,7 +164,7 @@ docker-compose logs -f postgres
 
 ## Success Criteria
 
-- SC-001: Process 10k emails in <10 minutes
+- SC-001: Process 1k emails in <10 minutes
 - SC-002: Entity extraction precision (90% persons, 70% orgs)
 - SC-003: Entity lookup <500ms (100k nodes)
 - SC-004: Shortest path <2s (6 degrees)

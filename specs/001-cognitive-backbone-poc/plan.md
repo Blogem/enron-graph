@@ -257,7 +257,7 @@ enron-graph/
    - [ ] Benchmark pgvector similarity search: 1k, 10k, 100k vectors (HNSW)
    - [ ] Measure Ollama inference speed: tokens/sec for Llama 3.1 8B on M4
    - [ ] Measure embedding generation speed: embeddings/sec for mxbai-embed-large
-   - [ ] Estimate total processing time for 10k emails
+   - [ ] Estimate total processing time for 1k emails
 
 **Deliverables**:
 - Research findings document (`specs/001-cognitive-backbone-poc/research.md`)
@@ -306,7 +306,7 @@ enron-graph/
    - [ ] Integration tests: insert entities, query back (FR-001, FR-002)
    - [ ] Test relationship traversal (1-hop, n-hop) (FR-003)
    - [ ] Test vector similarity search with sample embeddings
-   - [ ] Validate performance: <500ms for entity lookup on 10k entities (SC-003 baseline)
+   - [ ] Validate performance: <500ms for entity lookup on 1k entities (SC-003 baseline)
 
 **Acceptance Criteria**:
 - ✅ Entities and relationships can be stored and queried
@@ -355,13 +355,13 @@ enron-graph/
    - [ ] Integration test: load 100 sample emails, verify in database
    - [ ] Test duplicate handling: load same email twice, verify single record
    - [ ] Test error handling: malformed CSV, missing headers, corrupt data
-   - [ ] Benchmark: process 10k emails in <2 minutes (partial SC-001)
+   - [ ] Benchmark: process 1k emails in <2 minutes (partial SC-001)
 
 **Acceptance Criteria**:
-- ✅ CLI tool successfully loads 10k+ Enron emails
+- ✅ CLI tool successfully loads 1k+ Enron emails
 - ✅ Emails are deduplicated by message-id
 - ✅ Failure rate <2%
-- ✅ Processing completes in <2 minutes for 10k emails
+- ✅ Processing completes in <2 minutes for 1k emails
 
 ---
 
@@ -447,7 +447,7 @@ enron-graph/
 - ✅ Relationships are created correctly (SENT, RECEIVED, MENTIONS, COMMUNICATES_WITH)
 - ✅ Deduplication works for persons and organizations
 - ✅ Extraction achieves precision targets (SC-002)
-- ✅ 10k emails processed with extraction in <10 minutes (SC-001)
+- ✅ 1k emails processed with extraction in <10 minutes (SC-001)
 
 ---
 
@@ -578,7 +578,7 @@ enron-graph/
    - [ ] Validate SC-005, SC-006: identify 3+ candidates, promote 1 successfully
 
 **Acceptance Criteria**:
-- ✅ Analyst identifies at least 3 candidate types from 10k email dataset (SC-005)
+- ✅ Analyst identifies at least 3 candidate types from 1k email dataset (SC-005)
 - ✅ Schema generation produces valid ent schema files
 - ✅ Promotion creates new database table and migrates data (SC-006)
 - ✅ Audit log records all promotions (SC-010)

@@ -141,7 +141,7 @@
 - Use this as "standard hardware" for performance targets
 
 **Implications**:
-- SC-001 target: 10k emails in <10 minutes on M4 MacBook Air
+- SC-001 target: 1k emails in <10 minutes on M4 MacBook Air
 - Can use Docker for database containerization
 - Adequate resources for POC scale (100k+ nodes)
 

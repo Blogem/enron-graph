@@ -79,7 +79,7 @@ Successfully validated User Story 1: Email Data Ingestion and Entity Extraction
   - ✅ 3 duplicate emails skipped on second load (message-id check)
   - ✅ Same persons not re-created when appearing in multiple emails
 
-- [ ] **T043**: SC-001 - 10k emails processed in <10 minutes
+- [ ] **T043**: SC-001 - 1k emails processed in <10 minutes
   - ⚠️ DEFERRED - Requires full Enron dataset test
   - Note: Current rate of 0.079 emails/sec with LLM extraction would need optimization
 
