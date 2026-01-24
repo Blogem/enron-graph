@@ -1,22 +1,22 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.0.0 → 1.1.0
+Version Change: 1.1.0 → 1.2.0
 Change Type: MINOR - New principle added
 Modified Principles: N/A
 Added Sections: 
-  - Principle VII: File Editing Discipline (new)
+  - Principle VIII: Terminal Command Discipline (new)
 Removed Sections: N/A
 
-Reason for Amendment: Prevent file corruption caused by misuse of create_file tool on existing files.
-Pattern observed: Using create_file on existing files causes reversed code on single lines and malformed
-syntax. This principle codifies proper tool selection based on file existence.
+Reason for Amendment: Prevent terminal connection breaks caused by large multi-line commands.
+Pattern observed: Commands with heredocs, long strings, or >200 chars cause terminal disconnection.
+Solution: Use file creation tools for complex content, split commands into atomic operations.
 
 Templates Status:
 ✅ plan-template.md - Constitution Check section aligns with all principles
 ✅ spec-template.md - User story structure supports Spec-First and Independent Testing
 ✅ tasks-template.md - Phase structure supports TDD and story-based implementation
-✅ Command files - No changes required (tool usage is implementation detail)
+✅ Command files - No changes required (command discipline is implementation detail)
 
 Follow-up TODOs: None
 ==================
@@ -118,6 +118,24 @@ When working with files in the codebase, the following rules MUST be strictly ob
 syntax, duplicate package declarations). This principle enforces proper tool selection to maintain code
 integrity and prevent file corruption that blocks progress.
 
+### VIII. Terminal Command Discipline
+
+When executing commands in the terminal, the following rules MUST be strictly observed:
+
+1. **NEVER send large multi-line commands to the terminal** - Long heredocs, multi-line strings, or
+   commands exceeding ~200 characters will break the terminal connection
+2. **Use `create_file` to create files with multi-line content** - Write file content using the file
+   creation tool, then reference the file path in terminal commands
+3. **Split long commit messages into multiple `-m` flags** - Use `git commit -m "title" -m "body1" -m "body2"`
+   instead of a single long message
+4. **Chain simple commands with `&&`** - Keep each command concise and atomic
+5. **Use files for complex input** - Create scripts or config files separately, then execute them with
+   simple commands (e.g., `bash script.sh` or `git commit -F msgfile`)
+
+**Rationale**: The terminal connection is fragile and terminates when receiving commands that exceed
+buffer limits or contain complex multi-line input. Breaking commands into simple, atomic operations
+ensures reliable execution and prevents connection loss that interrupts workflow.
+
 ## Development Workflow
 
 ### Feature Lifecycle
@@ -201,4 +219,4 @@ Constitution compliance MUST be verified:
 - During code review of implementation PRs
 - In retrospectives when complexity violations were justified
 
-**Version**: 1.1.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24
+**Version**: 1.2.0 | **Ratified**: 2026-01-24 | **Last Amended**: 2026-01-24

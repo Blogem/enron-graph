@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/lib/pq"
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/pkg/utils"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -41,7 +41,7 @@ func main() {
 	// List relationships
 	rels, _ := client.Relationship.Query().All(ctx)
 	for _, r := range rels {
-		fmt.Printf("  - [%s] (from_id=%d, to_id=%d, confidence=%.2f)\n", 
+		fmt.Printf("  - [%s] (from_id=%d, to_id=%d, confidence=%.2f)\n",
 			r.Type, r.FromID, r.ToID, r.ConfidenceScore)
 	}
 }
