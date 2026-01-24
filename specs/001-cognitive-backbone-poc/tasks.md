@@ -670,11 +670,11 @@ assets/         # Enron email dataset
 
 **Acceptance Tests** (from spec.md):
 
-- [ ] T110 [US4] Verify: TUI displays entities and relationships
-- [ ] T111 [US4] Verify: Graph view renders ASCII graph with nodes/edges
-- [ ] T112 [US4] Verify: Clicking node shows properties and expansion option
-- [ ] T113 [US4] Verify: Controls for filtering by entity type work
-- [ ] T114 [US4] Verify: SC-007 - <3s render time for 500 nodes
+- [X] T110 [US4] Verify: TUI displays entities and relationships
+- [X] T111 [US4] Verify: Graph view renders ASCII graph with nodes/edges
+- [X] T112 [US4] Verify: Clicking node shows properties and expansion option
+- [X] T113 [US4] Verify: Controls for filtering by entity type work
+- [X] T114 [US4] Verify: SC-007 - <3s render time for 500 nodes
 
 **Checkpoint**: User Story 4 complete - TUI visualization functional
 

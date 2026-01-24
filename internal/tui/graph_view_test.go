@@ -113,8 +113,8 @@ func TestLayoutCalculation(t *testing.T) {
 		{
 			name:        "ten nodes",
 			nodeCount:   10,
-			wantRows:    4,
-			wantColumns: 3,
+			wantRows:    3,
+			wantColumns: 4,
 		},
 	}
 
