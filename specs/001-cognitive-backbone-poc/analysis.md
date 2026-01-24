@@ -63,7 +63,8 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
 
 **Embedding Generation**:
 - **When**: During entity extraction (FR-012-017), generate embeddings for entity names, descriptions, email content
-- **Model**: OpenAI text-embedding-3-small (1536 dimensions) or text-embedding-ada-002 (via LiteLLM)
+- **Model**: Local Ollama model (mxbai-embed-large or nomic-embed-text) with fallback to LiteLLM for API-based models (OpenAI text-embedding-3-small)
+- **Dimensions**: 768-1024 (local models) or 1536 (OpenAI via LiteLLM)
 - **Storage**: Store as vector column in entity table (PostgreSQL vector type)
 - **Indexing**: Create HNSW or IVFFlat index for fast similarity search
 
@@ -160,12 +161,13 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
 **Technical Considerations**:
 
 **LLM Integration**:
-- **Provider**: Hosted LLM via LiteLLM proxy
-- **Model**: GPT-4o-mini (cost-effective, good quality)
-- **Rationale**: LiteLLM provides unified API for multiple LLM providers, enabling easy model switching without code changes
-- **Integration**: Use LangChainGo for prompt management and LLM orchestration
-- **Cost Management**: Batch extraction requests, cache results, monitor API usage
-- **No Local Fallback**: Keeps infrastructure simple for POC
+- **Provider**: Local Ollama (primary) with optional LiteLLM proxy for API-based models
+- **Model**: Llama 3.1 8B via Ollama (recommended for MacBook Air M4 24GB RAM)
+  - Alternative: Llama 3.2 3B for faster processing with lower quality
+  - Future option: Switch to GPT-4o-mini or other models via LiteLLM without code changes
+- **Rationale**: Local models avoid API costs and rate limits, LiteLLM abstraction enables easy switching to hosted providers
+- **Integration**: Use LangChainGo for prompt management and LLM orchestration (supports both Ollama and LiteLLM)
+- **Performance**: Local inference on M4 (~1-3 tokens/sec for 8B model), acceptable for POC batch processing
 
 **Extraction Strategy**:
 - **High-Confidence Entities** (FR-012): Parse email headers directly (no LLM needed)
@@ -185,9 +187,9 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
 
 - **Embedding Generation**: Generate vector embeddings for semantic search
   - Entity name/description embeddings: For each extracted entity, generate embedding from name + properties
-  - Email content embeddings: NOT REQUIRED for POC (entities only to minimize storage and API costs)
-  - Model: OpenAI text-embedding-3-small (1536-dim) via LiteLLM
-  - Batch API calls: Generate embeddings in batches (10-50 entities) to reduce overhead
+  - Email content embeddings: NOT REQUIRED for POC (entities only to minimize storage and processing time)
+  - Model: Local Ollama (mxbai-embed-large or nomic-embed-text) with fallback to OpenAI text-embedding-3-small via LiteLLM
+  - Batch processing: Generate embeddings in batches (10-50 entities) to optimize throughput
   - Store with entity: Include embedding vector in entity JSON output for graph storage
 
 **Confidence Scoring** (FR-017):
@@ -384,7 +386,7 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
 
 **NL Query Interpretation** (LLM-Powered Approach):
 - **Implementation**:
-  - Send user query + graph schema context to LLM (GPT-4o-mini via LiteLLM)
+  - Send user query + graph schema context to LLM (Llama 3.1 8B via Ollama, or GPT-4o-mini via LiteLLM)
   - LLM generates SQL queries (for entity lookup) or vector similarity searches (for semantic queries)
   - Use LangChainGo to manage prompts and parse LLM output into executable queries
   - Execute generated query against PostgreSQL, return results
@@ -463,9 +465,9 @@ The primary technical challenges are: (1) maintaining dual entity states (discov
    - [ ] Test email header parsing from message field with Go standard library
 
 3. **LLM Strategy for Entity Extraction**:
-   - [x] Decision: Use hosted LLM (GPT-4o-mini) via LiteLLM proxy
+   - [x] Decision: Use local Ollama (Llama 3.1 8B) with optional LiteLLM proxy for API models
    - [ ] Estimate API costs for 10k email processing (extraction + embeddings)
-   - [ ] Test text-embedding-3-small quality and performance via LiteLLM
+   - [ ] Test local embedding models (mxbai-embed-large, nomic-embed-text) via Ollama, with LiteLLM fallback option
    - [ ] Design extraction prompts for person, organization, topic, open-ended entities
    - [ ] Test prompt effectiveness on sample emails (validate extraction accuracy)
    - [ ] Prototype batch embedding generation for performance optimization
@@ -541,9 +543,9 @@ graph TD
 | **Schema Migrations** | Atlas Go (optional) | Advanced migration management if needed beyond ent's built-in migrations |
 | **Backend Framework** | Go stdlib or Chi/Echo | Lightweight, fast, simple HTTP handling without heavyweight framework |
 | **CSV Parsing** | Go stdlib `encoding/csv` | Built-in, efficient, no external dependencies needed |
-| **LLM Integration** | LangChainGo + LiteLLM | LiteLLM provides unified LLM API, LangChainGo for prompt management |
-| **LLM Model** | GPT-4o-mini via LiteLLM | Cost-effective, good quality, accessible via LiteLLM proxy |
-| **Embedding Model** | text-embedding-3-small | 1536-dimensional embeddings via LiteLLM, good quality/cost balance |### Supporting Components
+| **LLM Integration** | LangChainGo + Ollama (+ LiteLLM optional) | Ollama for local models, LiteLLM for API providers, LangChainGo for abstraction |
+| **LLM Model** | Llama 3.1 8B via Ollama | Local inference on M4, no API costs, switchable to GPT-4o-mini via LiteLLM |
+| **Embedding Model** | mxbai-embed-large (Ollama) | 1024-dim local embeddings, fallback to text-embedding-3-small via LiteLLM |### Supporting Components
 
 | Component | Technology | Research Needed |
 |-----------|-----------|----------------|

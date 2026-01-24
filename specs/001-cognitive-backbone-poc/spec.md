@@ -229,7 +229,7 @@ The POC is considered **COMPLETE** when:
 ### Constraints
 - POC scope excludes production-level concerns: high availability, horizontal scaling, advanced security
 - POC may use embedded/single-node graph database for simplicity (not required to be distributed)
-- Entity extraction will use LLMs.
+- Entity extraction will use LLMs (local Ollama models preferred, with optional API access via LiteLLM for flexibility).
 - User interface can be minimal/prototype quality (not production-ready UX)
 
 ### Assumptions
@@ -255,7 +255,7 @@ The following are explicitly **OUT OF SCOPE** for this POC:
 ### External Dependencies
 - Enron email dataset availability (mitigation: dataset is publicly hosted)
 - Graph database selection (mitigation: evaluate 2-3 options during planning, ensure license compatibility)
-- LLM access for entity extraction (mitigation: can either run locally or using a hosted LLM)
+- LLM access for entity extraction (mitigation: use local Ollama models - Llama 3.1 8B recommended for MacBook Air M4 24GB RAM - with optional fallback to hosted LLMs via LiteLLM)
 
 ### Technical Risks
 - **Risk**: Entity extraction accuracy may be low with simple approaches
