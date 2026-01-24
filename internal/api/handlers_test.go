@@ -151,40 +151,6 @@ func (m *mockRepository) Close() error {
 	return nil
 }
 
-// Helper type for handler (will be implemented in handlers.go)
-type Handler struct {
-	repo interface{}
-}
-
-func NewHandler(repo interface{}) *Handler {
-	return &Handler{repo: repo}
-}
-
-// Placeholder methods (to be implemented in handlers.go)
-func (h *Handler) GetEntity(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement in handlers.go
-}
-
-func (h *Handler) SearchEntities(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement in handlers.go
-}
-
-func (h *Handler) GetEntityRelationships(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement in handlers.go
-}
-
-func (h *Handler) GetEntityNeighbors(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement in handlers.go
-}
-
-func (h *Handler) FindPath(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement in handlers.go
-}
-
-func (h *Handler) SemanticSearch(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement in handlers.go
-}
-
 // T055: Contract tests for entity endpoints
 func TestGetEntityByID_Success(t *testing.T) {
 	repo := newMockRepository()
@@ -296,7 +262,7 @@ func TestSearchEntities_FilterByName(t *testing.T) {
 
 	handler := NewHandler(repo)
 
-	req := httptest.NewRequest(http.MethodGet, "/entities?name=John Doe", nil)
+	req := httptest.NewRequest(http.MethodGet, "/entities?name=John+Doe", nil)
 	w := httptest.NewRecorder()
 
 	handler.SearchEntities(w, req)
@@ -559,10 +525,11 @@ func TestFindPath_Success(t *testing.T) {
 	path := response["path"].([]interface{})
 	assert.GreaterOrEqual(t, len(path), 1)
 
-	firstRel := path[0].(map[string]interface{})
-	assert.Contains(t, firstRel, "type")
-	assert.Contains(t, firstRel, "from_id")
-	assert.Contains(t, firstRel, "to_id")
+	// First element should be an entity (source)
+	firstElem := path[0].(map[string]interface{})
+	assert.Contains(t, firstElem, "entity_id")
+	assert.Contains(t, firstElem, "entity_name")
+	assert.Contains(t, firstElem, "entity_type")
 }
 
 func TestFindPath_NoPathExists(t *testing.T) {
@@ -650,9 +617,9 @@ func TestSemanticSearch_Success(t *testing.T) {
 	handler := NewHandler(repo)
 
 	requestBody := map[string]interface{}{
-		"text":      "energy trading strategies",
-		"top_k":     5,
-		"threshold": 0.7,
+		"query":          "energy trading strategies",
+		"limit":          5,
+		"min_similarity": 0.7,
 	}
 	bodyBytes, _ := json.Marshal(requestBody)
 
@@ -731,8 +698,8 @@ func TestSemanticSearch_RankedResults(t *testing.T) {
 	handler := NewHandler(repo)
 
 	requestBody := map[string]interface{}{
-		"text":  "test query",
-		"top_k": 3,
+		"query": "test query",
+		"limit": 3,
 	}
 	bodyBytes, _ := json.Marshal(requestBody)
 

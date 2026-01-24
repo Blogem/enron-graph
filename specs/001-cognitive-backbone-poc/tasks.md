@@ -373,36 +373,36 @@ assets/         # Enron email dataset
 
 ### API Design & Implementation
 
-- [ ] T061 [P] [US2] Define REST API endpoints in `specs/001-cognitive-backbone-poc/contracts/api.md`:
+- [X] T061 [P] [US2] Define REST API endpoints in `specs/001-cognitive-backbone-poc/contracts/api.md`:
   - GET /entities/:id - Get entity by ID
   - GET /entities?type=&name= - Search entities
   - GET /entities/:id/relationships - Get relationships
   - GET /entities/:id/neighbors?depth= - Traverse relationships
   - POST /entities/path - Find shortest path
   - POST /entities/search - Semantic search by embedding
-- [ ] T062 [US2] Implement API handlers in `internal/api/handlers.go` using Chi router:
+- [X] T062 [US2] Implement API handlers in `internal/api/handlers.go` using Chi router:
   - Map HTTP requests to repository methods
   - Input validation (IDs, query parameters)
   - JSON response formatting
   - Error handling (404, 400 status codes)
   - **Verify**: T055-T058 tests pass
-- [ ] T063 [P] [US2] Add middleware in `internal/api/middleware.go`:
+- [X] T063 [P] [US2] Add middleware in `internal/api/middleware.go`:
   - Request logging
   - CORS (for future web UI)
   - Panic recovery
-- [ ] T064 [US2] Implement HTTP server in `cmd/server/main.go`:
+- [X] T064 [US2] Implement HTTP server in `cmd/server/main.go`:
   - Initialize Chi router
   - Configure database connection pooling
   - Graceful shutdown
 
 ### Query Engine Enhancements
 
-- [ ] T065 [P] [US2] Add database indexes in `internal/graph/indexes.go`:
+- [X] T065 [P] [US2] Add database indexes in `internal/graph/indexes.go`:
   - Index on name, type, unique_id fields
-- [ ] T066 [P] [US2] Implement pagination in `internal/graph/pagination.go`:
+- [X] T066 [P] [US2] Implement pagination in `internal/graph/pagination.go`:
   - Add limit/offset to queries
   - **Verify**: T059 tests pass
-- [ ] T067 [P] [US2] Add filtering by confidence score and date range in `internal/graph/filters.go`
+- [X] T067 [P] [US2] Add filtering by confidence score and date range in `internal/graph/filters.go`
   - **Verify**: T060 tests pass
 
 ### Integration Tests

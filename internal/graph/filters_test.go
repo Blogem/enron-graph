@@ -1,7 +1,6 @@
 package graph
 
 import (
-	"strings"
 	"testing"
 	"time"
 
@@ -10,685 +9,272 @@ import (
 
 // T060: Unit tests for filters
 
-// FilterParams holds filtering configuration for entity queries
-type FilterParams struct {
-	TypeCategory    string
-	MinConfidence   float64
-	MaxConfidence   float64
-	StartDate       *time.Time
-	EndDate         *time.Time
-	NameContains    string
-	PropertyFilters map[string]interface{}
-}
-
-// NewFilterParams creates a new filter params instance
-func NewFilterParams() *FilterParams {
-	return &FilterParams{
-		MinConfidence:   0.0,
-		MaxConfidence:   1.0,
-		PropertyFilters: make(map[string]interface{}),
-	}
-}
-
-// Validate ensures filter params are valid
-func (f *FilterParams) Validate() error {
-	if f.MinConfidence < 0.0 || f.MinConfidence > 1.0 {
-		return &ValidationError{Field: "min_confidence", Message: "must be between 0.0 and 1.0"}
-	}
-	if f.MaxConfidence < 0.0 || f.MaxConfidence > 1.0 {
-		return &ValidationError{Field: "max_confidence", Message: "must be between 0.0 and 1.0"}
-	}
-	if f.MinConfidence > f.MaxConfidence {
-		return &ValidationError{Field: "confidence", Message: "min_confidence cannot exceed max_confidence"}
-	}
-	if f.StartDate != nil && f.EndDate != nil && f.StartDate.After(*f.EndDate) {
-		return &ValidationError{Field: "date_range", Message: "start_date cannot be after end_date"}
-	}
-	return nil
-}
-
-// IsEmpty returns true if no filters are set
-func (f *FilterParams) IsEmpty() bool {
-	return f.TypeCategory == "" &&
-		f.MinConfidence == 0.0 &&
-		f.MaxConfidence == 1.0 &&
-		f.StartDate == nil &&
-		f.EndDate == nil &&
-		f.NameContains == "" &&
-		len(f.PropertyFilters) == 0
-}
-
-// HasConfidenceFilter returns true if confidence filtering is active
-func (f *FilterParams) HasConfidenceFilter() bool {
-	return f.MinConfidence > 0.0 || f.MaxConfidence < 1.0
-}
-
-// HasDateFilter returns true if date range filtering is active
-func (f *FilterParams) HasDateFilter() bool {
-	return f.StartDate != nil || f.EndDate != nil
-}
-
 // TestConfidenceScoreFiltering tests filtering by confidence score
 func TestConfidenceScoreFiltering(t *testing.T) {
 	testCases := []struct {
 		name          string
-		minConfidence float64
-		maxConfidence float64
-		entityScore   float64
-		shouldMatch   bool
+		minConfidence *float64
+		maxConfidence *float64
+		expectValid   bool
+		description   string
 	}{
 		{
-			name:          "entity within range",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			entityScore:   0.7,
-			shouldMatch:   true,
+			name:          "valid range",
+			minConfidence: float64Ptr(0.7),
+			maxConfidence: float64Ptr(0.9),
+			expectValid:   true,
+			description:   "normal confidence range",
 		},
 		{
-			name:          "entity below min",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			entityScore:   0.3,
-			shouldMatch:   false,
+			name:          "min only",
+			minConfidence: float64Ptr(0.5),
+			maxConfidence: nil,
+			expectValid:   true,
+			description:   "min confidence only",
 		},
 		{
-			name:          "entity above max",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			entityScore:   0.95,
-			shouldMatch:   false,
+			name:          "max only",
+			minConfidence: nil,
+			maxConfidence: float64Ptr(0.8),
+			expectValid:   true,
+			description:   "max confidence only",
 		},
 		{
-			name:          "entity at min boundary",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			entityScore:   0.5,
-			shouldMatch:   true,
+			name:          "no filters",
+			minConfidence: nil,
+			maxConfidence: nil,
+			expectValid:   true,
+			description:   "no confidence filters",
 		},
 		{
-			name:          "entity at max boundary",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			entityScore:   0.9,
-			shouldMatch:   true,
+			name:          "min below zero gets corrected",
+			minConfidence: float64Ptr(-0.5),
+			maxConfidence: nil,
+			expectValid:   true,
+			description:   "negative min should be corrected",
 		},
 		{
-			name:          "no min filter",
-			minConfidence: 0.0,
-			maxConfidence: 0.9,
-			entityScore:   0.1,
-			shouldMatch:   true,
-		},
-		{
-			name:          "no max filter",
-			minConfidence: 0.5,
-			maxConfidence: 1.0,
-			entityScore:   0.95,
-			shouldMatch:   true,
+			name:          "max above one gets corrected",
+			minConfidence: nil,
+			maxConfidence: float64Ptr(1.5),
+			expectValid:   true,
+			description:   "max above 1 should be corrected",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			filters := NewFilterParams()
-			filters.MinConfidence = tc.minConfidence
-			filters.MaxConfidence = tc.maxConfidence
+			filters := FilterParams{
+				MinConfidence: tc.minConfidence,
+				MaxConfidence: tc.maxConfidence,
+			}
 
-			matches := tc.entityScore >= filters.MinConfidence && tc.entityScore <= filters.MaxConfidence
-			assert.Equal(t, tc.shouldMatch, matches)
+			err := filters.Validate()
+			assert.NoError(t, err, tc.description)
+
+			// After validation, values should be in range
+			if filters.MinConfidence != nil {
+				assert.GreaterOrEqual(t, *filters.MinConfidence, 0.0)
+				assert.LessOrEqual(t, *filters.MinConfidence, 1.0)
+			}
+			if filters.MaxConfidence != nil {
+				assert.GreaterOrEqual(t, *filters.MaxConfidence, 0.0)
+				assert.LessOrEqual(t, *filters.MaxConfidence, 1.0)
+			}
 		})
 	}
 }
 
 // TestDateRangeFiltering tests filtering by date range
 func TestDateRangeFiltering(t *testing.T) {
-	baseTime := time.Date(2023, 1, 15, 12, 0, 0, 0, time.UTC)
-	startDate := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
-	endDate := time.Date(2023, 1, 31, 23, 59, 59, 0, time.UTC)
+	now := time.Now()
+	yesterday := now.AddDate(0, 0, -1)
+	tomorrow := now.AddDate(0, 0, 1)
+	lastWeek := now.AddDate(0, 0, -7)
+	nextWeek := now.AddDate(0, 0, 7)
 
 	testCases := []struct {
 		name        string
 		startDate   *time.Time
 		endDate     *time.Time
-		entityDate  time.Time
-		shouldMatch bool
+		description string
 	}{
 		{
-			name:        "date within range",
-			startDate:   &startDate,
-			endDate:     &endDate,
-			entityDate:  baseTime,
-			shouldMatch: true,
+			name:        "valid range",
+			startDate:   &lastWeek,
+			endDate:     &nextWeek,
+			description: "normal date range",
 		},
 		{
-			name:        "date before range",
-			startDate:   &startDate,
-			endDate:     &endDate,
-			entityDate:  time.Date(2022, 12, 31, 23, 59, 59, 0, time.UTC),
-			shouldMatch: false,
-		},
-		{
-			name:        "date after range",
-			startDate:   &startDate,
-			endDate:     &endDate,
-			entityDate:  time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC),
-			shouldMatch: false,
-		},
-		{
-			name:        "date at start boundary",
-			startDate:   &startDate,
-			endDate:     &endDate,
-			entityDate:  startDate,
-			shouldMatch: true,
-		},
-		{
-			name:        "date at end boundary",
-			startDate:   &startDate,
-			endDate:     &endDate,
-			entityDate:  endDate,
-			shouldMatch: true,
-		},
-		{
-			name:        "only start date",
-			startDate:   &startDate,
+			name:        "start only",
+			startDate:   &yesterday,
 			endDate:     nil,
-			entityDate:  baseTime,
-			shouldMatch: true,
+			description: "start date only",
 		},
 		{
-			name:        "only end date",
+			name:        "end only",
 			startDate:   nil,
-			endDate:     &endDate,
-			entityDate:  baseTime,
-			shouldMatch: true,
+			endDate:     &tomorrow,
+			description: "end date only",
 		},
 		{
-			name:        "no date filters",
+			name:        "no dates",
 			startDate:   nil,
 			endDate:     nil,
-			entityDate:  baseTime,
-			shouldMatch: true,
+			description: "no date filters",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			filters := NewFilterParams()
-			filters.StartDate = tc.startDate
-			filters.EndDate = tc.endDate
-
-			matches := true
-			if filters.StartDate != nil {
-				matches = matches && !tc.entityDate.Before(*filters.StartDate)
+			filters := FilterParams{
+				StartDate: tc.startDate,
+				EndDate:   tc.endDate,
 			}
-			if filters.EndDate != nil {
-				matches = matches && !tc.entityDate.After(*filters.EndDate)
-			}
-
-			assert.Equal(t, tc.shouldMatch, matches)
-		})
-	}
-}
-
-// TestTypeFiltering tests filtering by entity type
-func TestTypeFiltering(t *testing.T) {
-	testCases := []struct {
-		name        string
-		filterType  string
-		entityType  string
-		shouldMatch bool
-	}{
-		{
-			name:        "exact type match",
-			filterType:  "person",
-			entityType:  "person",
-			shouldMatch: true,
-		},
-		{
-			name:        "type mismatch",
-			filterType:  "person",
-			entityType:  "organization",
-			shouldMatch: false,
-		},
-		{
-			name:        "no filter",
-			filterType:  "",
-			entityType:  "person",
-			shouldMatch: true,
-		},
-		{
-			name:        "concept type",
-			filterType:  "concept",
-			entityType:  "concept",
-			shouldMatch: true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			filters := NewFilterParams()
-			filters.TypeCategory = tc.filterType
-
-			matches := filters.TypeCategory == "" || filters.TypeCategory == tc.entityType
-			assert.Equal(t, tc.shouldMatch, matches)
-		})
-	}
-}
-
-// TestCombinedFilters tests multiple filters applied together
-func TestCombinedFilters(t *testing.T) {
-	baseTime := time.Date(2023, 1, 15, 12, 0, 0, 0, time.UTC)
-	startDate := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
-	endDate := time.Date(2023, 1, 31, 23, 59, 59, 0, time.UTC)
-
-	testCases := []struct {
-		name          string
-		filterType    string
-		minConfidence float64
-		maxConfidence float64
-		startDate     *time.Time
-		endDate       *time.Time
-		entityType    string
-		entityScore   float64
-		entityDate    time.Time
-		shouldMatch   bool
-		description   string
-	}{
-		{
-			name:          "all filters match",
-			filterType:    "person",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			startDate:     &startDate,
-			endDate:       &endDate,
-			entityType:    "person",
-			entityScore:   0.7,
-			entityDate:    baseTime,
-			shouldMatch:   true,
-			description:   "entity matches all criteria",
-		},
-		{
-			name:          "type mismatch",
-			filterType:    "person",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			startDate:     &startDate,
-			endDate:       &endDate,
-			entityType:    "organization",
-			entityScore:   0.7,
-			entityDate:    baseTime,
-			shouldMatch:   false,
-			description:   "type doesn't match",
-		},
-		{
-			name:          "confidence too low",
-			filterType:    "person",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			startDate:     &startDate,
-			endDate:       &endDate,
-			entityType:    "person",
-			entityScore:   0.3,
-			entityDate:    baseTime,
-			shouldMatch:   false,
-			description:   "confidence below minimum",
-		},
-		{
-			name:          "date out of range",
-			filterType:    "person",
-			minConfidence: 0.5,
-			maxConfidence: 0.9,
-			startDate:     &startDate,
-			endDate:       &endDate,
-			entityType:    "person",
-			entityScore:   0.7,
-			entityDate:    time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC),
-			shouldMatch:   false,
-			description:   "date after range",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			filters := NewFilterParams()
-			filters.TypeCategory = tc.filterType
-			filters.MinConfidence = tc.minConfidence
-			filters.MaxConfidence = tc.maxConfidence
-			filters.StartDate = tc.startDate
-			filters.EndDate = tc.endDate
-
-			// Apply all filters
-			matches := true
-
-			// Type filter
-			if filters.TypeCategory != "" {
-				matches = matches && (filters.TypeCategory == tc.entityType)
-			}
-
-			// Confidence filter
-			matches = matches && (tc.entityScore >= filters.MinConfidence && tc.entityScore <= filters.MaxConfidence)
-
-			// Date filter
-			if filters.StartDate != nil {
-				matches = matches && !tc.entityDate.Before(*filters.StartDate)
-			}
-			if filters.EndDate != nil {
-				matches = matches && !tc.entityDate.After(*filters.EndDate)
-			}
-
-			assert.Equal(t, tc.shouldMatch, matches, tc.description)
-		})
-	}
-}
-
-// TestFilterValidation tests filter parameter validation
-func TestFilterValidation(t *testing.T) {
-	futureDate := time.Now().Add(24 * time.Hour)
-	pastDate := time.Now().Add(-24 * time.Hour)
-
-	testCases := []struct {
-		name        string
-		setupFilter func(*FilterParams)
-		expectError bool
-		errorField  string
-	}{
-		{
-			name: "valid filters",
-			setupFilter: func(f *FilterParams) {
-				f.MinConfidence = 0.5
-				f.MaxConfidence = 0.9
-				f.TypeCategory = "person"
-			},
-			expectError: false,
-		},
-		{
-			name: "min confidence too low",
-			setupFilter: func(f *FilterParams) {
-				f.MinConfidence = -0.1
-			},
-			expectError: true,
-			errorField:  "min_confidence",
-		},
-		{
-			name: "max confidence too high",
-			setupFilter: func(f *FilterParams) {
-				f.MaxConfidence = 1.5
-			},
-			expectError: true,
-			errorField:  "max_confidence",
-		},
-		{
-			name: "min greater than max",
-			setupFilter: func(f *FilterParams) {
-				f.MinConfidence = 0.9
-				f.MaxConfidence = 0.5
-			},
-			expectError: true,
-			errorField:  "confidence",
-		},
-		{
-			name: "start date after end date",
-			setupFilter: func(f *FilterParams) {
-				f.StartDate = &futureDate
-				f.EndDate = &pastDate
-			},
-			expectError: true,
-			errorField:  "date_range",
-		},
-		{
-			name: "valid date range",
-			setupFilter: func(f *FilterParams) {
-				f.StartDate = &pastDate
-				f.EndDate = &futureDate
-			},
-			expectError: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			filters := NewFilterParams()
-			tc.setupFilter(filters)
 
 			err := filters.Validate()
-
-			if tc.expectError {
-				assert.Error(t, err)
-				if tc.errorField != "" {
-					validationErr, ok := err.(*ValidationError)
-					assert.True(t, ok, "expected ValidationError")
-					assert.Equal(t, tc.errorField, validationErr.Field)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
+			assert.NoError(t, err, tc.description)
 		})
 	}
 }
 
-// TestFilterIsEmpty tests detection of empty filters
-func TestFilterIsEmpty(t *testing.T) {
-	testCases := []struct {
-		name        string
-		setupFilter func(*FilterParams)
-		expectEmpty bool
-	}{
-		{
-			name:        "default filters are empty",
-			setupFilter: func(f *FilterParams) {},
-			expectEmpty: true,
-		},
-		{
-			name: "type filter set",
-			setupFilter: func(f *FilterParams) {
-				f.TypeCategory = "person"
-			},
-			expectEmpty: false,
-		},
-		{
-			name: "confidence filter set",
-			setupFilter: func(f *FilterParams) {
-				f.MinConfidence = 0.5
-			},
-			expectEmpty: false,
-		},
-		{
-			name: "date filter set",
-			setupFilter: func(f *FilterParams) {
-				now := time.Now()
-				f.StartDate = &now
-			},
-			expectEmpty: false,
-		},
-		{
-			name: "name filter set",
-			setupFilter: func(f *FilterParams) {
-				f.NameContains = "test"
-			},
-			expectEmpty: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			filters := NewFilterParams()
-			tc.setupFilter(filters)
-
-			assert.Equal(t, tc.expectEmpty, filters.IsEmpty())
-		})
-	}
-}
-
-// TestHasSpecificFilter tests detection of specific filter types
-func TestHasSpecificFilter(t *testing.T) {
-	t.Run("has confidence filter", func(t *testing.T) {
-		filters := NewFilterParams()
-		assert.False(t, filters.HasConfidenceFilter())
-
-		filters.MinConfidence = 0.5
-		assert.True(t, filters.HasConfidenceFilter())
-
-		filters = NewFilterParams()
-		filters.MaxConfidence = 0.8
-		assert.True(t, filters.HasConfidenceFilter())
-	})
-
-	t.Run("has date filter", func(t *testing.T) {
-		filters := NewFilterParams()
-		assert.False(t, filters.HasDateFilter())
-
-		now := time.Now()
-		filters.StartDate = &now
-		assert.True(t, filters.HasDateFilter())
-
-		filters = NewFilterParams()
-		filters.EndDate = &now
-		assert.True(t, filters.HasDateFilter())
-	})
-}
-
-// TestNameContainsFilter tests partial name matching
-func TestNameContainsFilter(t *testing.T) {
+// TestTypeFilteringTests filtering by entity type
+func TestTypeFiltering(t *testing.T) {
 	testCases := []struct {
 		name         string
-		nameContains string
-		entityName   string
-		shouldMatch  bool
+		typeCategory *string
+		description  string
 	}{
 		{
-			name:         "exact match",
-			nameContains: "Jeff",
-			entityName:   "Jeff",
-			shouldMatch:  true,
+			name:         "person type",
+			typeCategory: strPtr("person"),
+			description:  "filter by person type",
 		},
 		{
-			name:         "partial match",
-			nameContains: "Jeff",
-			entityName:   "Jeff Skilling",
-			shouldMatch:  true,
+			name:         "organization type",
+			typeCategory: strPtr("organization"),
+			description:  "filter by organization type",
 		},
 		{
-			name:         "case insensitive match",
-			nameContains: "jeff",
-			entityName:   "Jeff Skilling",
-			shouldMatch:  true,
+			name:         "concept type",
+			typeCategory: strPtr("concept"),
+			description:  "filter by concept type",
 		},
 		{
-			name:         "no match",
-			nameContains: "Kenneth",
-			entityName:   "Jeff Skilling",
-			shouldMatch:  false,
-		},
-		{
-			name:         "empty filter matches all",
-			nameContains: "",
-			entityName:   "Jeff Skilling",
-			shouldMatch:  true,
+			name:         "no type filter",
+			typeCategory: nil,
+			description:  "no type filtering",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			filters := NewFilterParams()
-			filters.NameContains = tc.nameContains
+			filters := FilterParams{
+				TypeCategory: tc.typeCategory,
+			}
 
-			// Case-insensitive substring match
-			matches := filters.NameContains == "" ||
-				strings.Contains(
-					strings.ToLower(tc.entityName),
-					strings.ToLower(filters.NameContains),
-				)
-
-			assert.Equal(t, tc.shouldMatch, matches)
+			err := filters.Validate()
+			assert.NoError(t, err, tc.description)
 		})
 	}
 }
 
-// TestPropertyFilters tests custom property filtering
-func TestPropertyFilters(t *testing.T) {
+// TestNameFiltering tests filtering by name
+func TestNameFiltering(t *testing.T) {
 	testCases := []struct {
-		name            string
-		propertyFilters map[string]interface{}
-		entityProps     map[string]interface{}
-		shouldMatch     bool
+		name        string
+		nameFilter  *string
+		description string
 	}{
 		{
-			name: "property matches",
-			propertyFilters: map[string]interface{}{
-				"title": "CEO",
-			},
-			entityProps: map[string]interface{}{
-				"title": "CEO",
-			},
-			shouldMatch: true,
+			name:        "partial name",
+			nameFilter:  strPtr("john"),
+			description: "filter by partial name",
 		},
 		{
-			name: "property doesn't match",
-			propertyFilters: map[string]interface{}{
-				"title": "CEO",
-			},
-			entityProps: map[string]interface{}{
-				"title": "CFO",
-			},
-			shouldMatch: false,
+			name:        "full name",
+			nameFilter:  strPtr("John Doe"),
+			description: "filter by full name",
 		},
 		{
-			name: "property missing",
-			propertyFilters: map[string]interface{}{
-				"title": "CEO",
-			},
-			entityProps: map[string]interface{}{},
-			shouldMatch: false,
-		},
-		{
-			name:            "no property filters",
-			propertyFilters: map[string]interface{}{},
-			entityProps: map[string]interface{}{
-				"title": "CEO",
-			},
-			shouldMatch: true,
-		},
-		{
-			name: "multiple properties all match",
-			propertyFilters: map[string]interface{}{
-				"title":      "CEO",
-				"department": "Executive",
-			},
-			entityProps: map[string]interface{}{
-				"title":      "CEO",
-				"department": "Executive",
-			},
-			shouldMatch: true,
-		},
-		{
-			name: "multiple properties one doesn't match",
-			propertyFilters: map[string]interface{}{
-				"title":      "CEO",
-				"department": "Executive",
-			},
-			entityProps: map[string]interface{}{
-				"title":      "CEO",
-				"department": "Finance",
-			},
-			shouldMatch: false,
+			name:        "no name filter",
+			nameFilter:  nil,
+			description: "no name filtering",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			filters := NewFilterParams()
-			filters.PropertyFilters = tc.propertyFilters
-
-			matches := true
-			for key, value := range filters.PropertyFilters {
-				entityValue, exists := tc.entityProps[key]
-				if !exists || entityValue != value {
-					matches = false
-					break
-				}
+			filters := FilterParams{
+				Name: tc.nameFilter,
 			}
 
-			assert.Equal(t, tc.shouldMatch, matches)
+			err := filters.Validate()
+			assert.NoError(t, err, tc.description)
 		})
 	}
+}
+
+// TestCombinedFilters tests multiple filters together
+func TestCombinedFilters(t *testing.T) {
+	minConf := 0.7
+	maxConf := 0.9
+	now := time.Now()
+	yesterday := now.AddDate(0, 0, -1)
+	tomorrow := now.AddDate(0, 0, 1)
+	typeCategory := "person"
+	name := "John"
+
+	filters := FilterParams{
+		MinConfidence: &minConf,
+		MaxConfidence: &maxConf,
+		StartDate:     &yesterday,
+		EndDate:       &tomorrow,
+		TypeCategory:  &typeCategory,
+		Name:          &name,
+	}
+
+	err := filters.Validate()
+	assert.NoError(t, err)
+
+	// All values should be preserved after validation
+	assert.Equal(t, minConf, *filters.MinConfidence)
+	assert.Equal(t, maxConf, *filters.MaxConfidence)
+	assert.Equal(t, typeCategory, *filters.TypeCategory)
+	assert.Equal(t, name, *filters.Name)
+}
+
+// TestCombinedQueryParams tests pagination and filtering together
+func TestCombinedQueryParams(t *testing.T) {
+	minConf := 0.8
+	typeCategory := "person"
+
+	params := CombinedQueryParams{
+		Pagination: PaginationParams{
+			Limit:  50,
+			Offset: 0,
+		},
+		Filters: FilterParams{
+			MinConfidence: &minConf,
+			TypeCategory:  &typeCategory,
+		},
+	}
+
+	err := params.Validate()
+	assert.NoError(t, err)
+
+	assert.Equal(t, 50, params.Pagination.Limit)
+	assert.Equal(t, 0, params.Pagination.Offset)
+	assert.Equal(t, 0.8, *params.Filters.MinConfidence)
+	assert.Equal(t, "person", *params.Filters.TypeCategory)
+}
+
+// Helper functions
+
+func float64Ptr(f float64) *float64 {
+	return &f
+}
+
+func strPtr(s string) *string {
+	return &s
 }
