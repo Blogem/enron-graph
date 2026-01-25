@@ -1,6 +1,10 @@
 package tui
 
 import (
+	"context"
+
+	"github.com/Blogem/enron-graph/internal/graph"
+	"github.com/Blogem/enron-graph/pkg/llm"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -20,6 +24,11 @@ type Model struct {
 	width       int
 	height      int
 
+	// Repository for data access
+	repo      graph.Repository
+	ctx       context.Context
+	llmClient llm.Client
+
 	// View-specific states
 	entityList *EntityListModel
 	graphView  *GraphViewModel
@@ -32,19 +41,30 @@ type Model struct {
 }
 
 // NewModel creates a new TUI model
-func NewModel() Model {
+func NewModel(repo graph.Repository) Model {
+	chatView := NewChatViewModel()
+
 	return Model{
 		currentView: ViewEntityList,
+		repo:        repo,
+		ctx:         context.Background(),
+		llmClient:   nil, // Will be set later if available
 		entityList:  NewEntityListModel(),
 		graphView:   NewGraphViewModel(),
 		detailView:  NewDetailViewModel(),
-		chatView:    NewChatViewModel(),
+		chatView:    chatView,
 	}
 }
 
 // LoadEntities loads entities into the entity list
 func (m *Model) LoadEntities(entities []Entity) {
 	m.entityList.entities = entities
+}
+
+// SetLLMClient sets the LLM client for chat functionality
+func (m *Model) SetLLMClient(client llm.Client) {
+	m.llmClient = client
+	m.chatView.SetLLMClient(client)
 }
 
 // Init initializes the model (required by Bubble Tea)
@@ -56,29 +76,59 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// Handle global keybindings first
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c":
+			return m, tea.Quit
+		case "q":
 			// Quit unless in chat view (where 'q' is input)
 			if m.currentView != ViewChatView {
 				return m, tea.Quit
 			}
 		case "tab":
-			// Switch between views
+			// Switch between views with Tab
 			m.currentView = (m.currentView + 1) % 4
+			// Reset view-specific state to prevent interference
+			m.entityList.selectedID = 0
+			m.graphView.selectedNode = -1
+			return m, nil
+		case "shift+tab":
+			// Switch between views backwards with Shift+Tab
+			m.currentView = (m.currentView + 3) % 4
+			// Reset view-specific state to prevent interference
+			m.entityList.selectedID = 0
+			m.graphView.selectedNode = -1
 			return m, nil
 		case "1":
 			m.currentView = ViewEntityList
+			// Reset selectedID to prevent auto-jump to details
+			m.entityList.selectedID = 0
+			// Reset graph view state
+			m.graphView.selectedNode = -1
 			return m, nil
 		case "2":
 			m.currentView = ViewGraphView
+			// Reset entity list selection state
+			m.entityList.selectedID = 0
+			// Load graph data for selected entity if available
+			if m.selectedEntityID > 0 {
+				m.graphView.LoadSubgraphData(m.ctx, m.repo, m.selectedEntityID)
+			}
 			return m, nil
 		case "3":
 			m.currentView = ViewDetailView
+			// Reset other view states
+			m.entityList.selectedID = 0
+			m.graphView.selectedNode = -1
 			return m, nil
 		case "4":
 			m.currentView = ViewChatView
+			// Reset other view states
+			m.entityList.selectedID = 0
+			m.graphView.selectedNode = -1
 			return m, nil
 		}
+		// If not a global key, fall through to view-specific handling
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -152,7 +202,7 @@ func (m Model) renderFooter() string {
 	case ViewEntityList:
 		help += " | ↑↓: Navigate | F: Filter | /: Search | Enter: Details"
 	case ViewGraphView:
-		help += " | Tab: Select Node | E: Expand | Enter: Details | B: Back"
+		help += " | ↑↓: Navigate Nodes | E: Expand | Enter: Details | B: Back"
 	case ViewDetailView:
 		help += " | V: Visualize | B: Back"
 	case ViewChatView:
@@ -173,7 +223,24 @@ func (m Model) updateEntityList(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.entityList.selectedID > 0 {
 		m.selectedEntityID = m.entityList.selectedID
 		m.currentView = ViewDetailView
-		m.detailView.LoadEntity(m.selectedEntityID)
+
+		// Load entity details from repository
+		entity, err := m.repo.FindEntityByID(m.ctx, m.selectedEntityID)
+		if err == nil {
+			m.detailView.LoadEntityData(entity.ID, entity.TypeCategory, entity.Name,
+				entity.Properties, entity.ConfidenceScore)
+
+			// Load relationships using the entity's type category
+			relationships, err := m.repo.FindRelationshipsByEntity(m.ctx, entity.TypeCategory, entity.ID)
+			if err == nil {
+				m.detailView.LoadRelationships(m.ctx, m.repo, relationships)
+			}
+		} else {
+			m.detailView.LoadEntity(m.selectedEntityID)
+		}
+
+		// Reset selectedID after transitioning to prevent auto-jump on next navigation
+		m.entityList.selectedID = 0
 	}
 
 	return m, cmd
@@ -184,11 +251,51 @@ func (m Model) updateGraphView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	updatedGraph, cmd := m.graphView.Update(msg)
 	m.graphView = updatedGraph
 
+	// Check for view transitions (only handle at parent level)
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "b", "esc":
+			// Back to entity list
+			m.currentView = ViewEntityList
+			m.graphView.selectedNode = -1
+			return m, cmd
+		}
+	}
+
+	// Check if user wants to expand a node
+	if m.graphView.expandNode > 0 {
+		// Reload graph centered on the expanded node
+		m.graphView.LoadSubgraphData(m.ctx, m.repo, m.graphView.expandNode)
+		// Reset cursor to center node (0)
+		m.graphView.cursor = 0
+		// Clear expand request
+		m.graphView.expandNode = 0
+		return m, cmd
+	}
+
 	// Check if entity was selected
 	if m.graphView.selectedNode > 0 {
 		m.selectedEntityID = m.graphView.selectedNode
 		m.currentView = ViewDetailView
-		m.detailView.LoadEntity(m.selectedEntityID)
+
+		// Load entity details from repository
+		entity, err := m.repo.FindEntityByID(m.ctx, m.selectedEntityID)
+		if err == nil {
+			m.detailView.LoadEntityData(entity.ID, entity.TypeCategory, entity.Name,
+				entity.Properties, entity.ConfidenceScore)
+
+			// Load relationships using the entity's type category
+			relationships, err := m.repo.FindRelationshipsByEntity(m.ctx, entity.TypeCategory, entity.ID)
+			if err == nil {
+				m.detailView.LoadRelationships(m.ctx, m.repo, relationships)
+			}
+		} else {
+			m.detailView.LoadEntity(m.selectedEntityID)
+		}
+
+		// Reset selectedNode after transitioning to prevent auto-jump on next navigation
+		m.graphView.selectedNode = -1
 	}
 
 	return m, cmd
@@ -199,17 +306,46 @@ func (m Model) updateDetailView(msg tea.Msg) (tea.Model, tea.Cmd) {
 	updatedDetail, cmd := m.detailView.Update(msg)
 	m.detailView = updatedDetail
 
-	// Check for view transitions
+	// Check if user selected a relationship to navigate to
+	if m.detailView.selectedEntityID > 0 {
+		m.selectedEntityID = m.detailView.selectedEntityID
+
+		// Load entity details from repository
+		entity, err := m.repo.FindEntityByID(m.ctx, m.selectedEntityID)
+		if err == nil {
+			m.detailView.LoadEntityData(entity.ID, entity.TypeCategory, entity.Name,
+				entity.Properties, entity.ConfidenceScore)
+
+			// Load relationships using the entity's type category
+			relationships, err := m.repo.FindRelationshipsByEntity(m.ctx, entity.TypeCategory, entity.ID)
+			if err == nil {
+				m.detailView.LoadRelationships(m.ctx, m.repo, relationships)
+			}
+		} else {
+			m.detailView.LoadEntity(m.selectedEntityID)
+		}
+
+		// Reset selectedEntityID after loading new details
+		m.detailView.selectedEntityID = 0
+		// Reset cursor to top of new entity's relationships
+		m.detailView.cursor = 0
+		return m, cmd
+	}
+
+	// Check for view transitions (only handle at parent level)
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "v":
-			// Switch to graph view
+			// Switch to graph view with loaded data
 			m.currentView = ViewGraphView
-			m.graphView.LoadSubgraph(m.selectedEntityID)
+			m.graphView.LoadSubgraphData(m.ctx, m.repo, m.selectedEntityID)
+			return m, cmd
 		case "b", "esc":
-			// Back to entity list
+			// Back to entity list - clear selection state
 			m.currentView = ViewEntityList
+			m.entityList.selectedID = 0
+			return m, cmd
 		}
 	}
 

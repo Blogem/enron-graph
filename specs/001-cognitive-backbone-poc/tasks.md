@@ -656,14 +656,14 @@ assets/         # Enron email dataset
 
 ### Manual Testing Checklist
 
-- [ ] T108 [US4] Manual test: TUI navigation flows
+- [X] T108 [US4] Manual test: TUI navigation flows
   - Start TUI, navigate entity list
   - Filter by type, verify results
   - Search by name, verify results
   - Select entity, view details
   - Visualize entity as graph
   - Navigate graph view, expand nodes
-- [ ] T109 [US4] Manual test: Error handling
+- [X] T109 [US4] Manual test: Error handling
   - Test empty database
   - Test network disconnection
   - Test invalid entity selection

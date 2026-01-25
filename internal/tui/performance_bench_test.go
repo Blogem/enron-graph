@@ -2,6 +2,8 @@ package tui
 
 import (
 	"testing"
+
+	"github.com/Blogem/enron-graph/internal/graph"
 )
 
 // BenchmarkGraphRendering500Nodes verifies T114: SC-007 - <3s render time for 500 nodes
@@ -131,7 +133,7 @@ func BenchmarkEntitySearch(b *testing.B) {
 // BenchmarkFullTUIRender benchmarks complete TUI rendering
 func BenchmarkFullTUIRender(b *testing.B) {
 	// Create model with realistic data
-	model := NewModel()
+	model := NewModel(graph.NewMockRepository())
 
 	entities := make([]Entity, 1000)
 	for i := 0; i < 1000; i++ {

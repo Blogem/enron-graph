@@ -1,19 +1,23 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/Blogem/enron-graph/ent"
+	"github.com/Blogem/enron-graph/internal/graph"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 // DetailViewModel represents the detail view state
 type DetailViewModel struct {
-	entity        *EntityDetail
-	relationships []Relationship
-	cursor        int
-	selectedID    int
+	entity           *EntityDetail
+	relationships    []Relationship
+	cursor           int
+	selectedID       int
+	selectedEntityID int // Entity to navigate to (from relationships)
 }
 
 // EntityDetail represents detailed entity information
@@ -37,10 +41,11 @@ type Relationship struct {
 // NewDetailViewModel creates a new detail view model
 func NewDetailViewModel() *DetailViewModel {
 	return &DetailViewModel{
-		entity:        nil,
-		relationships: []Relationship{},
-		cursor:        0,
-		selectedID:    0,
+		entity:           nil,
+		relationships:    []Relationship{},
+		cursor:           0,
+		selectedID:       0,
+		selectedEntityID: 0,
 	}
 }
 
@@ -58,14 +63,11 @@ func (m *DetailViewModel) Update(msg tea.Msg) (*DetailViewModel, tea.Cmd) {
 				m.cursor++
 			}
 		case "enter":
-			// Select relationship
+			// Navigate to related entity details
 			if m.cursor >= 0 && m.cursor < len(m.relationships) {
-				m.selectedID = m.relationships[m.cursor].ToID
+				m.selectedEntityID = m.relationships[m.cursor].ToID
 			}
-		case "v":
-			// Trigger visualization (handled by parent)
-		case "b", "esc":
-			// Back (handled by parent)
+			// Navigation keys (v, b, esc) are handled by parent app.go
 		}
 	}
 
@@ -125,8 +127,9 @@ func (m *DetailViewModel) View(width, height int) string {
 
 	// Render actions
 	b.WriteString("\n\nActions:\n")
+	b.WriteString("  ↑↓: Navigate Relationships\n")
+	b.WriteString("  Enter: View Selected Entity Details\n")
 	b.WriteString("  V: Visualize in Graph View\n")
-	b.WriteString("  R: Browse Related Entities\n")
 	b.WriteString("  B/Esc: Back to Entity List\n")
 
 	return b.String()
@@ -144,4 +147,57 @@ func (m *DetailViewModel) LoadEntity(entityID int) {
 		Confidence: 0.0,
 	}
 	m.relationships = []Relationship{}
+}
+
+// LoadEntityData loads entity details with actual data
+func (m *DetailViewModel) LoadEntityData(id int, entityType, name string, properties map[string]interface{}, confidence float64) {
+	m.entity = &EntityDetail{
+		ID:         id,
+		Type:       entityType,
+		Name:       name,
+		Properties: properties,
+		Confidence: confidence,
+	}
+	m.relationships = []Relationship{}
+}
+
+// LoadRelationships loads relationships for the current entity
+func (m *DetailViewModel) LoadRelationships(ctx context.Context, repo graph.Repository, rels []*ent.Relationship) {
+	relationships := make([]Relationship, 0, len(rels))
+
+	for _, rel := range rels {
+		// Determine target entity ID (could be to_id or from_id depending on direction)
+		var targetID int
+		var targetType string
+
+		if rel.FromID == m.entity.ID {
+			targetID = rel.ToID
+			targetType = rel.ToType
+		} else {
+			targetID = rel.FromID
+			targetType = rel.FromType
+		}
+
+		// Skip relationships to emails
+		if targetType == "email" {
+			continue
+		}
+
+		// Fetch target entity name
+		targetEntity, err := repo.FindEntityByID(ctx, targetID)
+		targetName := "Unknown"
+		if err == nil {
+			targetName = targetEntity.Name
+		}
+
+		relationships = append(relationships, Relationship{
+			ID:     rel.ID,
+			Type:   rel.Type,
+			ToID:   targetID,
+			ToName: targetName,
+			ToType: targetType,
+		})
+	}
+
+	m.relationships = relationships
 }

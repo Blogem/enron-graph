@@ -84,10 +84,13 @@ func (r *entRepository) FindEntityByUniqueID(ctx context.Context, uniqueID strin
 }
 
 // FindEntitiesByType finds entities by type category
+// If typeCategory is empty, returns all entities
 func (r *entRepository) FindEntitiesByType(ctx context.Context, typeCategory string) ([]*ent.DiscoveredEntity, error) {
-	return r.client.DiscoveredEntity.Query().
-		Where(discoveredentity.TypeCategoryEQ(typeCategory)).
-		All(ctx)
+	query := r.client.DiscoveredEntity.Query()
+	if typeCategory != "" {
+		query = query.Where(discoveredentity.TypeCategoryEQ(typeCategory))
+	}
+	return query.All(ctx)
 }
 
 // GetDistinctEntityTypes returns all unique entity type categories
@@ -117,15 +120,26 @@ func (r *entRepository) CreateRelationship(ctx context.Context, input *Relations
 
 // FindRelationshipsByEntity finds relationships for an entity
 func (r *entRepository) FindRelationshipsByEntity(ctx context.Context, entityType string, entityID int) ([]*ent.Relationship, error) {
+	// Support both schema types: specific types (person, organization, etc.) and generic "discovered_entity"
 	return r.client.Relationship.Query().
 		Where(
 			relationship.Or(
+				// Match on specific entity type (test DB schema)
 				relationship.And(
 					relationship.FromTypeEQ(entityType),
 					relationship.FromIDEQ(entityID),
 				),
 				relationship.And(
 					relationship.ToTypeEQ(entityType),
+					relationship.ToIDEQ(entityID),
+				),
+				// Match on discovered_entity (production DB schema)
+				relationship.And(
+					relationship.FromTypeEQ("discovered_entity"),
+					relationship.FromIDEQ(entityID),
+				),
+				relationship.And(
+					relationship.ToTypeEQ("discovered_entity"),
 					relationship.ToIDEQ(entityID),
 				),
 			),

@@ -10,15 +10,16 @@ import (
 
 // EntityListModel represents the entity list view state
 type EntityListModel struct {
-	entities    []Entity
-	cursor      int
-	page        int
-	pageSize    int
-	filterType  string
-	searchQuery string
-	selectedID  int
-	isSearching bool
-	isFiltering bool
+	entities     []Entity
+	cursor       int
+	page         int
+	pageSize     int
+	filterType   string
+	searchQuery  string
+	selectedID   int
+	isSearching  bool
+	isFiltering  bool
+	filterCursor int // Cursor position in filter menu
 }
 
 // Entity represents a discovered entity for display
@@ -35,7 +36,7 @@ func NewEntityListModel() *EntityListModel {
 		entities:    []Entity{},
 		cursor:      0,
 		page:        0,
-		pageSize:    20,
+		pageSize:    5,
 		filterType:  "",
 		searchQuery: "",
 		selectedID:  0,
@@ -59,23 +60,27 @@ func (m *EntityListModel) Update(msg tea.Msg) (*EntityListModel, tea.Cmd) {
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
+				m.updatePage()
 			}
 		case "down", "j":
 			visible := m.getVisibleEntities()
 			if m.cursor < len(visible)-1 {
 				m.cursor++
+				m.updatePage()
 			}
 		case "pgup":
 			m.cursor -= m.pageSize
 			if m.cursor < 0 {
 				m.cursor = 0
 			}
+			m.updatePage()
 		case "pgdown":
 			visible := m.getVisibleEntities()
 			m.cursor += m.pageSize
 			if m.cursor >= len(visible) {
 				m.cursor = len(visible) - 1
 			}
+			m.updatePage()
 		case "f":
 			m.isFiltering = true
 			m.filterType = ""
@@ -119,23 +124,54 @@ func (m *EntityListModel) handleSearchInput(msg tea.KeyMsg) (*EntityListModel, t
 	return m, nil
 }
 
+// getFilterOptions returns the available filter options based on actual entity types
+func (m *EntityListModel) getFilterOptions() []string {
+	// Start with "All"
+	options := []string{"All"}
+
+	// Collect unique entity types
+	typeMap := make(map[string]bool)
+	for _, entity := range m.entities {
+		if entity.Type != "" {
+			typeMap[entity.Type] = true
+		}
+	}
+
+	// Add unique types to options
+	for entityType := range typeMap {
+		options = append(options, entityType)
+	}
+
+	return options
+}
+
 // handleFilterInput handles keyboard input during filtering
 func (m *EntityListModel) handleFilterInput(msg tea.KeyMsg) (*EntityListModel, tea.Cmd) {
+	filterOptions := m.getFilterOptions()
+
 	switch msg.String() {
 	case "enter":
+		// Apply selected filter
+		if m.filterCursor == 0 {
+			m.filterType = "" // "All" means no filter
+		} else {
+			m.filterType = filterOptions[m.filterCursor]
+		}
 		m.isFiltering = false
 		m.cursor = 0
+		m.page = 0
 	case "esc":
 		m.isFiltering = false
-		m.filterType = ""
 		m.cursor = 0
-	case "backspace":
-		if len(m.filterType) > 0 {
-			m.filterType = m.filterType[:len(m.filterType)-1]
+	case "up", "k":
+		m.filterCursor--
+		if m.filterCursor < 0 {
+			m.filterCursor = len(filterOptions) - 1
 		}
-	default:
-		if len(msg.String()) == 1 {
-			m.filterType += msg.String()
+	case "down", "j":
+		m.filterCursor++
+		if m.filterCursor >= len(filterOptions) {
+			m.filterCursor = 0
 		}
 	}
 	return m, nil
@@ -157,10 +193,20 @@ func (m *EntityListModel) View(width, height int) string {
 		b.WriteString(fmt.Sprintf("Search: %s\n", m.searchQuery))
 	}
 	if m.isSearching {
-		b.WriteString(fmt.Sprintf("Search: %s_\n", m.searchQuery))
+		b.WriteString(fmt.Sprintf("Search (Esc to cancel): %s_\n", m.searchQuery))
 	}
 	if m.isFiltering {
-		b.WriteString(fmt.Sprintf("Filter: %s_\n", m.filterType))
+		// Show filter menu
+		filterOptions := m.getFilterOptions()
+		b.WriteString("Filter by type (↑↓ to select, Enter to apply, Esc to cancel):\n")
+		for i, option := range filterOptions {
+			if i == m.filterCursor {
+				b.WriteString(fmt.Sprintf("  > %s\n", option))
+			} else {
+				b.WriteString(fmt.Sprintf("    %s\n", option))
+			}
+		}
+		b.WriteString("\n")
 	}
 
 	// Render table
@@ -169,7 +215,8 @@ func (m *EntityListModel) View(width, height int) string {
 	b.WriteString(table)
 
 	// Show pagination info
-	b.WriteString(fmt.Sprintf("\nShowing %d of %d entities\n", len(visible), len(m.entities)))
+	start, end := calculatePagination(len(visible), m.pageSize, m.page)
+	b.WriteString(fmt.Sprintf("\nShowing %d-%d of %d entities (Page %d)\n", start+1, end, len(visible), m.page+1))
 
 	return b.String()
 }
@@ -197,7 +244,8 @@ func (m *EntityListModel) renderTable(entities []Entity, width, height int) stri
 	// Render rows
 	for i, entity := range pageEntities {
 		rowStyle := lipgloss.NewStyle()
-		if i == m.cursor {
+		// Adjust cursor check for page offset
+		if start+i == m.cursor {
 			rowStyle = rowStyle.Background(lipgloss.Color("62"))
 		}
 
@@ -255,6 +303,11 @@ func renderEntityTable(entities []Entity) string {
 	}
 
 	return b.String()
+}
+
+// updatePage calculates which page the cursor is on
+func (m *EntityListModel) updatePage() {
+	m.page = m.cursor / m.pageSize
 }
 
 func calculatePagination(totalItems, pageSize, currentPage int) (start, end int) {

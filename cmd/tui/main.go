@@ -9,6 +9,7 @@ import (
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/internal/graph"
 	"github.com/Blogem/enron-graph/internal/tui"
+	"github.com/Blogem/enron-graph/pkg/llm"
 	"github.com/Blogem/enron-graph/pkg/utils"
 	tea "github.com/charmbracelet/bubbletea"
 	_ "github.com/lib/pq"
@@ -35,8 +36,20 @@ func main() {
 	// Initialize repository
 	repo := graph.NewRepository(client)
 
-	// Create TUI model
-	model := tui.NewModel()
+	// Initialize LLM client (optional - chat will still work without it)
+	llmClient := llm.NewOllamaClient(
+		cfg.OllamaURL,
+		"llama3.1:8b",
+		"mxbai-embed-large",
+		logger,
+	)
+	logger.Info("LLM client initialized", "ollama_url", cfg.OllamaURL)
+
+	// Create TUI model with repository
+	model := tui.NewModel(repo)
+
+	// Set LLM client for chat functionality
+	model.SetLLMClient(llmClient)
 
 	// Load initial data
 	ctx := context.Background()
