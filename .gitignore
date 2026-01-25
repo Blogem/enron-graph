@@ -60,3 +60,11 @@ Thumbs.db
 
 # Project specific
 assets/enron-emails
+# Command binaries (built from cmd/)
+/tui
+/loader
+/server
+/migrate
+/query
+/analyst
+/promoter
