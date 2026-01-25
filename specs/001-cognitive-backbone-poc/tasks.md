@@ -532,7 +532,7 @@ assets/         # Enron email dataset
 
 ### Integration Tests
 
-- [ ] T088 [US3] Write integration test in `tests/integration/analyst_test.go`:
+- [X] T088 [US3] Write integration test in `tests/integration/analyst_test.go`:
   - Setup: Pre-populate test database with diverse discovered entities
   - Test: Run pattern detection
   - Verify: Candidates identified with correct scores
@@ -562,7 +562,7 @@ assets/         # Enron email dataset
 
 ### Shell Script Test (End-to-End Acceptance)
 
-- [ ] T097a [US3] Write end-to-end integration test in `tests/integration/test_user_story_3.sh`:
+- [X] T097a [US3] Write end-to-end integration test in `tests/integration/test_user_story_3.sh`:
   - Setup: Start database with populated graph from US1/US2
   - Test: Run analyst CLI to identify promotion candidates (go run cmd/analyst/main.go analyze)
   - Verify: At least 3 candidates identified

@@ -80,10 +80,16 @@ func (p *Promoter) RunEntGenerate(projectRoot string) error {
 }
 
 // MigrateDatabase runs database migration to create new table
-func (p *Promoter) MigrateDatabase(ctx context.Context) error {
-	// Run auto migration
-	if err := p.client.Schema.Create(ctx); err != nil {
-		return fmt.Errorf("failed to run migration: %w", err)
+func (p *Promoter) MigrateDatabase(ctx context.Context, projectRoot string) error {
+	// We need to run the migrate command externally because the ent client
+	// was created before the new schema existed, so it doesn't know about
+	// the new table yet. The migrate command will rebuild with the new schema.
+	cmd := exec.Command("go", "run", "cmd/migrate/main.go")
+	cmd.Dir = projectRoot
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to run migration: %w (output: %s)", err, string(output))
 	}
 
 	return nil
@@ -240,7 +246,7 @@ func (p *Promoter) PromoteType(ctx context.Context, req PromotionRequest) (*Prom
 	}
 
 	// Step 3: Run database migration
-	if err := p.MigrateDatabase(ctx); err != nil {
+	if err := p.MigrateDatabase(ctx, req.ProjectRoot); err != nil {
 		result.Error = fmt.Errorf("migration failed: %w", err)
 		result.Success = false
 		p.CreateAuditRecord(ctx, *result)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -107,6 +108,18 @@ func runPromote(cmd *cobra.Command, args []string) error {
 	}
 	defer client.Close()
 
+	// Get raw SQL connection for data migration
+	cfg, err := utils.LoadConfig()
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+
+	db, err := sql.Open("postgres", cfg.DatabaseURL)
+	if err != nil {
+		return fmt.Errorf("failed to open raw database connection: %w", err)
+	}
+	defer db.Close()
+
 	fmt.Printf("Promoting type: %s\n\n", typeName)
 
 	// Generate schema definition
@@ -144,6 +157,8 @@ func runPromote(cmd *cobra.Command, args []string) error {
 	}
 
 	p := promoter.NewPromoter(client)
+	p.SetDB(db) // Set raw SQL connection for data migration
+
 	// Convert analyst.SchemaDefinition to promoter.SchemaDefinition
 	promoterSchema := promoter.SchemaDefinition{
 		Type:       schema.Type,
