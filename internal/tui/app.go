@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 
+	"github.com/Blogem/enron-graph/internal/chat"
 	"github.com/Blogem/enron-graph/internal/graph"
 	"github.com/Blogem/enron-graph/pkg/llm"
 	tea "github.com/charmbracelet/bubbletea"
@@ -42,7 +43,12 @@ type Model struct {
 
 // NewModel creates a new TUI model
 func NewModel(repo graph.Repository) Model {
-	chatView := NewChatViewModel()
+	// Create chat components
+	chatContext := chat.NewContext()
+	var chatHandler chat.Handler
+
+	// Handler will be set when LLM client is available
+	chatView := NewChatViewModel(chatHandler, chatContext)
 
 	return Model{
 		currentView: ViewEntityList,
@@ -64,7 +70,11 @@ func (m *Model) LoadEntities(entities []Entity) {
 // SetLLMClient sets the LLM client for chat functionality
 func (m *Model) SetLLMClient(client llm.Client) {
 	m.llmClient = client
-	m.chatView.SetLLMClient(client)
+
+	// Create chat handler with LLM client and repository adapter
+	chatRepo := newChatRepositoryAdapter(m.repo)
+	chatHandler := chat.NewHandler(client, chatRepo)
+	m.chatView.SetHandler(chatHandler)
 }
 
 // Init initializes the model (required by Bubble Tea)
@@ -121,7 +131,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.entityList.selectedID = 0
 			m.graphView.selectedNode = -1
 			return m, nil
-		case "4":
+		case "4", "c":
 			m.currentView = ViewChatView
 			// Reset other view states
 			m.entityList.selectedID = 0
@@ -196,7 +206,7 @@ func (m Model) renderHeader() string {
 
 // renderFooter renders the application footer with keybindings
 func (m Model) renderFooter() string {
-	help := "Tab: Switch View | Q: Quit"
+	help := "Tab: Switch View | C: Chat | Q: Quit"
 
 	switch m.currentView {
 	case ViewEntityList:

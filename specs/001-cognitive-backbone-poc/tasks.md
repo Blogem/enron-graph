@@ -688,18 +688,18 @@ assets/         # Enron email dataset
 
 ### Unit Tests (TDD - Write First)
 
-- [ ] T115 [P] [US5] Write unit tests for pattern matching in `internal/chat/patterns_test.go`:
+- [X] T115 [P] [US5] Write unit tests for pattern matching in `internal/chat/patterns_test.go`:
   - Test entity lookup pattern: "Who is X?"
   - Test relationship pattern: "Who did X email?"
   - Test path finding pattern: "How are X and Y connected?"
   - Test concept search pattern: "Emails about energy"
   - Test aggregation pattern: "How many emails did X send?"
   - Test ambiguity handling
-- [ ] T116 [P] [US5] Write unit tests for context management in `internal/chat/context_test.go`:
+- [X] T116 [P] [US5] Write unit tests for context management in `internal/chat/context_test.go`:
   - Test conversation history storage (last 5 queries)
   - Test entity tracking for pronoun resolution
   - Test context injection into prompts
-- [ ] T117 [P] [US5] Write unit tests for chat handler in `internal/chat/handler_test.go`:
+- [X] T117 [P] [US5] Write unit tests for chat handler in `internal/chat/handler_test.go`:
   - Test query processing with mock LLM
   - Test response formatting
   - Test error handling
@@ -707,14 +707,14 @@ assets/         # Enron email dataset
 
 ### Chat Handler Implementation
 
-- [ ] T118 [US5] Implement chat handler in `internal/chat/handler.go`:
+- [X] T118 [US5] Implement chat handler in `internal/chat/handler.go`:
   - ProcessQuery(query, context, llm) → Response
   - Send query + history + schema to LLM
   - Parse LLM response (graph query or answer)
   - Execute query via repository
   - Format results for user
   - **Verify**: T117 tests pass
-- [ ] T119 [US5] Implement conversation context management in `internal/chat/context.go`:
+- [X] T119 [US5] Implement conversation context management in `internal/chat/context.go`:
   - Store last 5 queries and responses
   - Track mentioned entities (pronoun resolution)
   - Include context in LLM prompt
@@ -722,50 +722,50 @@ assets/         # Enron email dataset
 
 ### Query Pattern Matching
 
-- [ ] T120 [US5] Implement pattern matching in `internal/chat/patterns.go`:
+- [X] T120 [US5] Implement pattern matching in `internal/chat/patterns.go`:
   - Entity lookup: "Who is X?" → FindEntityByName(X)
   - Relationship discovery: "Who did X email?" → TraverseRelationships(X, "SENT")
   - Path finding: "How are X and Y connected?" → FindShortestPath(X, Y)
   - Concept search: "Emails about energy" → SimilaritySearch(embedding("energy"))
   - Aggregations: "How many emails did X send?" → CountRelationships(X, "SENT")
   - **Verify**: T115 tests pass
-- [ ] T121 [US5] Handle ambiguity: return multiple options, ask for clarification
+- [X] T121 [US5] Handle ambiguity: return multiple options, ask for clarification
 
 ### Prompt Engineering
 
-- [ ] T122 [P] [US5] Design chat prompt template in `internal/chat/prompts.go`:
+- [X] T122 [P] [US5] Design chat prompt template in `internal/chat/prompts.go`:
   - System role: graph database assistant
   - Available operations and schema
   - Conversation history
   - User query
   - Response format (answer or graph query command)
-- [ ] T123 [US5] Test prompt on 10 sample queries, iterate for accuracy
+- [X] T123 [US5] Test prompt on 10 sample queries, iterate for accuracy
   - Create test queries in `internal/chat/prompts_test.go`
   - Verify expected responses for each query type
 
 ### TUI Chat View
 
-- [ ] T124 [US5] Implement chat interface in `internal/tui/chat_view.go`:
+- [X] T124 [US5] Implement chat interface in `internal/tui/chat_view.go`:
   - Message history (scrollable)
   - Input box (text input)
   - Send: Enter key
   - Clear history: Ctrl+L
-- [ ] T125 [US5] Display query results:
+- [X] T125 [US5] Display query results:
   - Entity cards (name, type, snippet)
   - Relationship paths (arrow chains)
   - "Visualize" button → graph view with results highlighted
-- [ ] T126 [US5] Add loading indicator for LLM processing
+- [X] T126 [US5] Add loading indicator for LLM processing
 
 ### Integration
 
-- [ ] T127 [US5] Add chat view to TUI in `cmd/server/main.go`:
+- [X] T127 [US5] Add chat view to TUI in `cmd/tui/main.go`:
   - C key → chat view
   - Initialize LLM client
   - Session management
 
 ### Integration Tests
 
-- [ ] T128 [US5] Write integration test in `tests/integration/chat_test.go`:
+- [X] T128 [US5] Write integration test in `tests/integration/chat_test.go`:
   - Setup: Pre-populate test database with entities
   - Test: Submit query "Who is Jeff Skilling?"
   - Verify: Correct entity returned
@@ -778,7 +778,7 @@ assets/         # Enron email dataset
   - Test: Context maintenance across multiple queries
   - Verify: Second query uses context from first
   - Teardown: Clean test database
-- [ ] T129 [US5] Write end-to-end chat test in `tests/integration/test_chat_e2e.sh`:
+- [X] T129 [US5] Write end-to-end chat test in `tests/integration/test_chat_e2e.sh`:
   - Start chat interface
   - Submit series of related queries
   - Verify responses are contextually appropriate
@@ -786,16 +786,16 @@ assets/         # Enron email dataset
 
 **Acceptance Tests** (from spec.md):
 
-- [ ] T130 [US5] Verify: Chat processes natural language queries
-- [ ] T131 [US5] Verify: Entity lookup queries work ("Who is X?")
-- [ ] T132 [US5] Verify: Relationship queries work ("Who did X email?")
-- [ ] T133 [US5] Verify: Path finding queries work ("How are X and Y connected?")
-- [ ] T134 [US5] Verify: Concept search works ("Emails about energy")
-- [ ] T135 [US5] Verify: Conversation context maintained across queries
-- [ ] T136 [US5] Verify: Ambiguity handled with clarification
-- [ ] T137 [US5] Verify: Results can be visualized in graph view
-- [ ] T138 [US5] Verify: SC-012 - 80%+ accuracy on test queries
-- [ ] T139 [US5] Verify: SC-013 - Context maintained 3+ consecutive queries
+- [X] T130 [US5] Verify: Chat processes natural language queries
+- [X] T131 [US5] Verify: Entity lookup queries work ("Who is X?")
+- [X] T132 [US5] Verify: Relationship queries work ("Who did X email?")
+- [X] T133 [US5] Verify: Path finding queries work ("How are X and Y connected?")
+- [X] T134 [US5] Verify: Concept search works ("Emails about energy")
+- [X] T135 [US5] Verify: Conversation context maintained across queries
+- [X] T136 [US5] Verify: Ambiguity handled with clarification
+- [X] T137 [US5] Verify: Results can be visualized in graph view
+- [X] T138 [US5] Verify: SC-012 - 80%+ accuracy on test queries
+- [X] T139 [US5] Verify: SC-013 - Context maintained 3+ consecutive queries
 
 **Checkpoint**: User Story 5 complete - chat interface functional
 

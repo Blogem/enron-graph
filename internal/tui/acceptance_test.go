@@ -184,8 +184,12 @@ func TestFilteringByEntityType(t *testing.T) {
 		t.Error("Pressing 'F' should activate filter mode")
 	}
 
-	// Navigate down to "person" option (index 1: All, person, organization, concept)
-	// Filter cursor starts at 0 (All), so press down once to get to "person"
+	// Navigate down to "person" option (sorted: All, concept, organization, person)
+	// Filter cursor starts at 0 (All), so press down 3 times to get to "person"
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model = updated.(Model)
+	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
+	model = updated.(Model)
 	updated, _ = model.Update(tea.KeyMsg{Type: tea.KeyDown})
 	model = updated.(Model)
 
