@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -137,10 +138,13 @@ func (m *EntityListModel) getFilterOptions() []string {
 		}
 	}
 
-	// Add unique types to options
+	// Add unique types to options in sorted order
+	types := make([]string, 0, len(typeMap))
 	for entityType := range typeMap {
-		options = append(options, entityType)
+		types = append(types, entityType)
 	}
+	sort.Strings(types)
+	options = append(options, types...)
 
 	return options
 }
