@@ -110,12 +110,12 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T043 [P] [US2] Contract test: GraphService.GetRandomNodes returns limited nodes in tests/contract/graph_service_contract_test.go
-- [ ] T044 [P] [US2] Contract test: GraphService.GetRandomNodes validates node fields in tests/contract/graph_service_contract_test.go
-- [ ] T045 [P] [US2] Contract test: GraphService.GetRandomNodes edges reference returned nodes in tests/contract/graph_service_contract_test.go
-- [ ] T046 [P] [US2] Contract test: GraphService.GetRelationships paginates correctly in tests/contract/graph_service_contract_test.go
-- [ ] T047 [P] [US2] Contract test: GraphService.GetRelationships handles final batch in tests/contract/graph_service_contract_test.go
-- [ ] T048 [P] [US2] Contract test: GraphService.GetNodeDetails returns complete info in tests/contract/graph_service_contract_test.go
+- [X] T043 [P] [US2] Contract test: GraphService.GetRandomNodes returns limited nodes in tests/contract/graph_service_contract_test.go
+- [X] T044 [P] [US2] Contract test: GraphService.GetRandomNodes validates node fields in tests/contract/graph_service_contract_test.go
+- [X] T045 [P] [US2] Contract test: GraphService.GetRandomNodes edges reference returned nodes in tests/contract/graph_service_contract_test.go
+- [X] T046 [P] [US2] Contract test: GraphService.GetRelationships paginates correctly in tests/contract/graph_service_contract_test.go
+- [X] T047 [P] [US2] Contract test: GraphService.GetRelationships handles final batch in tests/contract/graph_service_contract_test.go
+- [X] T048 [P] [US2] Contract test: GraphService.GetNodeDetails returns complete info in tests/contract/graph_service_contract_test.go
 
 ### Backend Implementation for User Story 2
 
