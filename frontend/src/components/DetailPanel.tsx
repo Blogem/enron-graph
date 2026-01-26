@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import type { GraphNodeWithPosition, GraphEdge } from '../types/graph';
 import LoadMoreButton from './LoadMoreButton';
+import LoadingSkeleton from './LoadingSkeleton';
+import Tooltip from './Tooltip';
 import './DetailPanel.css';
 
 interface DetailPanelProps {
@@ -115,7 +117,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         return (
             <div className="detail-panel empty">
                 <p className="empty-message">Select a node to view details</p>
-                <p className="empty-hint">Click on a node in the graph or right-click to expand relationships</p>
+                <p className="empty-hint">💡 Click on a node in the graph</p>
+                <p className="empty-hint">💡 Right-click to expand relationships</p>
             </div>
         );
     }
@@ -158,18 +161,13 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                     </span>
                 </div>
                 {onClose && (
-                    <button className="close-button" onClick={onClose} title="Close details (Escape)">
+                    <button className="close-button" onClick={onClose} aria-label="Close details">
                         ✕
                     </button>
                 )}
             </div>
 
-            {loading && (
-                <div className="detail-loading">
-                    <div className="spinner-large"></div>
-                    <p>Loading details...</p>
-                </div>
-            )}
+            {loading && <LoadingSkeleton type="detail" />}
 
             {!loading && (
                 <div className="detail-content">
@@ -213,13 +211,15 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                                             <div key={key} className="property-item">
                                                 <div className="property-header">
                                                     <div className="property-key">{key}</div>
-                                                    <button
-                                                        className="copy-button-small"
-                                                        onClick={() => copyToClipboard(String(value), `Copied ${key}`)}
-                                                        title={`Copy ${key}`}
-                                                    >
-                                                        📋
-                                                    </button>
+                                                    <Tooltip content={`Copy ${key} value`} position="left">
+                                                        <button
+                                                            className="copy-button-small"
+                                                            onClick={() => copyToClipboard(String(value), `Copied ${key}`)}
+                                                            aria-label={`Copy ${key}`}
+                                                        >
+                                                            📋
+                                                        </button>
+                                                    </Tooltip>
                                                 </div>
                                                 <div className="property-value">
                                                     {renderPropertyValue(value)}

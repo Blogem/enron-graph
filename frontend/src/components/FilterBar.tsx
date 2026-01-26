@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { NodeFilter } from '../types/graph';
 import type { explorer } from '../wailsjs/go/models';
+import Tooltip from './Tooltip';
 import './FilterBar.css';
 
 interface FilterBarProps {
@@ -82,24 +83,27 @@ const FilterBar: React.FC<FilterBarProps> = ({ schema, onFilterChange, initialFi
                 <button
                     className="filter-toggle"
                     onClick={() => setIsExpanded(!isExpanded)}
-                    title={isExpanded ? 'Collapse filters' : 'Expand filters'}
+                    aria-label={isExpanded ? 'Collapse filters' : 'Expand filters'}
                 >
                     {isExpanded ? '▼' : '▶'} Filters
                     {hasActiveFilters && <span className="active-indicator">{selectedTypes.length > 0 ? ` (${selectedTypes.length} types)` : ''}</span>}
                 </button>
                 <div className="filter-bar-actions">
-                    <input
-                        type="text"
-                        className="search-input-compact"
-                        placeholder="Quick search..."
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                    />
+                    <Tooltip content="Search across all node properties" position="bottom">
+                        <input
+                            type="text"
+                            className="search-input-compact"
+                            placeholder="Quick search..."
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            aria-label="Search nodes"
+                        />
+                    </Tooltip>
                     {hasActiveFilters && (
                         <button
                             className="clear-btn-compact"
                             onClick={handleClearFilters}
-                            title="Clear all filters"
+                            aria-label="Clear all filters"
                         >
                             Clear
                         </button>
@@ -114,21 +118,21 @@ const FilterBar: React.FC<FilterBarProps> = ({ schema, onFilterChange, initialFi
                             <button
                                 className={`category-btn ${category === 'all' ? 'active' : ''}`}
                                 onClick={() => handleCategoryChange('all')}
-                                title="Show all entities"
+                                aria-label="Show all entities"
                             >
                                 All
                             </button>
                             <button
                                 className={`category-btn promoted ${category === 'promoted' ? 'active' : ''}`}
                                 onClick={() => handleCategoryChange('promoted')}
-                                title="Show promoted types only"
+                                aria-label="Show promoted types only"
                             >
                                 ⭐ Promoted
                             </button>
                             <button
                                 className={`category-btn discovered ${category === 'discovered' ? 'active' : ''}`}
                                 onClick={() => handleCategoryChange('discovered')}
-                                title="Show discovered types only"
+                                aria-label="Show discovered types only"
                             >
                                 🔍 Discovered
                             </button>

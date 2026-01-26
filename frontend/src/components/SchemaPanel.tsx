@@ -1,5 +1,7 @@
 import React from 'react';
 import type { explorer } from '../wailsjs/go/models';
+import LoadingSkeleton from './LoadingSkeleton';
+import Tooltip from './Tooltip';
 import './SchemaPanel.css';
 
 interface SchemaPanelProps {
@@ -24,14 +26,7 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
     };
 
     if (loading) {
-        return (
-            <div className="schema-panel">
-                <div className="schema-header">
-                    <h2>Schema</h2>
-                </div>
-                <div className="loading">Loading schema...</div>
-            </div>
-        );
+        return <LoadingSkeleton type="schema" />;
     }
 
     if (error) {
@@ -64,9 +59,11 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                 <div className="schema-stats">
                     <span>{schema.total_entities} entities</span>
                 </div>
-                <button onClick={onRefresh} className="refresh-btn" title="Refresh schema">
-                    ⟳
-                </button>
+                <Tooltip content="Refresh schema to see latest types and counts" position="bottom">
+                    <button onClick={onRefresh} className="refresh-btn" aria-label="Refresh schema">
+                        ⟳
+                    </button>
+                </Tooltip>
             </div>
 
             {/* Promoted Types Section */}

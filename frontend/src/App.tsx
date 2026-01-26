@@ -6,6 +6,8 @@ import GraphCanvas from './components/GraphCanvas';
 import DetailPanel from './components/DetailPanel';
 import FilterBar from './components/FilterBar';
 import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSkeleton from './components/LoadingSkeleton';
+import Tooltip from './components/Tooltip';
 import { wailsAPI } from './services/wails';
 import type { explorer } from './wailsjs/go/models';
 import type { GraphData, GraphNodeWithPosition, ExpandedNodeState, NodeFilter, GraphEdge } from './types/graph';
@@ -380,12 +382,7 @@ function App() {
                             componentName="Graph Canvas"
                             resetKeys={[graphData.nodes.length, graphData.links.length]}
                         >
-                            {graphLoading && (
-                                <div className="loading-overlay">
-                                    <div className="spinner"></div>
-                                    <p>Loading graph...</p>
-                                </div>
-                            )}
+                            {graphLoading && <LoadingSkeleton type="graph" />}
                             {graphError && (
                                 <div className="error-message">
                                     <p>⚠️ {graphError}</p>

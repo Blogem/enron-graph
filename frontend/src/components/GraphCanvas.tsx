@@ -1,6 +1,7 @@
 import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import type { GraphData, GraphNodeWithPosition, GraphEdge, ExpandedNodeState } from '../types/graph';
+import Tooltip from './Tooltip';
 import './GraphCanvas.css';
 
 interface GraphCanvasProps {
@@ -160,9 +161,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
     return (
         <div className="graph-canvas-container" ref={containerRef}>
             <div className="graph-controls">
-                <button onClick={handleRecenter} title="Recenter view (Space)">
-                    ⌖ Recenter
-                </button>
+                <Tooltip content="Recenter and fit all nodes in view (Space)">
+                    <button onClick={handleRecenter} aria-label="Recenter view">
+                        ⌖ Recenter
+                    </button>
+                </Tooltip>
                 <div className="graph-stats">
                     {data.nodes.length} nodes, {data.links.length} edges
                 </div>
