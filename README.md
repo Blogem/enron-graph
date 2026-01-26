@@ -1,5 +1,7 @@
 # Enron Graph - Cognitive Backbone POC
 
+Full disclosure: this code base is mostly (99%) AI generated, using [spec-kit](https://github.com/github/spec-kit) and Claude Sonnet 4.5.
+
 A self-evolving organizational knowledge graph built from the Enron email corpus.
 
 ## Overview
