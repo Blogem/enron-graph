@@ -46,9 +46,19 @@ func (s *SchemaService) GetSchema(ctx context.Context) (*SchemaResponse, error) 
 		return nil, err
 	}
 
+	// Calculate total entities
+	totalEntities := 0
+	for _, pt := range promotedTypes {
+		totalEntities += int(pt.Count)
+	}
+	for _, dt := range discoveredTypes {
+		totalEntities += int(dt.Count)
+	}
+
 	s.cache = &SchemaResponse{
 		PromotedTypes:   promotedTypes,
 		DiscoveredTypes: discoveredTypes,
+		TotalEntities:   totalEntities,
 	}
 
 	return s.cache, nil

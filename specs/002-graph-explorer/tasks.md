@@ -92,9 +92,9 @@
 
 ### Integration Tests for User Story 1
 
-- [ ] T040 [US1] Integration test: Full flow from Wails app start to schema display in tests/integration/explorer/schema_explorer_test.go
-- [ ] T041 [US1] Integration test: Type click shows details in tests/integration/explorer/schema_explorer_test.go
-- [ ] T042 [US1] Integration test: Refresh updates schema in tests/integration/explorer/schema_explorer_test.go
+- [X] T040 [US1] Integration test: Full flow from Wails app start to schema display in tests/integration/explorer/schema_explorer_test.go
+- [X] T041 [US1] Integration test: Type click shows details in tests/integration/explorer/schema_explorer_test.go
+- [X] T042 [US1] Integration test: Refresh updates schema in tests/integration/explorer/schema_explorer_test.go
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can view promoted types, discovered types, click for details, and refresh schema
 
