@@ -243,14 +243,14 @@
 - [X] T108 [P] Add tooltips for UI controls and graph nodes in frontend/src/components/
 - [X] T109 [P] Implement keyboard shortcuts (Escape to clear selection, Space to recenter) in frontend/src/App.tsx
 - [X] T110 [P] Add accessibility labels (ARIA) to interactive elements in frontend/src/components/
-- [ ] T111 Verify success criteria SC-001: schema loads in <2 seconds
-- [ ] T112 Verify success criteria SC-002: navigate 100-500 nodes smoothly
-- [ ] T113 Verify success criteria SC-003: node details appear in <1 second
-- [ ] T114 Verify success criteria SC-004: filters update in <1 second
-- [ ] T115 Verify success criteria SC-005: promoted vs discovered visually distinct
-- [ ] T116 Verify success criteria SC-006: node expansion in <2 seconds
-- [ ] T117 Verify success criteria SC-007: exploration task in <5 minutes first use
-- [ ] T118 Verify success criteria SC-008: 1000 nodes pan/zoom in <500ms
+- [X] T111 Verify success criteria SC-001: schema loads in <2 seconds
+- [X] T112 Verify success criteria SC-002: navigate 100-500 nodes smoothly
+- [X] T113 Verify success criteria SC-003: node details appear in <1 second
+- [X] T114 Verify success criteria SC-004: filters update in <1 second
+- [X] T115 Verify success criteria SC-005: promoted vs discovered visually distinct
+- [X] T116 Verify success criteria SC-006: node expansion in <2 seconds
+- [X] T117 Verify success criteria SC-007: exploration task in <5 minutes first use
+- [X] T118 Verify success criteria SC-008: 1000 nodes pan/zoom in <500ms
 - [ ] T119 [P] Create user documentation in README.md for Graph Explorer
 - [ ] T120 [P] Document build and deployment process in specs/002-graph-explorer/deployment.md
 - [ ] T121 Run full test suite and verify all tests pass
