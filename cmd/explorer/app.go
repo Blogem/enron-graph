@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/internal/explorer"
@@ -15,10 +16,10 @@ type App struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp(client *ent.Client) *App {
+func NewApp(client *ent.Client, db *sql.DB) *App {
 	return &App{
 		client:        client,
-		schemaService: explorer.NewSchemaService(client),
+		schemaService: explorer.NewSchemaService(client, db),
 	}
 }
 

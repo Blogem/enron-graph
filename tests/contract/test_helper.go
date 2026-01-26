@@ -1,4 +1,4 @@
-package contract_test
+package contract
 
 import (
 	"context"
@@ -6,11 +6,10 @@ import (
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/ent/enttest"
-	"github.com/Blogem/enron-graph/internal/explorer"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func TestClient(t *testing.T) *ent.Client {
+func NewTestClient(t *testing.T) *ent.Client {
 	opts := []enttest.Option{
 		enttest.WithOptions(ent.Log(t.Log)),
 	}
@@ -18,7 +17,7 @@ func TestClient(t *testing.T) *ent.Client {
 	return client
 }
 
-func TestClientPostgres(t *testing.T) *ent.Client {
+func NewTestClientPostgres(t *testing.T) *ent.Client {
 	databaseURL := "postgres://enron:enron@localhost:5432/enron_test?sslmode=disable"
 	client, err := ent.Open("postgres", databaseURL)
 	if err != nil {
@@ -57,290 +56,82 @@ func SeedTestData(t *testing.T, client *ent.Client) {
 		SetTypeName("person").
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("Failed to create person schema promotion: %v", err)
+		t.Fatalf("Failed to create person promotion: %v", err)
 	}
 
 	_, err = client.SchemaPromotion.Create().
 		SetTypeName("organization").
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("Failed to create organization schema promotion: %v", err)
+		t.Fatalf("Failed to create organization promotion: %v", err)
 	}
 
-	_, err = client.Email.Create().
-		SetMessageID("test1@enron.com").
-		SetSubject("Test Email 1").
-		SetFrom("sender1@enron.com").
-		SetTo([]string{"receiver1@enron.com"}).
-		SetBody("Test body 1").
-		Save(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create test email 1: %v", err)
+	properties := map[string]interface{}{
+		"name":  "John Doe",
+		"email": "john@example.com",
+		"age":   30,
 	}
 
-	email2, err := client.Email.Create().
-		SetMessageID("test2@enron.com").
-		SetSubject("Test Email 2").
-		SetFrom("sender2@enron.com").
-		SetTo([]string{"receiver2@enron.com"}).
-		SetBody("Test body 2").
-		Save(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create test email 2: %v", err)
-	}
-
-	person1, err := client.DiscoveredEntity.Create().
+	_, err = client.DiscoveredEntity.Create().
 		SetUniqueID("person-john-doe").
 		SetTypeCategory("person").
 		SetName("John Doe").
 		SetConfidenceScore(0.95).
+		SetProperties(properties).
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("Failed to create discovered entity person1: %v", err)
+		t.Fatalf("Failed to create person entity: %v", err)
 	}
 
-	org1, err := client.DiscoveredEntity.Create().
+	orgProperties := map[string]interface{}{
+		"name":     "Enron Corp",
+		"industry": "Energy",
+		"founded":  1985,
+	}
+
+	_, err = client.DiscoveredEntity.Create().
 		SetUniqueID("org-enron").
 		SetTypeCategory("organization").
 		SetName("Enron Corp").
 		SetConfidenceScore(0.90).
+		SetProperties(orgProperties).
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("Failed to create discovered entity org1: %v", err)
+		t.Fatalf("Failed to create organization entity: %v", err)
 	}
 
-	_, err = client.Relationship.Create().
-		SetType("works_for").
-		SetFromType("person").
-		SetFromID(person1.ID).
-		SetToType("organization").
-		SetToID(org1.ID).
-		SetConfidenceScore(0.85).
+	locationProperties := map[string]interface{}{
+		"name":    "Houston",
+		"state":   "Texas",
+		"country": "USA",
+	}
+
+	_, err = client.DiscoveredEntity.Create().
+		SetUniqueID("location-houston").
+		SetTypeCategory("location").
+		SetName("Houston").
+		SetConfidenceScore(0.75).
+		SetProperties(locationProperties).
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("Failed to create test relationship: %v", err)
+		t.Fatalf("Failed to create location entity: %v", err)
 	}
 
-	_, err = client.Relationship.Create().
-		SetType("mentioned_in").
-		SetFromType("person").
-		SetFromID(person1.ID).
-		SetToType("email").
-		SetToID(email2.ID).
-		SetConfidenceScore(0.80).
+	productProperties := map[string]interface{}{
+		"name":     "Energy Trading",
+		"category": "Financial Product",
+	}
+
+	_, err = client.DiscoveredEntity.Create().
+		SetUniqueID("product-energy").
+		SetTypeCategory("product").
+		SetName("Energy Trading").
+		SetConfidenceScore(0.70).
+		SetProperties(productProperties).
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("Failed to create test relationship 2: %v", err)
-	}
-}
-
-// T016: Test GetSchema returns promoted types
-func TestSchemaService_GetSchema_ReturnsPromotedTypes(t *testing.T) {
-	client := TestClient(t)
-	defer client.Close()
-	SeedTestData(t, client)
-
-	service := explorer.NewSchemaService(client)
-	ctx := context.Background()
-
-	response, err := service.GetSchema(ctx)
-	if err != nil {
-		t.Fatalf("GetSchema failed: %v", err)
+		t.Fatalf("Failed to create product entity: %v", err)
 	}
 
-	if len(response.PromotedTypes) == 0 {
-		t.Fatal("Expected promoted types, got none")
-	}
-
-	// Verify person and organization are in promoted types
-	typeNames := make(map[string]bool)
-	for _, pt := range response.PromotedTypes {
-		typeNames[pt.Name] = true
-		if !pt.IsPromoted {
-			t.Errorf("Type %s should be marked as promoted", pt.Name)
-		}
-	}
-
-	if !typeNames["person"] {
-		t.Error("Expected 'person' in promoted types")
-	}
-	if !typeNames["organization"] {
-		t.Error("Expected 'organization' in promoted types")
-	}
-}
-
-// T017: Test GetSchema returns discovered types
-func TestSchemaService_GetSchema_ReturnsDiscoveredTypes(t *testing.T) {
-	client := TestClient(t)
-	defer client.Close()
-	SeedTestData(t, client)
-
-	service := explorer.NewSchemaService(client)
-	ctx := context.Background()
-
-	response, err := service.GetSchema(ctx)
-	if err != nil {
-		t.Fatalf("GetSchema failed: %v", err)
-	}
-
-	if len(response.DiscoveredTypes) == 0 {
-		t.Fatal("Expected discovered types, got none")
-	}
-
-	// Verify discovered types are not marked as promoted
-	for _, dt := range response.DiscoveredTypes {
-		if dt.IsPromoted {
-			t.Errorf("Discovered type %s should not be marked as promoted", dt.Name)
-		}
-	}
-}
-
-// T018: Test no overlap between promoted and discovered types
-func TestSchemaService_GetSchema_NoOverlapBetweenCategories(t *testing.T) {
-	client := TestClient(t)
-	defer client.Close()
-	SeedTestData(t, client)
-
-	service := explorer.NewSchemaService(client)
-	ctx := context.Background()
-
-	response, err := service.GetSchema(ctx)
-	if err != nil {
-		t.Fatalf("GetSchema failed: %v", err)
-	}
-
-	// Build map of promoted type names
-	promotedNames := make(map[string]bool)
-	for _, pt := range response.PromotedTypes {
-		promotedNames[pt.Name] = true
-	}
-
-	// Verify no discovered type is also promoted
-	for _, dt := range response.DiscoveredTypes {
-		if promotedNames[dt.Name] {
-			t.Errorf("Type %s appears in both promoted and discovered", dt.Name)
-		}
-	}
-}
-
-// T019: Test schema includes property metadata
-func TestSchemaService_GetSchema_IncludesPropertyMetadata(t *testing.T) {
-	client := TestClient(t)
-	defer client.Close()
-	SeedTestData(t, client)
-
-	service := explorer.NewSchemaService(client)
-	ctx := context.Background()
-
-	response, err := service.GetSchema(ctx)
-	if err != nil {
-		t.Fatalf("GetSchema failed: %v", err)
-	}
-
-	// Check that at least one type has properties
-	foundProperties := false
-	for _, st := range append(response.PromotedTypes, response.DiscoveredTypes...) {
-		if len(st.Properties) > 0 {
-			foundProperties = true
-			// Verify property has required fields
-			for _, prop := range st.Properties {
-				if prop.Name == "" {
-					t.Error("Property should have a name")
-				}
-			}
-			break
-		}
-	}
-
-	if !foundProperties {
-		t.Error("Expected at least one type to have properties")
-	}
-}
-
-// T020: Test GetTypeDetails returns type details
-func TestSchemaService_GetTypeDetails_ReturnsTypeDetails(t *testing.T) {
-	client := TestClient(t)
-	defer client.Close()
-	SeedTestData(t, client)
-
-	service := explorer.NewSchemaService(client)
-	ctx := context.Background()
-
-	// Get details for person type
-	details, err := service.GetTypeDetails(ctx, "person")
-	if err != nil {
-		t.Fatalf("GetTypeDetails failed: %v", err)
-	}
-
-	if details.Name != "person" {
-		t.Errorf("Expected name 'person', got %s", details.Name)
-	}
-
-	if details.Count == 0 {
-		t.Error("Expected count > 0 for person type")
-	}
-
-	if !details.IsPromoted {
-		t.Error("Person type should be marked as promoted")
-	}
-
-	if len(details.Properties) == 0 {
-		t.Error("Expected properties for person type")
-	}
-}
-
-// T021: Test RefreshSchema updates schema
-func TestSchemaService_RefreshSchema_UpdatesSchema(t *testing.T) {
-	client := TestClient(t)
-	defer client.Close()
-	SeedTestData(t, client)
-
-	service := explorer.NewSchemaService(client)
-	ctx := context.Background()
-
-	// Get initial schema
-	response1, err := service.GetSchema(ctx)
-	if err != nil {
-		t.Fatalf("GetSchema failed: %v", err)
-	}
-
-	initialPromotedCount := len(response1.PromotedTypes)
-
-	// Add a new promoted type
-	_, err = client.SchemaPromotion.Create().
-		SetTypeName("location").
-		Save(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create promotion: %v", err)
-	}
-
-	// Refresh schema
-	err = service.RefreshSchema(ctx)
-	if err != nil {
-		t.Fatalf("RefreshSchema failed: %v", err)
-	}
-
-	// Get updated schema
-	response2, err := service.GetSchema(ctx)
-	if err != nil {
-		t.Fatalf("GetSchema failed after refresh: %v", err)
-	}
-
-	if len(response2.PromotedTypes) != initialPromotedCount+1 {
-		t.Errorf("Expected %d promoted types after refresh, got %d",
-			initialPromotedCount+1, len(response2.PromotedTypes))
-	}
-
-	// Verify location is in promoted types
-	found := false
-	for _, pt := range response2.PromotedTypes {
-		if pt.Name == "location" {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		t.Error("Expected 'location' in promoted types after refresh")
-	}
+	t.Logf("Test data seeded: 2 promoted types, 4 entities (2 promoted, 2 discovered)")
 }

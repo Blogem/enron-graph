@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"embed"
 	"log"
 
@@ -32,8 +33,15 @@ func main() {
 	}
 	defer client.Close()
 
+	// Also open a direct sql.DB connection for raw queries
+	db, err := sql.Open("postgres", cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to open SQL connection: %v", err)
+	}
+	defer db.Close()
+
 	// Create an instance of the app structure
-	app := NewApp(client)
+	app := NewApp(client, db)
 
 	// Create application with options
 	err = wails.Run(&options.App{
