@@ -821,16 +821,16 @@ assets/         # Enron email dataset
 
 ### Data Consistency
 
-- [ ] T148 Validate SC-009: No duplicate entities with same unique ID
+- [X] T148 Validate SC-009: No duplicate entities with same unique ID
   - Write data integrity test in `tests/integration/integrity_test.go`
   - Load diverse dataset
   - Query for duplicates by unique_id
   - Verify count = 0
-- [ ] T149 Validate SC-009: All relationships reference valid entities
+- [X] T149 Validate SC-009: All relationships reference valid entities
   - Write referential integrity test in `tests/integration/integrity_test.go`
   - Query relationships with LEFT JOIN on entities
   - Verify no NULL entity references
-- [ ] T150 Test concurrent writes (loader + extractor)
+- [X] T150 Test concurrent writes (loader + extractor)
   - Write concurrency test in `tests/integration/concurrency_test.go`
   - Run multiple loaders simultaneously
   - Verify no race conditions or deadlocks
