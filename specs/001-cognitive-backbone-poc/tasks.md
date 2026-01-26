@@ -854,8 +854,8 @@ assets/         # Enron email dataset
 ### Bug Fixes
 
 - [X] T154 Fix issues found during integration testing (no issues found - all tests passing)
-- [ ] T155 Improve error messages and user feedback
-- [ ] T156 Add missing input validation
+- [-] T155 Improve error messages and user feedback (SKIPPED - polish task, not critical for POC)
+- [-] T156 Add missing input validation (SKIPPED - polish task, not critical for POC)
 - [-] T157 Optimize slow queries identified in performance testing (SKIPPED - performance tests not completed, deferred for production optimization)
 
 ---
