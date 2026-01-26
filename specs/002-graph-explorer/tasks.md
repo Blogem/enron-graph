@@ -225,9 +225,9 @@
 
 ### Integration Tests for User Story 4
 
-- [ ] T102 [US4] Integration test: Detail panel shows all properties for selected node in tests/integration/explorer/detail_test.go
-- [ ] T103 [US4] Integration test: Detail panel shows related entities list in tests/integration/explorer/detail_test.go
-- [ ] T104 [US4] Integration test: Discovered entity shows metadata in tests/integration/explorer/detail_test.go
+- [X] T102 [US4] Integration test: Detail panel shows all properties for selected node in tests/integration/explorer/detail_test.go
+- [X] T103 [US4] Integration test: Detail panel shows related entities list in tests/integration/explorer/detail_test.go
+- [X] T104 [US4] Integration test: Discovered entity shows metadata in tests/integration/explorer/detail_test.go
 
 **Checkpoint**: At this point, User Story 4 should be fully functional - users can view comprehensive entity details with properties, metadata, and related entities
 
