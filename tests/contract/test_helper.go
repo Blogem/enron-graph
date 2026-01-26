@@ -200,75 +200,75 @@ func SeedGraphTestData(t *testing.T, client *ent.Client) {
 
 	// Create diverse set of entities for graph testing
 	entities := []struct {
-		uniqueID   string
+		uniqueID     string
 		typeCategory string
-		name       string
-		confidence float64
-		properties map[string]interface{}
+		name         string
+		confidence   float64
+		properties   map[string]interface{}
 	}{
 		{
-			uniqueID:   "person-jeff-skilling",
+			uniqueID:     "person-jeff-skilling",
 			typeCategory: "person",
-			name:       "Jeff Skilling",
-			confidence: 0.98,
+			name:         "Jeff Skilling",
+			confidence:   0.98,
 			properties: map[string]interface{}{
 				"email": "jeff.skilling@enron.com",
 				"title": "CEO",
 			},
 		},
 		{
-			uniqueID:   "person-ken-lay",
+			uniqueID:     "person-ken-lay",
 			typeCategory: "person",
-			name:       "Ken Lay",
-			confidence: 0.97,
+			name:         "Ken Lay",
+			confidence:   0.97,
 			properties: map[string]interface{}{
 				"email": "ken.lay@enron.com",
 				"title": "Chairman",
 			},
 		},
 		{
-			uniqueID:   "person-andy-fastow",
+			uniqueID:     "person-andy-fastow",
 			typeCategory: "person",
-			name:       "Andrew Fastow",
-			confidence: 0.96,
+			name:         "Andrew Fastow",
+			confidence:   0.96,
 			properties: map[string]interface{}{
 				"email": "andrew.fastow@enron.com",
 				"title": "CFO",
 			},
 		},
 		{
-			uniqueID:   "org-enron",
+			uniqueID:     "org-enron",
 			typeCategory: "organization",
-			name:       "Enron Corporation",
-			confidence: 0.95,
+			name:         "Enron Corporation",
+			confidence:   0.95,
 			properties: map[string]interface{}{
 				"industry": "Energy",
 				"location": "Houston",
 			},
 		},
 		{
-			uniqueID:   "org-arthur-andersen",
+			uniqueID:     "org-arthur-andersen",
 			typeCategory: "organization",
-			name:       "Arthur Andersen",
-			confidence: 0.94,
+			name:         "Arthur Andersen",
+			confidence:   0.94,
 			properties: map[string]interface{}{
 				"industry": "Accounting",
 			},
 		},
 		{
-			uniqueID:   "concept-energy-trading",
+			uniqueID:     "concept-energy-trading",
 			typeCategory: "concept",
-			name:       "Energy Trading",
-			confidence: 0.85,
+			name:         "Energy Trading",
+			confidence:   0.85,
 			properties: map[string]interface{}{
 				"category": "Business Activity",
 			},
 		},
 		{
-			uniqueID:   "location-houston",
+			uniqueID:     "location-houston",
 			typeCategory: "location",
-			name:       "Houston",
-			confidence: 0.80,
+			name:         "Houston",
+			confidence:   0.80,
 			properties: map[string]interface{}{
 				"state":   "Texas",
 				"country": "USA",
@@ -315,7 +315,7 @@ func SeedGraphTestData(t *testing.T, client *ent.Client) {
 	for _, r := range relationships {
 		fromEntity, ok1 := entityMap[r.fromUniqueID]
 		toEntity, ok2 := entityMap[r.toUniqueID]
-		
+
 		if !ok1 || !ok2 {
 			t.Logf("Warning: Skipping relationship %s -> %s (entity not found)", r.fromUniqueID, r.toUniqueID)
 			continue
@@ -358,7 +358,7 @@ func SeedNodeWithManyRelationships(t *testing.T, client *ent.Client, count int) 
 	// Create target nodes and relationships
 	for i := 0; i < count; i++ {
 		targetID := fmt.Sprintf("target-%d", i)
-		
+
 		targetEntity, err := client.DiscoveredEntity.Create().
 			SetUniqueID(targetID).
 			SetTypeCategory("person").

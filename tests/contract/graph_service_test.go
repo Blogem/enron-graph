@@ -108,7 +108,7 @@ func TestGraphService_GetRandomNodes_EdgesReferenceReturnedNodes(t *testing.T) {
 func TestGraphService_GetRelationships_PaginatesCorrectly(t *testing.T) {
 	client, db := NewTestClientWithDB(t)
 	defer client.Close()
-	
+
 	// Create a node with exactly 120 relationships
 	nodeID := SeedNodeWithManyRelationships(t, client, 120)
 
@@ -158,7 +158,7 @@ func TestGraphService_GetRelationships_PaginatesCorrectly(t *testing.T) {
 func TestGraphService_GetRelationships_HandlesFinalBatch(t *testing.T) {
 	client, db := NewTestClientWithDB(t)
 	defer client.Close()
-	
+
 	// Create a node with exactly 120 relationships
 	nodeID := SeedNodeWithManyRelationships(t, client, 120)
 
