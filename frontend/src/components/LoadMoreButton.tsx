@@ -37,6 +37,7 @@ const LoadMoreButton: React.FC<LoadMoreButtonProps> = ({
             onClick={handleClick}
             disabled={loading}
             title={`Load ${nextBatch} more relationships (${remaining} remaining)`}
+            aria-label={`Load ${nextBatch} more relationships (${remaining} remaining)`}
         >
             {loading ? (
                 <>

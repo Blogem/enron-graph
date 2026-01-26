@@ -400,7 +400,7 @@ function App() {
                             {graphError && (
                                 <div className="error-message">
                                     <p>⚠️ {graphError}</p>
-                                    <button onClick={() => loadRandomNodes(100)}>Retry</button>
+                                    <button onClick={() => loadRandomNodes(100)} aria-label="Retry loading nodes">Retry</button>
                                 </div>
                             )}
                             {!graphLoading && !graphError && graphData.nodes.length > 0 && (
@@ -437,7 +437,7 @@ function App() {
                                                     {selectedType.count} instances
                                                 </span>
                                             </div>
-                                            <button className="close-button" onClick={() => { setSelectedType(null); setSelectedTypeName(null); }} title="Close (Escape)">
+                                            <button className="close-button" onClick={() => { setSelectedType(null); setSelectedTypeName(null); }} title="Close (Escape)" aria-label="Close type details">
                                                 ✕
                                             </button>
                                         </div>

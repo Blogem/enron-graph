@@ -242,7 +242,7 @@
 - [X] T107 [P] Implement loading skeletons for schema and graph panels in frontend/src/components/
 - [X] T108 [P] Add tooltips for UI controls and graph nodes in frontend/src/components/
 - [X] T109 [P] Implement keyboard shortcuts (Escape to clear selection, Space to recenter) in frontend/src/App.tsx
-- [ ] T110 [P] Add accessibility labels (ARIA) to interactive elements in frontend/src/components/
+- [X] T110 [P] Add accessibility labels (ARIA) to interactive elements in frontend/src/components/
 - [ ] T111 Verify success criteria SC-001: schema loads in <2 seconds
 - [ ] T112 Verify success criteria SC-002: navigate 100-500 nodes smoothly
 - [ ] T113 Verify success criteria SC-003: node details appear in <1 second

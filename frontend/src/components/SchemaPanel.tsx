@@ -25,6 +25,13 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
         onTypeClick(typeName);
     };
 
+    const handleTypeKeyDown = (event: React.KeyboardEvent, typeName: string) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onTypeClick(typeName);
+        }
+    };
+
     if (loading) {
         return <LoadingSkeleton type="schema" />;
     }
@@ -78,6 +85,10 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                             key={type.name}
                             className={`type-item promoted ${selectedTypeName === type.name ? 'selected' : ''}`}
                             onClick={() => handleTypeClick(type.name)}
+                            onKeyDown={(e) => handleTypeKeyDown(e, type.name)}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Select promoted type ${type.name} with ${type.count} instances`}
                         >
                             <div className="type-header">
                                 <span className="type-name">{type.name}</span>
@@ -114,6 +125,10 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                             key={type.name}
                             className={`type-item discovered ${selectedTypeName === type.name ? 'selected' : ''}`}
                             onClick={() => handleTypeClick(type.name)}
+                            onKeyDown={(e) => handleTypeKeyDown(e, type.name)}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Select discovered type ${type.name} with ${type.count} instances`}
                         >
                             <div className="type-header">
                                 <span className="type-name">{type.name}</span>
