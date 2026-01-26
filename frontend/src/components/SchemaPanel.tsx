@@ -1,0 +1,148 @@
+import React, { useState } from 'react';
+import type { explorer } from '../wailsjs/go/models';
+import './SchemaPanel.css';
+
+interface SchemaPanelProps {
+    schema: explorer.SchemaResponse | null;
+    loading: boolean;
+    error: string | null;
+    onRefresh: () => void;
+    onTypeClick: (typeName: string) => void;
+}
+
+const SchemaPanel: React.FC<SchemaPanelProps> = ({
+    schema,
+    loading,
+    error,
+    onRefresh,
+    onTypeClick
+}) => {
+    const [selectedType, setSelectedType] = useState<string | null>(null);
+
+    const handleTypeClick = (typeName: string) => {
+        setSelectedType(typeName);
+        onTypeClick(typeName);
+    };
+
+    if (loading) {
+        return (
+            <div className="schema-panel">
+                <div className="schema-header">
+                    <h2>Schema</h2>
+                </div>
+                <div className="loading">Loading schema...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="schema-panel">
+                <div className="schema-header">
+                    <h2>Schema</h2>
+                    <button onClick={onRefresh} className="refresh-btn">Refresh</button>
+                </div>
+                <div className="error">Error: {error}</div>
+            </div>
+        );
+    }
+
+    if (!schema) {
+        return (
+            <div className="schema-panel">
+                <div className="schema-header">
+                    <h2>Schema</h2>
+                </div>
+                <div className="empty">No schema data</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="schema-panel">
+            <div className="schema-header">
+                <h2>Schema</h2>
+                <div className="schema-stats">
+                    <span>{schema.total_entities} entities</span>
+                </div>
+                <button onClick={onRefresh} className="refresh-btn" title="Refresh schema">
+                    ⟳
+                </button>
+            </div>
+
+            {/* Promoted Types Section */}
+            <div className="schema-section">
+                <h3 className="section-title">
+                    <span className="promoted-icon">⭐</span>
+                    Promoted Types ({schema.promoted_types?.length || 0})
+                </h3>
+                <div className="type-list">
+                    {schema.promoted_types?.map((type) => (
+                        <div
+                            key={type.name}
+                            className={`type-item promoted ${selectedType === type.name ? 'selected' : ''}`}
+                            onClick={() => handleTypeClick(type.name)}
+                        >
+                            <div className="type-header">
+                                <span className="type-name">{type.name}</span>
+                                <span className="type-count">{type.count}</span>
+                            </div>
+                            {type.properties && type.properties.length > 0 && (
+                                <div className="type-properties">
+                                    {type.properties.slice(0, 3).map((prop, idx) => (
+                                        <span key={idx} className="property-badge">
+                                            {prop.name}
+                                        </span>
+                                    ))}
+                                    {type.properties.length > 3 && (
+                                        <span className="property-badge more">
+                                            +{type.properties.length - 3}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Discovered Types Section */}
+            <div className="schema-section">
+                <h3 className="section-title">
+                    <span className="discovered-icon">🔍</span>
+                    Discovered Types ({schema.discovered_types?.length || 0})
+                </h3>
+                <div className="type-list">
+                    {schema.discovered_types?.map((type) => (
+                        <div
+                            key={type.name}
+                            className={`type-item discovered ${selectedType === type.name ? 'selected' : ''}`}
+                            onClick={() => handleTypeClick(type.name)}
+                        >
+                            <div className="type-header">
+                                <span className="type-name">{type.name}</span>
+                                <span className="type-count">{type.count}</span>
+                            </div>
+                            {type.properties && type.properties.length > 0 && (
+                                <div className="type-properties">
+                                    {type.properties.slice(0, 3).map((prop, idx) => (
+                                        <span key={idx} className="property-badge">
+                                            {prop.name}
+                                        </span>
+                                    ))}
+                                    {type.properties.length > 3 && (
+                                        <span className="property-badge more">
+                                            +{type.properties.length - 3}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default SchemaPanel;

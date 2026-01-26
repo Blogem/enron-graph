@@ -80,15 +80,15 @@
 
 ### Frontend Implementation for User Story 1
 
-- [ ] T031 [P] [US1] Create TypeScript types in frontend/src/types/graph.ts (SchemaResponse, SchemaType, PropertyDefinition)
-- [ ] T032 [P] [US1] Create Wails API bindings in frontend/src/services/wails.ts
-- [ ] T033 [US1] Implement SchemaPanel component in frontend/src/components/SchemaPanel.tsx (promoted types section)
-- [ ] T034 [US1] Implement SchemaPanel component: discovered types section in frontend/src/components/SchemaPanel.tsx
-- [ ] T035 [US1] Implement SchemaPanel component: type click handler to show details in frontend/src/components/SchemaPanel.tsx
-- [ ] T036 [US1] Implement SchemaPanel component: refresh button handler in frontend/src/components/SchemaPanel.tsx
-- [ ] T037 [US1] Add visual differentiation (icons/colors) for promoted vs discovered types in frontend/src/components/SchemaPanel.tsx
-- [ ] T038 [US1] Integrate SchemaPanel into App.tsx with GetSchema() call on mount
-- [ ] T039 [US1] Add loading state and error handling for schema fetch in frontend/src/App.tsx
+- [X] T031 [P] [US1] Create TypeScript types in frontend/src/types/graph.ts (SchemaResponse, SchemaType, PropertyDefinition)
+- [X] T032 [P] [US1] Create Wails API bindings in frontend/src/services/wails.ts
+- [X] T033 [US1] Implement SchemaPanel component in frontend/src/components/SchemaPanel.tsx (promoted types section)
+- [X] T034 [US1] Implement SchemaPanel component: discovered types section in frontend/src/components/SchemaPanel.tsx
+- [X] T035 [US1] Implement SchemaPanel component: type click handler to show details in frontend/src/components/SchemaPanel.tsx
+- [X] T036 [US1] Implement SchemaPanel component: refresh button handler in frontend/src/components/SchemaPanel.tsx
+- [X] T037 [US1] Add visual differentiation (icons/colors) for promoted vs discovered types in frontend/src/components/SchemaPanel.tsx
+- [X] T038 [US1] Integrate SchemaPanel into App.tsx with GetSchema() call on mount
+- [X] T039 [US1] Add loading state and error handling for schema fetch in frontend/src/App.tsx
 
 ### Integration Tests for User Story 1
 
