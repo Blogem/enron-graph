@@ -9,6 +9,7 @@ import (
 	"github.com/Blogem/enron-graph/ent/discoveredentity"
 	"github.com/Blogem/enron-graph/ent/email"
 	"github.com/Blogem/enron-graph/ent/relationship"
+	esql "entgo.io/ent/dialect/sql"
 )
 
 type GraphService struct {
@@ -60,6 +61,114 @@ func (s *GraphService) GetRandomNodes(ctx context.Context, limit int) (*GraphRes
 	edges, err := s.getEdgesBetweenNodes(ctx, discoveredEntities)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get connecting edges: %w", err)
+	}
+
+	return &GraphResponse{
+		Nodes:      nodes,
+		Edges:      edges,
+		TotalNodes: totalCount,
+		HasMore:    len(nodes) < totalCount,
+	}, nil
+}
+
+// GetNodes returns nodes filtered by type, category, and/or search query
+func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphResponse, error) {
+	// Build query based on filters
+	query := s.client.DiscoveredEntity.Query()
+
+	// Filter by types if specified
+	if len(filter.Types) > 0 {
+		query = query.Where(discoveredentity.TypeCategoryIn(filter.Types...))
+	}
+
+	// Filter by category if specified
+	// Note: Currently all entities in DiscoveredEntity are "discovered" category
+	// Promoted types (like Email) would need separate handling
+	if filter.Category == "discovered" {
+		// Already querying DiscoveredEntity, so this is default behavior
+	} else if filter.Category == "promoted" {
+		// For now, return empty results as we're only querying DiscoveredEntity
+		// Future enhancement: query Email and other promoted types
+		return &GraphResponse{
+			Nodes:      []GraphNode{},
+			Edges:      []GraphEdge{},
+			TotalNodes: 0,
+			HasMore:    false,
+		}, nil
+	}
+
+	// Apply search query if specified
+	if filter.SearchQuery != "" {
+		// Use raw SQL to search within JSONB properties
+		// This searches for the query string in any property value
+		searchQuery := fmt.Sprintf("%%%s%%", filter.SearchQuery)
+		query = query.Where(func(s *esql.Selector) {
+			s.Where(esql.Or(
+				esql.Contains("name", filter.SearchQuery),
+				esql.Contains("type_category", filter.SearchQuery),
+				esql.P(func(b *esql.Builder) {
+					b.WriteString("EXISTS (SELECT 1 FROM jsonb_each_text(properties) WHERE value ILIKE ")
+					b.Arg(searchQuery)
+					b.WriteString(")")
+				}),
+			))
+		})
+	}
+
+	// Apply limit
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 100 // Default limit
+	}
+	query = query.Limit(limit)
+
+	// Execute query
+	entities, err := query.All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query filtered nodes: %w", err)
+	}
+
+	// Get total count (without limit)
+	countQuery := s.client.DiscoveredEntity.Query()
+	if len(filter.Types) > 0 {
+		countQuery = countQuery.Where(discoveredentity.TypeCategoryIn(filter.Types...))
+	}
+	if filter.SearchQuery != "" {
+		searchQuery := fmt.Sprintf("%%%s%%", filter.SearchQuery)
+		countQuery = countQuery.Where(func(s *esql.Selector) {
+			s.Where(esql.Or(
+				esql.Contains("name", filter.SearchQuery),
+				esql.Contains("type_category", filter.SearchQuery),
+				esql.P(func(b *esql.Builder) {
+					b.WriteString("EXISTS (SELECT 1 FROM jsonb_each_text(properties) WHERE value ILIKE ")
+					b.Arg(searchQuery)
+					b.WriteString(")")
+				}),
+			))
+		})
+	}
+	totalCount, err := countQuery.Count(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count filtered nodes: %w", err)
+	}
+
+	// Build nodes from entities
+	nodes := make([]GraphNode, 0, len(entities))
+	for _, entity := range entities {
+		node := GraphNode{
+			ID:         entity.UniqueID,
+			Type:       entity.TypeCategory,
+			Category:   "discovered",
+			Properties: entity.Properties,
+			IsGhost:    false,
+		}
+		nodes = append(nodes, node)
+	}
+
+	// Get edges between filtered nodes
+	edges, err := s.getEdgesBetweenNodes(ctx, entities)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get edges: %w", err)
 	}
 
 	return &GraphResponse{

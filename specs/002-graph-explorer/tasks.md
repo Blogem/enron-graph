@@ -169,10 +169,10 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T076 [P] [US3] Contract test: GraphService.GetNodes filters by type in tests/contract/graph_service_contract_test.go
-- [ ] T077 [P] [US3] Contract test: GraphService.GetNodes filters by category in tests/contract/graph_service_contract_test.go
-- [ ] T078 [P] [US3] Contract test: GraphService.GetNodes searches by property value in tests/contract/graph_service_contract_test.go
-- [ ] T079 [P] [US3] Contract test: GraphService.GetNodes combines multiple filters in tests/contract/graph_service_contract_test.go
+- [X] T076 [P] [US3] Contract test: GraphService.GetNodes filters by type in tests/contract/graph_service_test.go
+- [X] T077 [P] [US3] Contract test: GraphService.GetNodes filters by category in tests/contract/graph_service_test.go
+- [X] T078 [P] [US3] Contract test: GraphService.GetNodes searches by property value in tests/contract/graph_service_test.go
+- [X] T079 [P] [US3] Contract test: GraphService.GetNodes combines multiple filters in tests/contract/graph_service_test.go
 
 ### Backend Implementation for User Story 3
 

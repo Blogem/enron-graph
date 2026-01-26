@@ -272,3 +272,153 @@ func TestGraphService_GetNodeDetails_ErrorsOnMissingNode(t *testing.T) {
 		t.Errorf("Expected 'not found' error, got: %v", err)
 	}
 }
+
+// T076: Test GetNodes filters by type
+func TestGraphService_GetNodes_FiltersByType(t *testing.T) {
+	client, db := NewTestClientWithDB(t)
+	defer client.Close()
+	SeedMixedTypeGraphData(t, client)
+
+	service := explorer.NewGraphService(client, db)
+	ctx := context.Background()
+
+	// When: Filter by types=["person"]
+	filter := explorer.NodeFilter{
+		Types: []string{"person"},
+		Limit: 100,
+	}
+	resp, err := service.GetNodes(ctx, filter)
+
+	// Then: Returns only person nodes
+	if err != nil {
+		t.Fatalf("GetNodes failed: %v", err)
+	}
+
+	if len(resp.Nodes) == 0 {
+		t.Error("Expected at least some person nodes")
+	}
+
+	for i, node := range resp.Nodes {
+		if node.Type != "person" {
+			t.Errorf("Node %d: Expected type 'person', got '%s'", i, node.Type)
+		}
+	}
+}
+
+// T077: Test GetNodes filters by category
+func TestGraphService_GetNodes_FiltersByCategory(t *testing.T) {
+	client, db := NewTestClientWithDB(t)
+	defer client.Close()
+	SeedMixedTypeGraphData(t, client)
+
+	service := explorer.NewGraphService(client, db)
+	ctx := context.Background()
+
+	// When: Filter by category="discovered"
+	filter := explorer.NodeFilter{
+		Category: "discovered",
+		Limit:    100,
+	}
+	resp, err := service.GetNodes(ctx, filter)
+
+	// Then: Returns only discovered nodes
+	if err != nil {
+		t.Fatalf("GetNodes failed: %v", err)
+	}
+
+	if len(resp.Nodes) == 0 {
+		t.Error("Expected at least some discovered nodes")
+	}
+
+	for i, node := range resp.Nodes {
+		if node.Category != "discovered" {
+			t.Errorf("Node %d: Expected category 'discovered', got '%s'", i, node.Category)
+		}
+	}
+}
+
+// T078: Test GetNodes searches by property value
+func TestGraphService_GetNodes_SearchesByPropertyValue(t *testing.T) {
+	client, db := NewTestClientWithDB(t)
+	defer client.Close()
+	SeedMixedTypeGraphData(t, client)
+
+	service := explorer.NewGraphService(client, db)
+	ctx := context.Background()
+
+	// When: Search for "skilling@enron.com"
+	filter := explorer.NodeFilter{
+		SearchQuery: "skilling@enron.com",
+		Limit:       100,
+	}
+	resp, err := service.GetNodes(ctx, filter)
+
+	// Then: Returns nodes with matching property values
+	if err != nil {
+		t.Fatalf("GetNodes failed: %v", err)
+	}
+
+	if len(resp.Nodes) == 0 {
+		t.Error("Expected at least one matching node")
+	}
+
+	// At least one node should contain the search term
+	foundMatch := false
+	for _, node := range resp.Nodes {
+		for _, value := range node.Properties {
+			if str, ok := value.(string); ok && strings.Contains(strings.ToLower(str), strings.ToLower("skilling@enron.com")) {
+				foundMatch = true
+				break
+			}
+		}
+		if foundMatch {
+			break
+		}
+	}
+
+	if !foundMatch {
+		t.Error("Expected at least one node to match search query")
+	}
+}
+
+// T079: Test GetNodes combines multiple filters
+func TestGraphService_GetNodes_CombinesMultipleFilters(t *testing.T) {
+	client, db := NewTestClientWithDB(t)
+	defer client.Close()
+	SeedMixedTypeGraphData(t, client)
+
+	service := explorer.NewGraphService(client, db)
+	ctx := context.Background()
+
+	// When: Filter by type="person" AND search="enron.com"
+	filter := explorer.NodeFilter{
+		Types:       []string{"person"},
+		SearchQuery: "enron.com",
+		Limit:       100,
+	}
+	resp, err := service.GetNodes(ctx, filter)
+
+	// Then: Returns only person nodes matching search query
+	if err != nil {
+		t.Fatalf("GetNodes failed: %v", err)
+	}
+
+	for i, node := range resp.Nodes {
+		// Must be person type
+		if node.Type != "person" {
+			t.Errorf("Node %d: Expected type 'person', got '%s'", i, node.Type)
+		}
+
+		// Must contain search term in at least one property
+		foundMatch := false
+		for _, value := range node.Properties {
+			if str, ok := value.(string); ok && strings.Contains(strings.ToLower(str), "enron.com") {
+				foundMatch = true
+				break
+			}
+		}
+		if !foundMatch {
+			t.Errorf("Node %d: Expected to match search query 'enron.com'", i)
+		}
+	}
+}

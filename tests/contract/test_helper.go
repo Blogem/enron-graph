@@ -388,3 +388,103 @@ func SeedNodeWithManyRelationships(t *testing.T, client *ent.Client, count int) 
 	t.Logf("Created node with %d relationships", count)
 	return centralNode.UniqueID
 }
+
+// SeedMixedTypeGraphData creates test data with multiple types and categories for filtering tests
+func SeedMixedTypeGraphData(t *testing.T, client *ent.Client) {
+	ctx := context.Background()
+
+	// Create diverse entities for filtering tests
+	entities := []struct {
+		uniqueID     string
+		typeCategory string
+		name         string
+		confidence   float64
+		properties   map[string]interface{}
+	}{
+		{
+			uniqueID:     "person-jeff-skilling",
+			typeCategory: "person",
+			name:         "Jeff Skilling",
+			confidence:   0.98,
+			properties: map[string]interface{}{
+				"email": "jeff.skilling@enron.com",
+				"title": "CEO",
+			},
+		},
+		{
+			uniqueID:     "person-ken-lay",
+			typeCategory: "person",
+			name:         "Ken Lay",
+			confidence:   0.97,
+			properties: map[string]interface{}{
+				"email": "ken.lay@enron.com",
+				"title": "Chairman",
+			},
+		},
+		{
+			uniqueID:     "person-andy-fastow",
+			typeCategory: "person",
+			name:         "Andrew Fastow",
+			confidence:   0.96,
+			properties: map[string]interface{}{
+				"email": "andrew.fastow@enron.com",
+				"title": "CFO",
+			},
+		},
+		{
+			uniqueID:     "org-enron",
+			typeCategory: "organization",
+			name:         "Enron Corporation",
+			confidence:   0.95,
+			properties: map[string]interface{}{
+				"industry": "Energy",
+				"location": "Houston",
+			},
+		},
+		{
+			uniqueID:     "org-arthur-andersen",
+			typeCategory: "organization",
+			name:         "Arthur Andersen",
+			confidence:   0.94,
+			properties: map[string]interface{}{
+				"industry": "Accounting",
+				"website":  "www.arthurandersen.com",
+			},
+		},
+		{
+			uniqueID:     "location-houston",
+			typeCategory: "location",
+			name:         "Houston",
+			confidence:   0.80,
+			properties: map[string]interface{}{
+				"state":   "Texas",
+				"country": "USA",
+			},
+		},
+		{
+			uniqueID:     "concept-energy-trading",
+			typeCategory: "concept",
+			name:         "Energy Trading",
+			confidence:   0.85,
+			properties: map[string]interface{}{
+				"category": "Business Activity",
+			},
+		},
+	}
+
+	for _, e := range entities {
+		_, err := client.DiscoveredEntity.Create().
+			SetUniqueID(e.uniqueID).
+			SetTypeCategory(e.typeCategory).
+			SetName(e.name).
+			SetConfidenceScore(e.confidence).
+			SetProperties(e.properties).
+			Save(ctx)
+		if err != nil {
+			t.Fatalf("Failed to create entity %s: %v", e.name, err)
+		}
+	}
+
+	t.Logf("Mixed type graph data seeded: %d entities (3 person, 2 org, 1 location, 1 concept)", len(entities))
+}
+
