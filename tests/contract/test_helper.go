@@ -193,3 +193,198 @@ func SeedTestData(t *testing.T, client *ent.Client) {
 
 	t.Logf("Test data seeded: 2 promoted types, 4 entities (2 promoted, 2 discovered)")
 }
+
+// SeedGraphTestData creates test data for graph service tests
+func SeedGraphTestData(t *testing.T, client *ent.Client) {
+	ctx := context.Background()
+
+	// Create diverse set of entities for graph testing
+	entities := []struct {
+		uniqueID   string
+		typeCategory string
+		name       string
+		confidence float64
+		properties map[string]interface{}
+	}{
+		{
+			uniqueID:   "person-jeff-skilling",
+			typeCategory: "person",
+			name:       "Jeff Skilling",
+			confidence: 0.98,
+			properties: map[string]interface{}{
+				"email": "jeff.skilling@enron.com",
+				"title": "CEO",
+			},
+		},
+		{
+			uniqueID:   "person-ken-lay",
+			typeCategory: "person",
+			name:       "Ken Lay",
+			confidence: 0.97,
+			properties: map[string]interface{}{
+				"email": "ken.lay@enron.com",
+				"title": "Chairman",
+			},
+		},
+		{
+			uniqueID:   "person-andy-fastow",
+			typeCategory: "person",
+			name:       "Andrew Fastow",
+			confidence: 0.96,
+			properties: map[string]interface{}{
+				"email": "andrew.fastow@enron.com",
+				"title": "CFO",
+			},
+		},
+		{
+			uniqueID:   "org-enron",
+			typeCategory: "organization",
+			name:       "Enron Corporation",
+			confidence: 0.95,
+			properties: map[string]interface{}{
+				"industry": "Energy",
+				"location": "Houston",
+			},
+		},
+		{
+			uniqueID:   "org-arthur-andersen",
+			typeCategory: "organization",
+			name:       "Arthur Andersen",
+			confidence: 0.94,
+			properties: map[string]interface{}{
+				"industry": "Accounting",
+			},
+		},
+		{
+			uniqueID:   "concept-energy-trading",
+			typeCategory: "concept",
+			name:       "Energy Trading",
+			confidence: 0.85,
+			properties: map[string]interface{}{
+				"category": "Business Activity",
+			},
+		},
+		{
+			uniqueID:   "location-houston",
+			typeCategory: "location",
+			name:       "Houston",
+			confidence: 0.80,
+			properties: map[string]interface{}{
+				"state":   "Texas",
+				"country": "USA",
+			},
+		},
+	}
+
+	createdEntities := make([]*ent.DiscoveredEntity, 0, len(entities))
+	for _, e := range entities {
+		entity, err := client.DiscoveredEntity.Create().
+			SetUniqueID(e.uniqueID).
+			SetTypeCategory(e.typeCategory).
+			SetName(e.name).
+			SetConfidenceScore(e.confidence).
+			SetProperties(e.properties).
+			Save(ctx)
+		if err != nil {
+			t.Fatalf("Failed to create entity %s: %v", e.name, err)
+		}
+		createdEntities = append(createdEntities, entity)
+	}
+
+	// Create relationships between entities
+	relationships := []struct {
+		fromUniqueID string
+		toUniqueID   string
+		relType      string
+	}{
+		{"person-jeff-skilling", "org-enron", "WORKED_AT"},
+		{"person-ken-lay", "org-enron", "WORKED_AT"},
+		{"person-andy-fastow", "org-enron", "WORKED_AT"},
+		{"person-jeff-skilling", "person-ken-lay", "COMMUNICATED_WITH"},
+		{"person-jeff-skilling", "concept-energy-trading", "MENTIONED"},
+		{"org-enron", "location-houston", "LOCATED_IN"},
+		{"org-enron", "org-arthur-andersen", "AUDITED_BY"},
+	}
+
+	// Build a map of unique_id to entity for lookups
+	entityMap := make(map[string]*ent.DiscoveredEntity)
+	for _, e := range createdEntities {
+		entityMap[e.UniqueID] = e
+	}
+
+	for _, r := range relationships {
+		fromEntity, ok1 := entityMap[r.fromUniqueID]
+		toEntity, ok2 := entityMap[r.toUniqueID]
+		
+		if !ok1 || !ok2 {
+			t.Logf("Warning: Skipping relationship %s -> %s (entity not found)", r.fromUniqueID, r.toUniqueID)
+			continue
+		}
+
+		_, err := client.Relationship.Create().
+			SetType(r.relType).
+			SetFromType("discovered_entity").
+			SetFromID(fromEntity.ID).
+			SetToType("discovered_entity").
+			SetToID(toEntity.ID).
+			SetConfidenceScore(1.0).
+			Save(ctx)
+		if err != nil {
+			t.Logf("Warning: Failed to create relationship %s -> %s: %v", r.fromUniqueID, r.toUniqueID, err)
+		}
+	}
+
+	t.Logf("Graph test data seeded: %d entities, %d relationships", len(entities), len(relationships))
+}
+
+// SeedNodeWithManyRelationships creates a node with a specific number of relationships
+func SeedNodeWithManyRelationships(t *testing.T, client *ent.Client, count int) string {
+	ctx := context.Background()
+
+	// Create the central node
+	centralNode, err := client.DiscoveredEntity.Create().
+		SetUniqueID("central-node").
+		SetTypeCategory("person").
+		SetName("Central Person").
+		SetConfidenceScore(0.95).
+		SetProperties(map[string]interface{}{
+			"email": "central@enron.com",
+		}).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create central node: %v", err)
+	}
+
+	// Create target nodes and relationships
+	for i := 0; i < count; i++ {
+		targetID := fmt.Sprintf("target-%d", i)
+		
+		targetEntity, err := client.DiscoveredEntity.Create().
+			SetUniqueID(targetID).
+			SetTypeCategory("person").
+			SetName(fmt.Sprintf("Person %d", i)).
+			SetConfidenceScore(0.80).
+			SetProperties(map[string]interface{}{
+				"email": fmt.Sprintf("person%d@enron.com", i),
+			}).
+			Save(ctx)
+		if err != nil {
+			t.Fatalf("Failed to create target node %d: %v", i, err)
+		}
+
+		_, err = client.Relationship.Create().
+			SetType("COMMUNICATED_WITH").
+			SetFromType("discovered_entity").
+			SetFromID(centralNode.ID).
+			SetToType("discovered_entity").
+			SetToID(targetEntity.ID).
+			SetConfidenceScore(1.0).
+			Save(ctx)
+		if err != nil {
+			t.Fatalf("Failed to create relationship %d: %v", i, err)
+		}
+	}
+
+	t.Logf("Created node with %d relationships", count)
+	return centralNode.UniqueID
+}
