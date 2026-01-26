@@ -25,3 +25,7 @@ export function GetRelationships(arg1, arg2, arg3) {
 export function GetNodeDetails(arg1) {
   return window['go']['main']['App']['GetNodeDetails'](arg1);
 }
+
+export function GetNodes(arg1) {
+  return window['go']['main']['App']['GetNodes'](arg1);
+}

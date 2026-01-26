@@ -6,6 +6,7 @@ import './GraphCanvas.css';
 interface GraphCanvasProps {
     data: GraphData;
     selectedNodeId: string | null;
+    highlightedNodeIds?: Set<string>;
     expandedNodes: Map<string, ExpandedNodeState>;
     onNodeClick: (node: GraphNodeWithPosition) => void;
     onNodeRightClick: (node: GraphNodeWithPosition) => void;
@@ -15,6 +16,7 @@ interface GraphCanvasProps {
 const GraphCanvas: React.FC<GraphCanvasProps> = ({
     data,
     selectedNodeId,
+    highlightedNodeIds = new Set(),
     expandedNodes,
     onNodeClick,
     onNodeRightClick,
@@ -35,11 +37,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
                 });
             }
         };
-        
+
         // Initial update with a slight delay to ensure layout is ready
         const timer = setTimeout(updateDimensions, 100);
         updateDimensions();
-        
+
         window.addEventListener('resize', updateDimensions);
         return () => {
             clearTimeout(timer);
@@ -49,8 +51,21 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
     // Node color differentiation by entity type
     const getNodeColor = useCallback((node: GraphNodeWithPosition) => {
+        // Check if node is a ghost node (is_ghost property)
+        const isGhost = node.properties?.is_ghost === true;
+
+        if (isGhost) {
+            // Ghost nodes: greyed out, semi-transparent (FR-007a)
+            return 'rgba(128, 128, 128, 0.3)';
+        }
+
         if (node.id === selectedNodeId) {
             return '#ff6b6b'; // Highlight selected node in red
+        }
+
+        // Highlighted search result nodes (T092)
+        if (highlightedNodeIds.has(node.id)) {
+            return '#fbbf24'; // Bright amber/yellow for search matches
         }
 
         // Color by type
@@ -63,7 +78,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
         };
 
         return typeColors[node.type] || '#a8dadc'; // Default color
-    }, [selectedNodeId]);
+    }, [selectedNodeId, highlightedNodeIds]);
 
     // Node size based on degree (relationship count)
     const getNodeSize = useCallback((node: GraphNodeWithPosition) => {
@@ -74,8 +89,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
 
     // Node label with relationship count indicator
     const getNodeLabel = useCallback((node: GraphNodeWithPosition) => {
+        const isGhost = node.properties?.is_ghost === true;
         const degree = node.properties?.degree || 0;
         const label = node.label || node.id;
+
+        // Ghost nodes have minimal label
+        if (isGhost) {
+            return `${label} (ghost)`;
+        }
 
         // Show relationship count for nodes with relationships
         if (degree > 0) {
@@ -105,6 +126,28 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
         }
     }, []);
 
+    // Auto-zoom to highlighted search results
+    useEffect(() => {
+        if (highlightedNodeIds.size > 0 && graphRef.current) {
+            // Zoom to fit highlighted nodes after a brief delay
+            setTimeout(() => {
+                if (graphRef.current) {
+                    // Get the bounding box of highlighted nodes
+                    const highlightedNodes = data.nodes.filter(n => highlightedNodeIds.has(n.id));
+
+                    if (highlightedNodes.length > 0) {
+                        // Center on the highlighted nodes
+                        const avgX = highlightedNodes.reduce((sum, n) => sum + (n.x || 0), 0) / highlightedNodes.length;
+                        const avgY = highlightedNodes.reduce((sum, n) => sum + (n.y || 0), 0) / highlightedNodes.length;
+
+                        graphRef.current.centerAt(avgX, avgY, 400);
+                        graphRef.current.zoom(3, 400);
+                    }
+                }
+            }, 500);
+        }
+    }, [highlightedNodeIds, data.nodes]);
+
     return (
         <div className="graph-canvas-container" ref={containerRef}>
             <div className="graph-controls">
@@ -129,6 +172,23 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
                 }}
                 nodeCanvasObjectMode={() => 'after'}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
+                    const isGhost = node.properties?.is_ghost === true;
+
+                    // Skip badges for ghost nodes
+                    if (isGhost) {
+                        return;
+                    }
+
+                    // Draw search highlight ring
+                    if (highlightedNodeIds.has(node.id)) {
+                        const nodeSize = Math.min(12, 4 + Math.log((node.properties?.degree || 0) + 1) * 2);
+                        ctx.beginPath();
+                        ctx.arc(node.x!, node.y!, nodeSize * 1.8, 0, 2 * Math.PI);
+                        ctx.strokeStyle = '#fbbf24';
+                        ctx.lineWidth = 3 / globalScale;
+                        ctx.stroke();
+                    }
+
                     // Draw relationship count badge for nodes with relationships
                     const degree = node.properties?.degree || 0;
                     if (degree > 0) {

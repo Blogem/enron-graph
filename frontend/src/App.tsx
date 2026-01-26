@@ -4,9 +4,10 @@ import './components/TypeDetailsPanel.css';
 import SchemaPanel from './components/SchemaPanel';
 import GraphCanvas from './components/GraphCanvas';
 import DetailPanel from './components/DetailPanel';
+import FilterBar from './components/FilterBar';
 import { wailsAPI } from './services/wails';
 import type { explorer } from './wailsjs/go/models';
-import type { GraphData, GraphNodeWithPosition, ExpandedNodeState } from './types/graph';
+import type { GraphData, GraphNodeWithPosition, ExpandedNodeState, NodeFilter } from './types/graph';
 
 function App() {
     // Schema state
@@ -25,15 +26,33 @@ function App() {
     const [expandedNodes, setExpandedNodes] = useState<Map<string, ExpandedNodeState>>(new Map());
     const [loadingNodeId, setLoadingNodeId] = useState<string | null>(null);
 
+    // Filter state
+    const [activeFilter, setActiveFilter] = useState<NodeFilter>({});
+    const [highlightedNodeIds, setHighlightedNodeIds] = useState<Set<string>>(new Set());
+
     // Load schema on mount
     useEffect(() => {
         loadSchema();
     }, []);
 
-    // Load random nodes on mount (auto-load 100 nodes)
+    // Load random nodes on mount (auto-load 100 nodes) only if no filter is active
     useEffect(() => {
-        loadRandomNodes(100);
+        const hasActiveFilter = activeFilter.types?.length || activeFilter.category || activeFilter.search_query;
+        if (!hasActiveFilter) {
+            loadRandomNodes(100);
+        }
     }, []);
+
+    // Apply filters when activeFilter changes
+    useEffect(() => {
+        const hasActiveFilter = activeFilter.types?.length || activeFilter.category || activeFilter.search_query;
+        if (hasActiveFilter) {
+            applyFilters(activeFilter);
+        } else {
+            // When filters are cleared, load random nodes again
+            loadRandomNodes(100);
+        }
+    }, [activeFilter]);
 
     const loadSchema = async () => {
         try {
@@ -73,6 +92,9 @@ function App() {
                 nodes,
                 links: response.edges
             });
+
+            // Clear highlights when loading random nodes
+            setHighlightedNodeIds(new Set());
         } catch (err) {
             setGraphError(err instanceof Error ? err.message : 'Failed to load graph');
             console.error('Error loading graph:', err);
@@ -80,6 +102,63 @@ function App() {
             setGraphLoading(false);
         }
     };
+
+    const applyFilters = async (filter: NodeFilter) => {
+        try {
+            setGraphLoading(true);
+            setGraphError(null);
+            console.log('Applying filters:', filter);
+            const response = await wailsAPI.getNodes(filter);
+            console.log('Filtered response:', response);
+
+            // Transform response to GraphData format
+            const nodes: GraphNodeWithPosition[] = response.nodes.map((node: any) => ({
+                ...node,
+                x: undefined,
+                y: undefined,
+                vx: undefined,
+                vy: undefined,
+                fx: undefined,
+                fy: undefined
+            }));
+
+            console.log('Filtered nodes:', nodes.length, 'edges:', response.edges.length);
+            setGraphData({
+                nodes,
+                links: response.edges
+            });
+
+            // Highlight nodes matching search query
+            if (filter.search_query) {
+                const highlighted = new Set<string>();
+                nodes.forEach(node => {
+                    // Check if search query appears in any property value
+                    const searchLower = filter.search_query!.toLowerCase();
+                    const matchesSearch = Object.values(node.properties || {}).some(val =>
+                        String(val).toLowerCase().includes(searchLower)
+                    );
+                    if (matchesSearch) {
+                        highlighted.add(node.id);
+                    }
+                });
+                setHighlightedNodeIds(highlighted);
+            } else {
+                setHighlightedNodeIds(new Set());
+            }
+        } catch (err) {
+            setGraphError(err instanceof Error ? err.message : 'Failed to apply filters');
+            console.error('Error applying filters:', err);
+        } finally {
+            setGraphLoading(false);
+        }
+    };
+
+    const handleFilterChange = useCallback((filter: NodeFilter) => {
+        setActiveFilter(filter);
+        // Reset expanded nodes and selection when filter changes
+        setExpandedNodes(new Map());
+        setSelectedNode(null);
+    }, []);
 
     const handleRefreshSchema = async () => {
         try {
@@ -174,7 +253,7 @@ function App() {
 
             // Update expanded nodes state
             const newOffset = offset + edges.length;
-            const hasMore = response.totalCount > newOffset;
+            const hasMore = response.total_count > newOffset;
 
             setExpandedNodes(prev => {
                 const updated = new Map(prev);
@@ -182,7 +261,7 @@ function App() {
                     nodeId,
                     offset: newOffset,
                     hasMore,
-                    totalRelationships: response.totalCount
+                    totalRelationships: response.total_count
                 });
                 return updated;
             });
@@ -236,6 +315,11 @@ function App() {
                     />
                 </div>
                 <div className="main-content">
+                    <FilterBar
+                        schema={schema}
+                        onFilterChange={handleFilterChange}
+                        initialFilter={activeFilter}
+                    />
                     {graphLoading && (
                         <div className="loading-overlay">
                             <div className="spinner"></div>
@@ -252,6 +336,7 @@ function App() {
                         <GraphCanvas
                             data={graphData}
                             selectedNodeId={selectedNode?.id || null}
+                            highlightedNodeIds={highlightedNodeIds}
                             expandedNodes={expandedNodes}
                             onNodeClick={handleNodeClick}
                             onNodeRightClick={handleNodeRightClick}

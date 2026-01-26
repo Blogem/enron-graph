@@ -60,3 +60,8 @@ func (a *App) GetRelationships(nodeID string, offset, limit int) (*explorer.Rela
 func (a *App) GetNodeDetails(nodeID string) (*explorer.GraphNode, error) {
 	return a.graphService.GetNodeDetails(a.ctx, nodeID)
 }
+
+// GetNodes returns nodes filtered by type, category, and/or search query
+func (a *App) GetNodes(filter explorer.NodeFilter) (*explorer.GraphResponse, error) {
+	return a.graphService.GetNodes(a.ctx, filter)
+}

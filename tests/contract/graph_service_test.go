@@ -427,7 +427,7 @@ func TestGraphService_GetNodes_CombinesMultipleFilters(t *testing.T) {
 func TestGraphService_GetNodes_IncludesGhostNodesForCrossFilterEdges(t *testing.T) {
 	client, db := NewTestClientWithDB(t)
 	defer client.Close()
-	
+
 	ctx := context.Background()
 
 	// Create person entities

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	esql "entgo.io/ent/dialect/sql"
 	"github.com/Blogem/enron-graph/ent"
@@ -73,6 +74,9 @@ func (s *GraphService) GetRandomNodes(ctx context.Context, limit int) (*GraphRes
 
 // GetNodes returns nodes filtered by type, category, and/or search query
 func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphResponse, error) {
+	log.Printf("[GetNodes] Starting with filter: Types=%v, Category=%s, SearchQuery=%q, Limit=%d",
+		filter.Types, filter.Category, filter.SearchQuery, filter.Limit)
+
 	// Build query based on filters
 	query := s.client.DiscoveredEntity.Query()
 
@@ -99,20 +103,39 @@ func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphR
 
 	// Apply search query if specified
 	if filter.SearchQuery != "" {
-		// Use raw SQL to search within JSONB properties
-		// This searches for the query string in any property value
+		// Use case-insensitive search across unique_id, name, type_category, and JSONB properties
 		searchQuery := fmt.Sprintf("%%%s%%", filter.SearchQuery)
 		query = query.Where(func(s *esql.Selector) {
 			s.Where(esql.Or(
-				esql.Contains("name", filter.SearchQuery),
-				esql.Contains("type_category", filter.SearchQuery),
 				esql.P(func(b *esql.Builder) {
-					b.WriteString("EXISTS (SELECT 1 FROM jsonb_each_text(properties) WHERE value ILIKE ")
+					b.Ident(s.C(discoveredentity.FieldUniqueID))
+					b.WriteString(" ILIKE ")
 					b.Arg(searchQuery)
-					b.WriteString(")")
+				}),
+				esql.P(func(b *esql.Builder) {
+					b.Ident(s.C(discoveredentity.FieldName))
+					b.WriteString(" ILIKE ")
+					b.Arg(searchQuery)
+				}),
+				esql.P(func(b *esql.Builder) {
+					b.Ident(s.C(discoveredentity.FieldTypeCategory))
+					b.WriteString(" ILIKE ")
+					b.Arg(searchQuery)
+				}),
+				esql.P(func(b *esql.Builder) {
+					b.WriteString("(")
+					b.Ident(s.C(discoveredentity.FieldProperties))
+					b.WriteString(" IS NOT NULL AND ")
+					b.Ident(s.C(discoveredentity.FieldProperties))
+					b.WriteString(" != 'null'::jsonb AND EXISTS (SELECT 1 FROM jsonb_each_text(")
+					b.Ident(s.C(discoveredentity.FieldProperties))
+					b.WriteString(") WHERE value ILIKE ")
+					b.Arg(searchQuery)
+					b.WriteString("))")
 				}),
 			))
 		})
+		log.Printf("[GetNodes] Applied search query: %q", filter.SearchQuery)
 	}
 
 	// Apply limit
@@ -125,7 +148,17 @@ func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphR
 	// Execute query
 	entities, err := query.All(ctx)
 	if err != nil {
+		log.Printf("[GetNodes] ERROR executing query: %v", err)
 		return nil, fmt.Errorf("failed to query filtered nodes: %w", err)
+	}
+	log.Printf("[GetNodes] Query returned %d entities", len(entities))
+
+	// Debug: log first few entities to see what we got
+	for i, e := range entities {
+		if i >= 3 {
+			break
+		}
+		log.Printf("[GetNodes] Entity %d: ID=%q, Name=%q, Type=%q", i, e.UniqueID, e.Name, e.TypeCategory)
 	}
 
 	// Get total count (without limit)
@@ -137,26 +170,47 @@ func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphR
 		searchQuery := fmt.Sprintf("%%%s%%", filter.SearchQuery)
 		countQuery = countQuery.Where(func(s *esql.Selector) {
 			s.Where(esql.Or(
-				esql.Contains("name", filter.SearchQuery),
-				esql.Contains("type_category", filter.SearchQuery),
 				esql.P(func(b *esql.Builder) {
-					b.WriteString("EXISTS (SELECT 1 FROM jsonb_each_text(properties) WHERE value ILIKE ")
+					b.Ident(s.C(discoveredentity.FieldUniqueID))
+					b.WriteString(" ILIKE ")
 					b.Arg(searchQuery)
-					b.WriteString(")")
+				}),
+				esql.P(func(b *esql.Builder) {
+					b.Ident(s.C(discoveredentity.FieldName))
+					b.WriteString(" ILIKE ")
+					b.Arg(searchQuery)
+				}),
+				esql.P(func(b *esql.Builder) {
+					b.Ident(s.C(discoveredentity.FieldTypeCategory))
+					b.WriteString(" ILIKE ")
+					b.Arg(searchQuery)
+				}),
+				esql.P(func(b *esql.Builder) {
+					b.WriteString("(")
+					b.Ident(s.C(discoveredentity.FieldProperties))
+					b.WriteString(" IS NOT NULL AND ")
+					b.Ident(s.C(discoveredentity.FieldProperties))
+					b.WriteString(" != 'null'::jsonb AND EXISTS (SELECT 1 FROM jsonb_each_text(")
+					b.Ident(s.C(discoveredentity.FieldProperties))
+					b.WriteString(") WHERE value ILIKE ")
+					b.Arg(searchQuery)
+					b.WriteString("))")
 				}),
 			))
 		})
 	}
 	totalCount, err := countQuery.Count(ctx)
 	if err != nil {
+		log.Printf("[GetNodes] ERROR executing count query: %v", err)
 		return nil, fmt.Errorf("failed to count filtered nodes: %w", err)
 	}
+	log.Printf("[GetNodes] Total count: %d", totalCount)
 
 	// Build nodes from entities
 	nodes := make([]GraphNode, 0, len(entities))
 	nodeIDSet := make(map[string]bool)
 	entityIDMap := make(map[int]string) // map from ent ID to unique_id
-	
+
 	for _, entity := range entities {
 		node := GraphNode{
 			ID:         entity.UniqueID,

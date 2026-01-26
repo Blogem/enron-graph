@@ -5,10 +5,11 @@ import {
     RefreshSchema,
     GetRandomNodes,
     GetRelationships,
-    GetNodeDetails
+    GetNodeDetails,
+    GetNodes
 } from '../wailsjs/go/main/App';
 import type { explorer } from '../wailsjs/go/models';
-import type { GraphResponse, RelationshipsResponse, GraphNode } from '../types/graph';
+import type { GraphResponse, RelationshipsResponse, GraphNode, NodeFilter } from '../types/graph';
 
 export const wailsAPI = {
     // Schema operations
@@ -35,5 +36,16 @@ export const wailsAPI = {
 
     async getNodeDetails(nodeId: string): Promise<GraphNode> {
         return await GetNodeDetails(nodeId);
+    },
+
+    async getNodes(filter: NodeFilter): Promise<GraphResponse> {
+        // Convert TypeScript filter to Go-compatible format
+        const goFilter: any = {
+            types: filter.types || [],
+            category: filter.category || '',
+            search_query: filter.search_query || '',
+            limit: filter.limit || 100
+        };
+        return await GetNodes(goFilter);
     },
 };

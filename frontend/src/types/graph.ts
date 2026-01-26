@@ -46,8 +46,11 @@ export interface GraphResponse {
 }
 
 export interface RelationshipsResponse {
-    relationships: GraphEdge[];
-    total: number;
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+    total_count: number;
+    has_more: boolean;
+    offset: number;
 }
 
 export interface NodeFilter {

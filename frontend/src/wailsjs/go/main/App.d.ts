@@ -13,3 +13,5 @@ export function GetRandomNodes(arg1: number): Promise<explorer.GraphResponse>;
 export function GetRelationships(arg1: string, arg2: number, arg3: number): Promise<explorer.RelationshipsResponse>;
 
 export function GetNodeDetails(arg1: string): Promise<explorer.GraphNode>;
+
+export function GetNodes(arg1: explorer.NodeFilter): Promise<explorer.GraphResponse>;

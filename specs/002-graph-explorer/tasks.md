@@ -186,21 +186,21 @@
 
 ### Frontend Implementation for User Story 3
 
-- [ ] T085 [P] [US3] Create NodeFilter type in frontend/src/types/graph.ts
-- [ ] T086 [US3] Implement FilterBar component in frontend/src/components/FilterBar.tsx (type selector)
-- [ ] T087 [US3] Implement FilterBar component: category filter (promoted/discovered/all) in frontend/src/components/FilterBar.tsx
-- [ ] T088 [US3] Implement FilterBar component: search input field in frontend/src/components/FilterBar.tsx
-- [ ] T089 [US3] Implement FilterBar component: clear filters button in frontend/src/components/FilterBar.tsx
-- [ ] T090 [US3] Integrate FilterBar into App.tsx with filter state management in frontend/src/App.tsx
-- [ ] T091 [US3] Implement filter application logic: call GetNodes() with NodeFilter in frontend/src/App.tsx
-- [ ] T091a [US3] Render ghost nodes with distinct visual style (greyed out, semi-transparent per FR-007a) in frontend/src/components/GraphCanvas.tsx
-- [ ] T092 [US3] Update GraphCanvas to highlight search results using node color change (distinct highlight color) and auto-zoom to center results in frontend/src/components/GraphCanvas.tsx
+- [X] T085 [P] [US3] Create NodeFilter type in frontend/src/types/graph.ts
+- [X] T086 [US3] Implement FilterBar component in frontend/src/components/FilterBar.tsx (type selector)
+- [X] T087 [US3] Implement FilterBar component: category filter (promoted/discovered/all) in frontend/src/components/FilterBar.tsx
+- [X] T088 [US3] Implement FilterBar component: search input field in frontend/src/components/FilterBar.tsx
+- [X] T089 [US3] Implement FilterBar component: clear filters button in frontend/src/components/FilterBar.tsx
+- [X] T090 [US3] Integrate FilterBar into App.tsx with filter state management in frontend/src/App.tsx
+- [X] T091 [US3] Implement filter application logic: call GetNodes() with NodeFilter in frontend/src/App.tsx
+- [X] T091a [US3] Render ghost nodes with distinct visual style (greyed out, semi-transparent per FR-007a) in frontend/src/components/GraphCanvas.tsx
+- [X] T092 [US3] Update GraphCanvas to highlight search results using node color change (distinct highlight color) and auto-zoom to center results in frontend/src/components/GraphCanvas.tsx
 
 ### Integration Tests for User Story 3
 
-- [ ] T093 [US3] Integration test: Filter by entity type updates graph in tests/integration/explorer/filter_test.go
-- [ ] T094 [US3] Integration test: Search by property value highlights matches in tests/integration/explorer/filter_test.go
-- [ ] T095 [US3] Integration test: Clear filters restores full graph in tests/integration/explorer/filter_test.go
+- [X] T093 [US3] Integration test: Filter by entity type updates graph in tests/integration/explorer/filter_test.go
+- [X] T094 [US3] Integration test: Search by property value highlights matches in tests/integration/explorer/filter_test.go
+- [X] T095 [US3] Integration test: Clear filters restores full graph in tests/integration/explorer/filter_test.go
 
 **Checkpoint**: At this point, User Story 3 should be fully functional - users can filter by type, category, search by property values, and clear filters
 
