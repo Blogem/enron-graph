@@ -22,10 +22,10 @@
 
 - [X] T001 Initialize Wails project structure using `wails init -n explorer -t react-ts`
 - [X] T002 Adapt Wails template to monorepo structure (move to cmd/explorer/ and frontend/)
-- [ ] T003 [P] Install frontend dependencies: react-force-graph, three, @types/three in frontend/package.json
-- [ ] T004 [P] Configure Wails build in wails.json to reference frontend/ directory
-- [ ] T005 [P] Create internal/explorer package directory structure
-- [ ] T006 [P] Add frontend/dist to .gitignore
+- [X] T003 [P] Install frontend dependencies: react-force-graph, three, @types/three in frontend/package.json
+- [X] T004 [P] Configure Wails build in wails.json to reference frontend/ directory
+- [X] T005 [P] Create internal/explorer package directory structure
+- [X] T006 [P] Add frontend/dist to .gitignore
 - [ ] T007 Verify Wails dev server starts with `wails dev` from cmd/explorer/
 
 ---

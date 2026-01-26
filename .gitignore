@@ -49,6 +49,9 @@ logs/
 
 # Generated files
 ent/generated/
+frontend/dist/
+frontend/node_modules/
+frontend/wailsjs/
 
 # Temporary files
 tmp/

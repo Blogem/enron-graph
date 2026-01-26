@@ -1,0 +1,14 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "explorer",
+  "outputfilename": "explorer",
+  "frontend:install": "cd ../../frontend && npm install",
+  "frontend:build": "cd ../../frontend && npm run build",
+  "frontend:dev:watcher": "cd ../../frontend && npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "wailsjsdir": "../../frontend/src",
+  "author": {
+    "name": "Blogem🜃",
+    "email": "git@troep.net"
+  }
+}
