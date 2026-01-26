@@ -68,15 +68,15 @@
 
 ### Backend Implementation for User Story 1
 
-- [ ] T022 [US1] Implement SchemaService interface in internal/explorer/schema_service.go
-- [ ] T023 [US1] Implement GetSchema() method using ent schema introspection for promoted types in internal/explorer/schema_service.go
-- [ ] T024 [US1] Implement GetSchema() method: query DiscoveredEntity table grouped by type in internal/explorer/schema_service.go
-- [ ] T025 [US1] Implement GetSchema() method: extract property definitions from JSONB using jsonb_object_keys in internal/explorer/schema_service.go
-- [ ] T026 [US1] Implement GetSchema() method: query sample values for each type in internal/explorer/schema_service.go
-- [ ] T027 [US1] Implement GetTypeDetails() method in internal/explorer/schema_service.go
-- [ ] T028 [US1] Implement RefreshSchema() method (clears cache, re-queries) in internal/explorer/schema_service.go
-- [ ] T029 [US1] Add SchemaService to Wails app binding in cmd/explorer/main.go
-- [ ] T030 [US1] Verify all contract tests pass for SchemaService
+- [X] T022 [US1] Implement SchemaService interface in internal/explorer/schema_service.go
+- [X] T023 [US1] Implement GetSchema() method using ent schema introspection for promoted types in internal/explorer/schema_service.go
+- [X] T024 [US1] Implement GetSchema() method: query DiscoveredEntity table grouped by type in internal/explorer/schema_service.go
+- [X] T025 [US1] Implement GetSchema() method: extract property definitions from JSONB using jsonb_object_keys in internal/explorer/schema_service.go
+- [X] T026 [US1] Implement GetSchema() method: query sample values for each type in internal/explorer/schema_service.go
+- [X] T027 [US1] Implement GetTypeDetails() method in internal/explorer/schema_service.go
+- [X] T028 [US1] Implement RefreshSchema() method (clears cache, re-queries) in internal/explorer/schema_service.go
+- [X] T029 [US1] Add SchemaService to Wails app binding in cmd/explorer/main.go
+- [X] T030 [US1] Verify all contract tests pass for SchemaService
 
 ### Frontend Implementation for User Story 1
 
