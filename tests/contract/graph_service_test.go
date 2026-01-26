@@ -422,3 +422,125 @@ func TestGraphService_GetNodes_CombinesMultipleFilters(t *testing.T) {
 		}
 	}
 }
+
+// Test GetNodes includes ghost nodes for edges outside filter (FR-007a)
+func TestGraphService_GetNodes_IncludesGhostNodesForCrossFilterEdges(t *testing.T) {
+	client, db := NewTestClientWithDB(t)
+	defer client.Close()
+	
+	ctx := context.Background()
+
+	// Create person entities
+	person1, _ := client.DiscoveredEntity.Create().
+		SetUniqueID("person-alice").
+		SetTypeCategory("person").
+		SetName("Alice").
+		SetConfidenceScore(0.95).
+		SetProperties(map[string]interface{}{"email": "alice@enron.com"}).
+		Save(ctx)
+
+	person2, _ := client.DiscoveredEntity.Create().
+		SetUniqueID("person-bob").
+		SetTypeCategory("person").
+		SetName("Bob").
+		SetConfidenceScore(0.95).
+		SetProperties(map[string]interface{}{"email": "bob@enron.com"}).
+		Save(ctx)
+
+	// Create organization entities
+	org1, _ := client.DiscoveredEntity.Create().
+		SetUniqueID("org-enron").
+		SetTypeCategory("organization").
+		SetName("Enron").
+		SetConfidenceScore(0.95).
+		SetProperties(map[string]interface{}{"industry": "Energy"}).
+		Save(ctx)
+
+	// Create relationship: person1 -> org1 (crosses filter boundary)
+	client.Relationship.Create().
+		SetType("WORKS_AT").
+		SetFromType("discovered_entity").
+		SetFromID(person1.ID).
+		SetToType("discovered_entity").
+		SetToID(org1.ID).
+		SetConfidenceScore(1.0).
+		Save(ctx)
+
+	// Create relationship: person1 -> person2 (within filter)
+	client.Relationship.Create().
+		SetType("KNOWS").
+		SetFromType("discovered_entity").
+		SetFromID(person1.ID).
+		SetToType("discovered_entity").
+		SetToID(person2.ID).
+		SetConfidenceScore(1.0).
+		Save(ctx)
+
+	service := explorer.NewGraphService(client, db)
+
+	// Filter by type="person" only
+	filter := explorer.NodeFilter{
+		Types: []string{"person"},
+		Limit: 100,
+	}
+	resp, err := service.GetNodes(ctx, filter)
+
+	if err != nil {
+		t.Fatalf("GetNodes failed: %v", err)
+	}
+
+	// Should have 2 regular nodes (person1, person2) + 1 ghost node (org1)
+	if len(resp.Nodes) != 3 {
+		t.Errorf("Expected 3 nodes (2 person + 1 ghost org), got %d", len(resp.Nodes))
+	}
+
+	// Check that we have exactly 1 ghost node
+	ghostCount := 0
+	regularCount := 0
+	var ghostNode explorer.GraphNode
+	for _, node := range resp.Nodes {
+		if node.IsGhost {
+			ghostCount++
+			ghostNode = node
+		} else {
+			regularCount++
+		}
+	}
+
+	if ghostCount != 1 {
+		t.Errorf("Expected 1 ghost node, got %d", ghostCount)
+	}
+
+	if regularCount != 2 {
+		t.Errorf("Expected 2 regular nodes, got %d", regularCount)
+	}
+
+	// Ghost node should be the org
+	if ghostNode.Type != "organization" {
+		t.Errorf("Expected ghost node to be organization, got %s", ghostNode.Type)
+	}
+
+	if ghostNode.ID != "org-enron" {
+		t.Errorf("Expected ghost node ID to be org-enron, got %s", ghostNode.ID)
+	}
+
+	// Should have 2 edges (person1->person2 and person1->org1)
+	if len(resp.Edges) != 2 {
+		t.Errorf("Expected 2 edges, got %d", len(resp.Edges))
+	}
+
+	// Verify edge to ghost node exists
+	foundCrossFilterEdge := false
+	for _, edge := range resp.Edges {
+		if edge.Target == "org-enron" {
+			foundCrossFilterEdge = true
+			if edge.Source != "person-alice" {
+				t.Errorf("Expected edge source to be person-alice, got %s", edge.Source)
+			}
+		}
+	}
+
+	if !foundCrossFilterEdge {
+		t.Error("Expected to find edge from person to organization (cross-filter edge)")
+	}
+}

@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 
+	esql "entgo.io/ent/dialect/sql"
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/ent/discoveredentity"
 	"github.com/Blogem/enron-graph/ent/email"
 	"github.com/Blogem/enron-graph/ent/relationship"
-	esql "entgo.io/ent/dialect/sql"
 )
 
 type GraphService struct {
@@ -154,6 +154,9 @@ func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphR
 
 	// Build nodes from entities
 	nodes := make([]GraphNode, 0, len(entities))
+	nodeIDSet := make(map[string]bool)
+	entityIDMap := make(map[int]string) // map from ent ID to unique_id
+	
 	for _, entity := range entities {
 		node := GraphNode{
 			ID:         entity.UniqueID,
@@ -163,13 +166,18 @@ func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphR
 			IsGhost:    false,
 		}
 		nodes = append(nodes, node)
+		nodeIDSet[entity.UniqueID] = true
+		entityIDMap[entity.ID] = entity.UniqueID
 	}
 
-	// Get edges between filtered nodes
-	edges, err := s.getEdgesBetweenNodes(ctx, entities)
+	// T080a: Get edges from filtered nodes (including edges to nodes outside filter)
+	edges, ghostNodes, err := s.getEdgesWithGhostNodes(ctx, entities, nodeIDSet)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get edges: %w", err)
 	}
+
+	// T080b: Add ghost nodes to response
+	nodes = append(nodes, ghostNodes...)
 
 	return &GraphResponse{
 		Nodes:      nodes,
@@ -434,6 +442,95 @@ func (s *GraphService) getEdgesBetweenNodes(ctx context.Context, entities []*ent
 	}
 
 	return edges, nil
+}
+
+// getEdgesWithGhostNodes returns edges from filtered nodes including edges to nodes outside the filter
+// Returns edges and ghost nodes for unmatched targets (FR-007a)
+func (s *GraphService) getEdgesWithGhostNodes(ctx context.Context, entities []*ent.DiscoveredEntity, nodeIDSet map[string]bool) ([]GraphEdge, []GraphNode, error) {
+	if len(entities) == 0 {
+		return []GraphEdge{}, []GraphNode{}, nil
+	}
+
+	// Build map of entity IDs
+	entityIDToUniqueID := make(map[int]string)
+	entityIDs := make([]int, 0, len(entities))
+	for _, e := range entities {
+		entityIDToUniqueID[e.ID] = e.UniqueID
+		entityIDs = append(entityIDs, e.ID)
+	}
+
+	// Query ALL relationships from filtered nodes (including to nodes outside filter)
+	rels, err := s.client.Relationship.
+		Query().
+		Where(
+			relationship.FromTypeEQ("discovered_entity"),
+			relationship.FromIDIn(entityIDs...),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Collect target entity IDs that are NOT in the filtered set
+	ghostEntityIDs := make(map[int]bool)
+	for _, rel := range rels {
+		if rel.ToType == "discovered_entity" {
+			targetUniqueID, ok := entityIDToUniqueID[rel.ToID]
+			// If target is not in our filtered set, it's a ghost node
+			if !ok {
+				ghostEntityIDs[rel.ToID] = true
+			} else if !nodeIDSet[targetUniqueID] {
+				ghostEntityIDs[rel.ToID] = true
+			}
+		}
+	}
+
+	// Fetch ghost entities to get their basic info
+	ghostNodes := make([]GraphNode, 0)
+	if len(ghostEntityIDs) > 0 {
+		ghostIDs := make([]int, 0, len(ghostEntityIDs))
+		for id := range ghostEntityIDs {
+			ghostIDs = append(ghostIDs, id)
+		}
+
+		ghostEntities, err := s.client.DiscoveredEntity.
+			Query().
+			Where(discoveredentity.IDIn(ghostIDs...)).
+			All(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Create ghost nodes
+		for _, entity := range ghostEntities {
+			ghostNodes = append(ghostNodes, GraphNode{
+				ID:         entity.UniqueID,
+				Type:       entity.TypeCategory,
+				Category:   "discovered",
+				Properties: map[string]interface{}{}, // Empty properties for ghost nodes
+				IsGhost:    true,
+			})
+			// Add to maps for edge creation
+			entityIDToUniqueID[entity.ID] = entity.UniqueID
+		}
+	}
+
+	// Convert to GraphEdges
+	edges := make([]GraphEdge, 0, len(rels))
+	for _, rel := range rels {
+		sourceID, sourceOK := entityIDToUniqueID[rel.FromID]
+		targetID, targetOK := entityIDToUniqueID[rel.ToID]
+
+		if sourceOK && targetOK {
+			edges = append(edges, GraphEdge{
+				Source: sourceID,
+				Target: targetID,
+				Type:   rel.Type,
+			})
+		}
+	}
+
+	return edges, ghostNodes, nil
 }
 
 func (s *GraphService) getNodeDegree(ctx context.Context, entityID int) (int, error) {

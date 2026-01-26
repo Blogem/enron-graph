@@ -487,4 +487,3 @@ func SeedMixedTypeGraphData(t *testing.T, client *ent.Client) {
 
 	t.Logf("Mixed type graph data seeded: %d entities (3 person, 2 org, 1 location, 1 concept)", len(entities))
 }
-

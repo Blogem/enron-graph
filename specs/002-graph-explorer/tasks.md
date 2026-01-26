@@ -176,13 +176,13 @@
 
 ### Backend Implementation for User Story 3
 
-- [ ] T080 [US3] Implement GetNodes() method with type filtering in internal/explorer/graph_service.go
-- [ ] T080a [US3] Implement GetNodes() to include edges to nodes outside filter (FR-007a) in internal/explorer/graph_service.go
-- [ ] T080b [US3] Mark unmatched target nodes as ghost placeholders (is_ghost=true per FR-007a) in internal/explorer/graph_service.go
-- [ ] T081 [US3] Implement GetNodes() method with category filtering in internal/explorer/graph_service.go
-- [ ] T082 [US3] Implement GetNodes() method with search query (case-insensitive property matching) in internal/explorer/graph_service.go
-- [ ] T083 [US3] Implement GetNodes() method with limit parameter in internal/explorer/graph_service.go
-- [ ] T084 [US3] Verify contract tests pass for GetNodes filtering
+- [X] T080 [US3] Implement GetNodes() method with type filtering in internal/explorer/graph_service.go
+- [X] T080a [US3] Implement GetNodes() to include edges to nodes outside filter (FR-007a) in internal/explorer/graph_service.go
+- [X] T080b [US3] Mark unmatched target nodes as ghost placeholders (is_ghost=true per FR-007a) in internal/explorer/graph_service.go
+- [X] T081 [US3] Implement GetNodes() method with category filtering in internal/explorer/graph_service.go
+- [X] T082 [US3] Implement GetNodes() method with search query (case-insensitive property matching) in internal/explorer/graph_service.go
+- [X] T083 [US3] Implement GetNodes() method with limit parameter in internal/explorer/graph_service.go
+- [X] T084 [US3] Verify contract tests pass for GetNodes filtering
 
 ### Frontend Implementation for User Story 3
 
