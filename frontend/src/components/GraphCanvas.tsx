@@ -12,6 +12,7 @@ interface GraphCanvasProps {
     onNodeClick: (node: GraphNodeWithPosition) => void;
     onNodeRightClick: (node: GraphNodeWithPosition) => void;
     onLoadMore?: (nodeId: string) => void;
+    onRecenterRef?: (recenter: () => void) => void;
 }
 
 const GraphCanvas: React.FC<GraphCanvasProps> = ({
@@ -21,7 +22,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
     expandedNodes,
     onNodeClick,
     onNodeRightClick,
-    onLoadMore
+    onLoadMore,
+    onRecenterRef
 }) => {
     const graphRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -135,6 +137,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
             graphRef.current.zoomToFit(400, 20);
         }
     }, []);
+
+    // Expose recenter function to parent component via callback ref (T109)
+    useEffect(() => {
+        if (onRecenterRef) {
+            onRecenterRef(handleRecenter);
+        }
+    }, [onRecenterRef, handleRecenter]);
 
     // Auto-zoom to highlighted search results
     useEffect(() => {

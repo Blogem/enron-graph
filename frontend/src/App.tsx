@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import './App.css';
 import './components/TypeDetailsPanel.css';
 import SchemaPanel from './components/SchemaPanel';
@@ -8,6 +8,7 @@ import FilterBar from './components/FilterBar';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import Tooltip from './components/Tooltip';
+import KeyboardHelp from './components/KeyboardHelp';
 import { wailsAPI } from './services/wails';
 import type { explorer } from './wailsjs/go/models';
 import type { GraphData, GraphNodeWithPosition, ExpandedNodeState, NodeFilter, GraphEdge } from './types/graph';
@@ -32,6 +33,9 @@ function App() {
     // Filter state
     const [activeFilter, setActiveFilter] = useState<NodeFilter>({});
     const [highlightedNodeIds, setHighlightedNodeIds] = useState<Set<string>>(new Set());
+
+    // Graph recenter callback ref (T109)
+    const graphRecenterRef = useRef<(() => void) | null>(null);
 
     // Load schema on mount
     useEffect(() => {
@@ -331,13 +335,23 @@ function App() {
         setSelectedNode(null);
     }, []);
 
-    // Keyboard shortcuts
+    // Keyboard shortcuts (T109)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Escape: Clear selection
             if (e.key === 'Escape') {
+                e.preventDefault(); // Prevent browser beep
                 setSelectedNode(null);
                 setSelectedType(null);
                 setSelectedTypeName(null);
+            }
+            // Space: Recenter graph view
+            else if (e.key === ' ' || e.code === 'Space') {
+                // Prevent default space behavior (page scroll)
+                e.preventDefault();
+                if (graphRecenterRef.current) {
+                    graphRecenterRef.current();
+                }
             }
         };
 
@@ -398,6 +412,7 @@ function App() {
                                     onNodeClick={handleNodeClick}
                                     onNodeRightClick={handleNodeRightClick}
                                     onLoadMore={handleLoadMore}
+                                    onRecenterRef={(fn) => { graphRecenterRef.current = fn; }}
                                 />
                             )}
                             {!graphLoading && !graphError && graphData.nodes.length === 0 && (
@@ -478,6 +493,7 @@ function App() {
                         </div>
                     )}
                 </div>
+                <KeyboardHelp />
             </div>
         </ErrorBoundary>
     );
