@@ -39,7 +39,8 @@ function App() {
     useEffect(() => {
         const hasActiveFilter = activeFilter.types?.length || activeFilter.category || activeFilter.search_query;
         if (!hasActiveFilter) {
-            loadRandomNodes(100);
+            const limit = activeFilter.limit || 100;
+            loadRandomNodes(limit);
         }
     }, []);
 
@@ -49,8 +50,9 @@ function App() {
         if (hasActiveFilter) {
             applyFilters(activeFilter);
         } else {
-            // When filters are cleared, load random nodes again
-            loadRandomNodes(100);
+            // When filters are cleared, reload with current limit setting
+            const limit = activeFilter.limit || 100;
+            loadRandomNodes(limit);
         }
     }, [activeFilter]);
 

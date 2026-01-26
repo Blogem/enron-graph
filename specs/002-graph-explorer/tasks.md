@@ -237,7 +237,7 @@
 
 **Purpose**: Performance optimization, error handling, documentation, and final integration
 
-- [ ] T105 [P] Optimize force-graph rendering performance for 1000+ nodes (verify SC-008: <500ms pan/zoom) in frontend/src/components/GraphCanvas.tsx
+- [X] T105 [P] Optimize force-graph rendering performance for 1000+ nodes (verify SC-008: <500ms pan/zoom) in frontend/src/components/GraphCanvas.tsx
 - [ ] T106 [P] Add comprehensive error boundaries for React components in frontend/src/App.tsx
 - [ ] T107 [P] Implement loading skeletons for schema and graph panels in frontend/src/components/
 - [ ] T108 [P] Add tooltips for UI controls and graph nodes in frontend/src/components/

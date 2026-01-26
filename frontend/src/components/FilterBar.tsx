@@ -14,6 +14,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ schema, onFilterChange, initialFi
     const [category, setCategory] = useState<string>(initialFilter?.category || 'all');
     const [searchQuery, setSearchQuery] = useState<string>(initialFilter?.search_query || '');
     const [limit, setLimit] = useState<number>(initialFilter?.limit || 100);
+    const [limitInput, setLimitInput] = useState<string>(String(initialFilter?.limit || 100));
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
     // Debounce search query
@@ -170,16 +171,68 @@ const FilterBar: React.FC<FilterBarProps> = ({ schema, onFilterChange, initialFi
 
                     <div className="filter-section">
                         <label className="filter-label" htmlFor="limit-input">Result Limit</label>
-                        <input
-                            id="limit-input"
-                            type="number"
-                            className="limit-input"
-                            min="10"
-                            max="1000"
-                            step="10"
-                            value={limit}
-                            onChange={(e) => setLimit(parseInt(e.target.value, 10) || 100)}
-                        />
+                        <div className="limit-controls">
+                            <input
+                                id="limit-input"
+                                type="number"
+                                className="limit-input"
+                                min="10"
+                                max="2000"
+                                step="10"
+                                value={limitInput}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    setLimitInput(value);
+                                    const numValue = parseInt(value, 10);
+                                    if (!isNaN(numValue) && numValue > 0) {
+                                        setLimit(numValue);
+                                    }
+                                }}
+                                onBlur={(e) => {
+                                    const value = e.target.value;
+                                    const numValue = parseInt(value, 10);
+                                    if (isNaN(numValue) || numValue < 10) {
+                                        setLimitInput('100');
+                                        setLimit(100);
+                                    } else {
+                                        // Update input to show the actual number (remove leading zeros, etc)
+                                        setLimitInput(String(numValue));
+                                    }
+                                }}
+                            />
+                            <div className="limit-presets">
+                                <button
+                                    className={`preset-btn ${limit === 100 ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setLimit(100);
+                                        setLimitInput('100');
+                                    }}
+                                    title="Load 100 nodes"
+                                >
+                                    100
+                                </button>
+                                <button
+                                    className={`preset-btn ${limit === 500 ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setLimit(500);
+                                        setLimitInput('500');
+                                    }}
+                                    title="Load 500 nodes"
+                                >
+                                    500
+                                </button>
+                                <button
+                                    className={`preset-btn ${limit === 1000 ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setLimit(1000);
+                                        setLimitInput('1000');
+                                    }}
+                                    title="Load 1000 nodes - Performance test"
+                                >
+                                    1000 🚀
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="filter-actions">

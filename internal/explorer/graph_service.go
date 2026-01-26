@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 
 	esql "entgo.io/ent/dialect/sql"
 	"github.com/Blogem/enron-graph/ent"
@@ -86,19 +87,11 @@ func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphR
 	}
 
 	// Filter by category if specified
-	// Note: Currently all entities in DiscoveredEntity are "discovered" category
-	// Promoted types (like Email) would need separate handling
 	if filter.Category == "discovered" {
 		// Already querying DiscoveredEntity, so this is default behavior
 	} else if filter.Category == "promoted" {
-		// For now, return empty results as we're only querying DiscoveredEntity
-		// Future enhancement: query Email and other promoted types
-		return &GraphResponse{
-			Nodes:      []GraphNode{},
-			Edges:      []GraphEdge{},
-			TotalNodes: 0,
-			HasMore:    false,
-		}, nil
+		// Query promoted types (e.g., Email table)
+		return s.getPromotedNodes(ctx, filter)
 	}
 
 	// Apply search query if specified
@@ -611,4 +604,208 @@ func (s *GraphService) getNodeDegree(ctx context.Context, entityID int) (int, er
 	}
 
 	return outgoing + incoming, nil
+}
+
+// getPromotedNodes returns nodes from promoted types (dynamically discovered from database tables)
+func (s *GraphService) getPromotedNodes(ctx context.Context, filter NodeFilter) (*GraphResponse, error) {
+	nodes := []GraphNode{}
+	edges := []GraphEdge{}
+	totalCount := 0
+
+	limit := filter.Limit
+	if limit == 0 {
+		limit = 100
+	}
+
+	// Dynamically discover promoted type tables (same logic as SchemaService)
+	tableQuery := `
+		SELECT table_name
+		FROM information_schema.tables
+		WHERE table_schema = 'public'
+		AND table_type = 'BASE TABLE'
+		AND table_name NOT IN ('relationships', 'discovered_entities', 'schema_promotions')
+		ORDER BY table_name
+	`
+
+	rows, err := s.db.QueryContext(ctx, tableQuery)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query promoted tables: %w", err)
+	}
+	defer rows.Close()
+
+	tableNames := []string{}
+	for rows.Next() {
+		var tableName string
+		if err := rows.Scan(&tableName); err != nil {
+			continue
+		}
+		tableNames = append(tableNames, tableName)
+	}
+
+	// Query each promoted table
+	remainingLimit := limit
+	for _, tableName := range tableNames {
+		if remainingLimit <= 0 {
+			break
+		}
+
+		// Skip if type filter is specified and this table is not in the list
+		if len(filter.Types) > 0 {
+			found := false
+			for _, t := range filter.Types {
+				// Match table name (case-insensitive)
+				if tableName == t || tableName+"s" == t || tableName == t+"s" {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+
+		// Query the table for nodes
+		tableNodes, err := s.queryPromotedTable(ctx, tableName, remainingLimit, filter.SearchQuery)
+		if err != nil {
+			log.Printf("[getPromotedNodes] Error querying table %s: %v", tableName, err)
+			continue
+		}
+
+		nodes = append(nodes, tableNodes...)
+		remainingLimit -= len(tableNodes)
+
+		// Get count for this table
+		countQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
+		var count int
+		if err := s.db.QueryRowContext(ctx, countQuery).Scan(&count); err == nil {
+			totalCount += count
+		}
+	}
+
+	return &GraphResponse{
+		Nodes:      nodes,
+		Edges:      edges,
+		TotalNodes: totalCount,
+		HasMore:    totalCount > len(nodes),
+	}, nil
+}
+
+// queryPromotedTable queries a specific promoted table and returns GraphNodes
+func (s *GraphService) queryPromotedTable(ctx context.Context, tableName string, limit int, searchQuery string) ([]GraphNode, error) {
+	// Get column names for this table
+	columnQuery := `
+		SELECT column_name
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+		AND table_name = $1
+		ORDER BY ordinal_position
+	`
+
+	columnRows, err := s.db.QueryContext(ctx, columnQuery, tableName)
+	if err != nil {
+		return nil, err
+	}
+	defer columnRows.Close()
+
+	columns := []string{}
+	var idColumn string
+	for columnRows.Next() {
+		var colName string
+		if err := columnRows.Scan(&colName); err != nil {
+			continue
+		}
+		columns = append(columns, colName)
+		// Try to find ID column
+		if idColumn == "" && (colName == "id" || colName == "message_id" || colName == "unique_id") {
+			idColumn = colName
+		}
+	}
+
+	if len(columns) == 0 {
+		return nil, fmt.Errorf("no columns found for table %s", tableName)
+	}
+
+	// Default to first column if no ID column found
+	if idColumn == "" {
+		idColumn = columns[0]
+	}
+
+	// Build column list (exclude ID since we're selecting it separately)
+	otherColumns := []string{}
+	for _, col := range columns {
+		if col != idColumn {
+			otherColumns = append(otherColumns, col)
+		}
+	}
+
+	// Build SELECT query
+	selectCols := idColumn
+	if len(otherColumns) > 0 {
+		selectCols += ", " + strings.Join(otherColumns, ", ")
+	}
+
+	query := fmt.Sprintf("SELECT %s FROM %s", selectCols, tableName)
+
+	// Add search filter if specified
+	if searchQuery != "" {
+		// Simple text search across all columns
+		whereClauses := []string{}
+		for _, col := range columns {
+			whereClauses = append(whereClauses, fmt.Sprintf("CAST(%s AS TEXT) ILIKE $1", col))
+		}
+		query += " WHERE (" + strings.Join(whereClauses, " OR ") + ")"
+	}
+
+	query += fmt.Sprintf(" LIMIT %d", limit)
+
+	var queryRows *sql.Rows
+	if searchQuery != "" {
+		searchPattern := "%" + searchQuery + "%"
+		queryRows, err = s.db.QueryContext(ctx, query, searchPattern)
+	} else {
+		queryRows, err = s.db.QueryContext(ctx, query)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	defer queryRows.Close()
+
+	nodes := []GraphNode{}
+	for queryRows.Next() {
+		// Prepare scan destinations
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(values))
+		for i := range values {
+			valuePtrs[i] = &values[i]
+		}
+
+		if err := queryRows.Scan(valuePtrs...); err != nil {
+			continue
+		}
+
+		// Extract ID (first value)
+		var nodeID string
+		if values[0] != nil {
+			nodeID = fmt.Sprintf("%v", values[0])
+		}
+
+		// Build properties map
+		properties := make(map[string]interface{})
+		for i, col := range columns {
+			if values[i] != nil {
+				properties[col] = values[i]
+			}
+		}
+
+		nodes = append(nodes, GraphNode{
+			ID:         nodeID,
+			Type:       tableName,
+			Category:   "promoted",
+			Properties: properties,
+			IsGhost:    false,
+		})
+	}
+
+	return nodes, nil
 }
