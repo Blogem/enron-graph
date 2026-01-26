@@ -69,7 +69,7 @@ Download the emails.csv from [Kaggle](https://www.kaggle.com/datasets/wcukierski
 
 ```bash
 # Load emails from CSV
-go run cmd/loader/main.go --csv-path assets/enron-emails/emails.csv --batch-size 100 --workers 50
+go run cmd/loader/main.go --csv-path assets/enron-emails/emails.csv --workers 50
 
 # Load with entity extraction
 go run cmd/loader/main.go --csv-path assets/enron-emails/emails.csv --extract
@@ -79,17 +79,23 @@ go run cmd/loader/main.go --csv-path assets/enron-emails/emails.csv --extract
 
 ```bash
 # Start TUI application
+go run cmd/tui/main.go
+
+# Or start API server
 go run cmd/server/main.go
 ```
 
 ### Analyze Schema Evolution
 
 ```bash
-# Detect type promotion candidates
+# Detect type promotion candidates (default: min 5 occurrences, 40% consistency)
 go run cmd/analyst/main.go analyze
 
+# Customize thresholds
+go run cmd/analyst/main.go analyze --min-occurrences 3 --min-consistency 0.5 --top 5
+
 # Promote a type to core schema
-go run cmd/analyst/main.go promote --type person
+go run cmd/analyst/main.go promote person
 ```
 
 ## Project Structure

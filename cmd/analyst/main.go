@@ -25,6 +25,12 @@ var rootCmd = &cobra.Command{
 	Long:  "Analyzes discovered entities to identify promotion candidates and execute schema promotions",
 }
 
+var (
+	minOccurrences int
+	minConsistency float64
+	topN           int
+)
+
 var analyzeCmd = &cobra.Command{
 	Use:   "analyze",
 	Short: "Analyze entities and rank promotion candidates",
@@ -43,6 +49,11 @@ var promoteCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(promoteCmd)
+
+	// Add flags to analyze command
+	analyzeCmd.Flags().IntVar(&minOccurrences, "min-occurrences", 5, "Minimum number of entity occurrences")
+	analyzeCmd.Flags().Float64Var(&minConsistency, "min-consistency", 0.4, "Minimum property consistency (0.0-1.0)")
+	analyzeCmd.Flags().IntVar(&topN, "top", 10, "Number of top candidates to display")
 }
 
 func getDBClient() (*ent.Client, error) {
@@ -68,10 +79,10 @@ func runAnalyze(cmd *cobra.Command, args []string) error {
 	defer client.Close()
 
 	fmt.Println("Running pattern detection and analysis...")
+	fmt.Printf("Thresholds: minOccurrences=%d, minConsistency=%.1f%%, topN=%d\n\n", minOccurrences, minConsistency*100, topN)
 
 	// Run pattern detection and ranking
-	// Parameters: minOccurrences=5, minConsistency=0.6, topN=10
-	candidates, err := analyst.AnalyzeAndRankCandidates(ctx, client, 5, 0.6, 10)
+	candidates, err := analyst.AnalyzeAndRankCandidates(ctx, client, minOccurrences, minConsistency, topN)
 	if err != nil {
 		return fmt.Errorf("analysis failed: %w", err)
 	}

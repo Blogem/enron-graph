@@ -139,6 +139,8 @@ func DetectPatterns(ctx context.Context, client *ent.Client) (map[string]*Patter
 
 	// Group by type
 	typeGroups := make(map[string]*PatternStats)
+	entityTypeMap := make(map[int]string) // Track entity ID to type mapping
+
 	for _, entity := range entities {
 		if typeGroups[entity.TypeCategory] == nil {
 			typeGroups[entity.TypeCategory] = &PatternStats{
@@ -149,6 +151,7 @@ func DetectPatterns(ctx context.Context, client *ent.Client) (map[string]*Patter
 		}
 
 		stats := typeGroups[entity.TypeCategory]
+		entityTypeMap[entity.ID] = entity.TypeCategory
 
 		// Count frequency
 		stats.Frequency++
@@ -156,6 +159,34 @@ func DetectPatterns(ctx context.Context, client *ent.Client) (map[string]*Patter
 		// Parse and count properties
 		for prop := range entity.Properties {
 			stats.Properties[prop]++
+		}
+	}
+
+	// Query all relationships involving discovered entities
+	relationships, err := client.Relationship.
+		Query().
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Count relationships per entity type
+	for _, rel := range relationships {
+		// Count relationships where discovered_entity is the source
+		if rel.FromType == "discovered_entity" {
+			if entityType, ok := entityTypeMap[rel.FromID]; ok {
+				if typeGroups[entityType] != nil {
+					typeGroups[entityType].TotalRelationships++
+				}
+			}
+		}
+		// Count relationships where discovered_entity is the target
+		if rel.ToType == "discovered_entity" {
+			if entityType, ok := entityTypeMap[rel.ToID]; ok {
+				if typeGroups[entityType] != nil {
+					typeGroups[entityType].TotalRelationships++
+				}
+			}
 		}
 	}
 
