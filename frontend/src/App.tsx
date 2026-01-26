@@ -5,6 +5,7 @@ import SchemaPanel from './components/SchemaPanel';
 import GraphCanvas from './components/GraphCanvas';
 import DetailPanel from './components/DetailPanel';
 import FilterBar from './components/FilterBar';
+import ErrorBoundary from './components/ErrorBoundary';
 import { wailsAPI } from './services/wails';
 import type { explorer } from './wailsjs/go/models';
 import type { GraphData, GraphNodeWithPosition, ExpandedNodeState, NodeFilter, GraphEdge } from './types/graph';
@@ -343,121 +344,143 @@ function App() {
     }, []);
 
     return (
-        <div id="App">
-            <div className="app-header">
-                <h1>Graph Explorer</h1>
-            </div>
-            <div className="app-container">
-                <div className="sidebar">
-                    <SchemaPanel
-                        schema={schema}
-                        loading={schemaLoading}
-                        error={schemaError}
-                        selectedTypeName={selectedTypeName}
-                        onRefresh={handleRefreshSchema}
-                        onTypeClick={handleTypeClick}
-                    />
+        <ErrorBoundary componentName="Graph Explorer Application">
+            <div id="App">
+                <div className="app-header">
+                    <h1>Graph Explorer</h1>
                 </div>
-                <div className="main-content">
-                    <FilterBar
-                        schema={schema}
-                        onFilterChange={handleFilterChange}
-                        initialFilter={activeFilter}
-                    />
-                    {graphLoading && (
-                        <div className="loading-overlay">
-                            <div className="spinner"></div>
-                            <p>Loading graph...</p>
-                        </div>
-                    )}
-                    {graphError && (
-                        <div className="error-message">
-                            <p>⚠️ {graphError}</p>
-                            <button onClick={() => loadRandomNodes(100)}>Retry</button>
-                        </div>
-                    )}
-                    {!graphLoading && !graphError && graphData.nodes.length > 0 && (
-                        <GraphCanvas
-                            data={graphData}
-                            selectedNodeId={selectedNode?.id || null}
-                            highlightedNodeIds={highlightedNodeIds}
-                            expandedNodes={expandedNodes}
-                            onNodeClick={handleNodeClick}
-                            onNodeRightClick={handleNodeRightClick}
-                            onLoadMore={handleLoadMore}
-                        />
-                    )}
-                    {!graphLoading && !graphError && graphData.nodes.length === 0 && (
-                        <div className="loading-overlay">
-                            <p>No nodes to display</p>
-                        </div>
-                    )}
-                </div>
-                <div className="sidebar-right">
-                    {selectedType ? (
-                        <div className="type-details-panel">
-                            <div className="detail-header">
-                                <div className="detail-title">
-                                    <h2>{selectedType.name}</h2>
-                                    <span className={`type-badge ${selectedType.name.toLowerCase()}`}>
-                                        {selectedType.count} instances
-                                    </span>
-                                </div>
-                                <button className="close-button" onClick={() => { setSelectedType(null); setSelectedTypeName(null); }} title="Close (Escape)">
-                                    ✕
-                                </button>
-                            </div>
-                            {detailsLoading ? (
-                                <div className="detail-loading">
-                                    <div className="spinner-large"></div>
-                                    <p>Loading type details...</p>
-                                </div>
-                            ) : (
-                                <div className="detail-content">
-                                    <div className="detail-section">
-                                        <h3>Properties ({selectedType.properties?.length || 0})</h3>
-                                        {selectedType.properties && selectedType.properties.length > 0 ? (
-                                            <div className="properties-list">
-                                                {selectedType.properties.map((prop, idx) => (
-                                                    <div key={idx} className="property-item">
-                                                        <div className="property-key">{prop.name}</div>
-                                                        <div className="property-meta">
-                                                            <span className="property-type">{prop.data_type}</span>
-                                                            {prop.sample_value && prop.sample_value.length > 0 && (
-                                                                <div className="sample-values">
-                                                                    <strong>Samples:</strong>
-                                                                    <ul>
-                                                                        {prop.sample_value.slice(0, 3).map((val, i) => (
-                                                                            <li key={i}>{String(val)}</li>
-                                                                        ))}
-                                                                    </ul>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="empty-message">No properties defined</p>
-                                        )}
-                                    </div>
+                <div className="app-container">
+                    <div className="sidebar">
+                        <ErrorBoundary
+                            componentName="Schema Panel"
+                            resetKeys={[schema?.promoted_types?.length || 0, schema?.discovered_types?.length || 0]}
+                        >
+                            <SchemaPanel
+                                schema={schema}
+                                loading={schemaLoading}
+                                error={schemaError}
+                                selectedTypeName={selectedTypeName}
+                                onRefresh={handleRefreshSchema}
+                                onTypeClick={handleTypeClick}
+                            />
+                        </ErrorBoundary>
+                    </div>
+                    <div className="main-content">
+                        <ErrorBoundary
+                            componentName="Filter Bar"
+                            resetKeys={[schema?.promoted_types?.length || 0]}
+                        >
+                            <FilterBar
+                                schema={schema}
+                                onFilterChange={handleFilterChange}
+                                initialFilter={activeFilter}
+                            />
+                        </ErrorBoundary>
+                        <ErrorBoundary
+                            componentName="Graph Canvas"
+                            resetKeys={[graphData.nodes.length, graphData.links.length]}
+                        >
+                            {graphLoading && (
+                                <div className="loading-overlay">
+                                    <div className="spinner"></div>
+                                    <p>Loading graph...</p>
                                 </div>
                             )}
-                        </div>
-                    ) : (
-                        <DetailPanel
-                            node={selectedNode}
-                            loading={loadingNodeId === selectedNode?.id}
-                            expandedNodeState={selectedNode ? expandedNodes.get(selectedNode.id) || null : null}
-                            onLoadMore={handleLoadMore}
-                            onClose={handleCloseDetail}
-                            relatedEntities={relatedEntities}
-                            onExpandRelationship={handleExpandRelationship}
-                        />
-                    )}
+                            {graphError && (
+                                <div className="error-message">
+                                    <p>⚠️ {graphError}</p>
+                                    <button onClick={() => loadRandomNodes(100)}>Retry</button>
+                                </div>
+                            )}
+                            {!graphLoading && !graphError && graphData.nodes.length > 0 && (
+                                <GraphCanvas
+                                    data={graphData}
+                                    selectedNodeId={selectedNode?.id || null}
+                                    highlightedNodeIds={highlightedNodeIds}
+                                    expandedNodes={expandedNodes}
+                                    onNodeClick={handleNodeClick}
+                                    onNodeRightClick={handleNodeRightClick}
+                                    onLoadMore={handleLoadMore}
+                                />
+                            )}
+                            {!graphLoading && !graphError && graphData.nodes.length === 0 && (
+                                <div className="loading-overlay">
+                                    <p>No nodes to display</p>
+                                </div>
+                            )}
+                        </ErrorBoundary>
+                    </div>
+                    <div className="sidebar-right">
+                        <ErrorBoundary
+                            componentName="Detail Panel"
+                            resetKeys={[selectedNode?.id || '', selectedType?.name || '']}
+                        >
+                            {selectedType ? (
+                                <div className="type-details-panel">
+                                    <div className="detail-header">
+                                        <div className="detail-title">
+                                            <h2>{selectedType.name}</h2>
+                                            <span className={`type-badge ${selectedType.name.toLowerCase()}`}>
+                                                {selectedType.count} instances
+                                            </span>
+                                        </div>
+                                        <button className="close-button" onClick={() => { setSelectedType(null); setSelectedTypeName(null); }} title="Close (Escape)">
+                                            ✕
+                                        </button>
+                                    </div>
+                                    {detailsLoading ? (
+                                        <div className="detail-loading">
+                                            <div className="spinner-large"></div>
+                                            <p>Loading type details...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="detail-content">
+                                            <div className="detail-section">
+                                                <h3>Properties ({selectedType.properties?.length || 0})</h3>
+                                                {selectedType.properties && selectedType.properties.length > 0 ? (
+                                                    <div className="properties-list">
+                                                        {selectedType.properties.map((prop, idx) => (
+                                                            <div key={idx} className="property-item">
+                                                                <div className="property-key">{prop.name}</div>
+                                                                <div className="property-meta">
+                                                                    <span className="property-type">{prop.data_type}</span>
+                                                                    {prop.sample_value && prop.sample_value.length > 0 && (
+                                                                        <div className="sample-values">
+                                                                            <strong>Samples:</strong>
+                                                                            <ul>
+                                                                                {prop.sample_value.slice(0, 3).map((val, i) => (
+                                                                                    <li key={i}>{String(val)}</li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="empty-message">No properties defined</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <DetailPanel
+                                    node={selectedNode}
+                                    loading={loadingNodeId === selectedNode?.id}
+                                    expandedNodeState={selectedNode ? expandedNodes.get(selectedNode.id) || null : null}
+                                    onLoadMore={handleLoadMore}
+                                    onClose={handleCloseDetail}
+                                    relatedEntities={relatedEntities}
+                                    onExpandRelationship={handleExpandRelationship}
+                                />
+                            )}
+                        </ErrorBoundary>
+                    </div>
                 </div>
             </div>
-        </div>
+        </ErrorBoundary>
     );
 }
 
