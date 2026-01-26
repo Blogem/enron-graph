@@ -2,12 +2,70 @@ package contract
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"testing"
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/ent/enttest"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+const (
+	testDBHost     = "localhost"
+	testDBPort     = "5432"
+	testDBUser     = "enron"
+	testDBPassword = "enron123"
+	testDBName     = "enron_contract_test"
+)
+
+// NewTestClientWithDB creates both an ent client and the underlying SQL DB for testing with PostgreSQL
+func NewTestClientWithDB(t *testing.T) (*ent.Client, *sql.DB) {
+	t.Helper()
+
+	// Connect to postgres database to create test database
+	adminDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=postgres sslmode=disable",
+		testDBHost, testDBPort, testDBUser, testDBPassword)
+
+	adminDB, err := sql.Open("postgres", adminDSN)
+	if err != nil {
+		t.Fatalf("Failed to connect to postgres: %v", err)
+	}
+	defer adminDB.Close()
+
+	// Drop test database if it exists (cleanup from previous failed tests)
+	_, _ = adminDB.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDBName))
+
+	// Create fresh test database
+	_, err = adminDB.Exec(fmt.Sprintf("CREATE DATABASE %s", testDBName))
+	if err != nil {
+		t.Fatalf("Failed to create test database: %v", err)
+	}
+
+	// Connect to test database
+	testDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		testDBHost, testDBPort, testDBUser, testDBPassword, testDBName)
+
+	testDB, err := sql.Open("postgres", testDSN)
+	if err != nil {
+		t.Fatalf("Failed to connect to test database: %v", err)
+	}
+
+	// Create ent client with schema migration
+	client := enttest.Open(t, "postgres", testDSN)
+
+	// Register cleanup function
+	t.Cleanup(func() {
+		client.Close()
+		testDB.Close()
+
+		// Drop test database
+		_, _ = adminDB.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", testDBName))
+	})
+
+	return client, testDB
+}
 
 func NewTestClient(t *testing.T) *ent.Client {
 	opts := []enttest.Option{

@@ -10,11 +10,11 @@ import (
 
 // T016: Test GetSchema returns promoted types
 func TestSchemaService_GetSchema_ReturnsPromotedTypes(t *testing.T) {
-	client := NewTestClient(t)
+	client, db := NewTestClientWithDB(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
-	service := explorer.NewSchemaService(client)
+	service := explorer.NewSchemaService(client, db)
 	ctx := context.Background()
 
 	response, err := service.GetSchema(ctx)
@@ -26,7 +26,7 @@ func TestSchemaService_GetSchema_ReturnsPromotedTypes(t *testing.T) {
 		t.Fatal("Expected promoted types, got none")
 	}
 
-	// Verify person and organization are in promoted types
+	// Verify emails table is in promoted types (actual Ent schema table)
 	typeNames := make(map[string]bool)
 	for _, pt := range response.PromotedTypes {
 		typeNames[pt.Name] = true
@@ -35,21 +35,18 @@ func TestSchemaService_GetSchema_ReturnsPromotedTypes(t *testing.T) {
 		}
 	}
 
-	if !typeNames["person"] {
-		t.Error("Expected 'person' in promoted types")
-	}
-	if !typeNames["organization"] {
-		t.Error("Expected 'organization' in promoted types")
+	if !typeNames["emails"] {
+		t.Error("Expected 'emails' in promoted types (actual Ent table)")
 	}
 }
 
 // T017: Test GetSchema returns discovered types
 func TestSchemaService_GetSchema_ReturnsDiscoveredTypes(t *testing.T) {
-	client := NewTestClient(t)
+	client, db := NewTestClientWithDB(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
-	service := explorer.NewSchemaService(client)
+	service := explorer.NewSchemaService(client, db)
 	ctx := context.Background()
 
 	response, err := service.GetSchema(ctx)
@@ -80,11 +77,11 @@ func TestSchemaService_GetSchema_ReturnsDiscoveredTypes(t *testing.T) {
 
 // T018: Test GetSchema has no overlap between promoted and discovered
 func TestSchemaService_GetSchema_NoOverlapBetweenCategories(t *testing.T) {
-	client := NewTestClient(t)
+	client, db := NewTestClientWithDB(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
-	service := explorer.NewSchemaService(client)
+	service := explorer.NewSchemaService(client, db)
 	ctx := context.Background()
 
 	response, err := service.GetSchema(ctx)
@@ -112,11 +109,11 @@ func TestSchemaService_GetSchema_NoOverlapBetweenCategories(t *testing.T) {
 
 // T019: Test GetSchema includes property metadata
 func TestSchemaService_GetSchema_IncludesPropertyMetadata(t *testing.T) {
-	client := NewTestClient(t)
+	client, db := NewTestClientWithDB(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
-	service := explorer.NewSchemaService(client)
+	service := explorer.NewSchemaService(client, db)
 	ctx := context.Background()
 
 	response, err := service.GetSchema(ctx)
@@ -149,13 +146,14 @@ func TestSchemaService_GetSchema_IncludesPropertyMetadata(t *testing.T) {
 
 // T020: Test GetTypeDetails returns type details
 func TestSchemaService_GetTypeDetails_ReturnsTypeDetails(t *testing.T) {
-	client := NewTestClient(t)
+	client, db := NewTestClientWithDB(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
-	service := explorer.NewSchemaService(client)
+	service := explorer.NewSchemaService(client, db)
 	ctx := context.Background()
 
+	// Query for a discovered type (person is in discovered_entities, not an actual table)
 	details, err := service.GetTypeDetails(ctx, "person")
 	if err != nil {
 		t.Fatalf("GetTypeDetails failed: %v", err)
@@ -173,8 +171,9 @@ func TestSchemaService_GetTypeDetails_ReturnsTypeDetails(t *testing.T) {
 		t.Errorf("Expected count > 0, got %d", details.Count)
 	}
 
-	if !details.IsPromoted {
-		t.Error("Expected person to be promoted")
+	// person is a discovered type, not promoted (no actual table)
+	if details.IsPromoted {
+		t.Error("Expected person to NOT be promoted (it's a discovered type)")
 	}
 
 	if len(details.Properties) == 0 {
@@ -184,11 +183,11 @@ func TestSchemaService_GetTypeDetails_ReturnsTypeDetails(t *testing.T) {
 
 // T021: Test RefreshSchema updates schema
 func TestSchemaService_RefreshSchema_UpdatesSchema(t *testing.T) {
-	client := NewTestClient(t)
+	client, db := NewTestClientWithDB(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
-	service := explorer.NewSchemaService(client)
+	service := explorer.NewSchemaService(client, db)
 	ctx := context.Background()
 
 	// Get initial schema
@@ -197,14 +196,17 @@ func TestSchemaService_RefreshSchema_UpdatesSchema(t *testing.T) {
 		t.Fatalf("Initial GetSchema failed: %v", err)
 	}
 
-	initialPromotedCount := len(initialResponse.PromotedTypes)
+	initialDiscoveredCount := len(initialResponse.DiscoveredTypes)
 
-	// Add a new promoted type
-	_, err = client.SchemaPromotion.Create().
-		SetTypeName("location").
+	// Add a new entity with a new type to discovered_entities
+	_, err = client.DiscoveredEntity.Create().
+		SetUniqueID("event-meeting-123").
+		SetTypeCategory("event").
+		SetName("Board Meeting").
+		SetConfidenceScore(0.80).
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("Failed to add new promotion: %v", err)
+		t.Fatalf("Failed to add new entity: %v", err)
 	}
 
 	// Refresh schema
@@ -219,8 +221,8 @@ func TestSchemaService_RefreshSchema_UpdatesSchema(t *testing.T) {
 		t.Fatalf("Updated GetSchema failed: %v", err)
 	}
 
-	if len(updatedResponse.PromotedTypes) != initialPromotedCount+1 {
-		t.Errorf("Expected %d promoted types after refresh, got %d",
-			initialPromotedCount+1, len(updatedResponse.PromotedTypes))
+	if len(updatedResponse.DiscoveredTypes) != initialDiscoveredCount+1 {
+		t.Errorf("Expected %d discovered types after refresh, got %d",
+			initialDiscoveredCount+1, len(updatedResponse.DiscoveredTypes))
 	}
 }

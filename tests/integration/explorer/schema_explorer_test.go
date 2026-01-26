@@ -4,15 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Blogem/enron-graph/ent/enttest"
 	"github.com/Blogem/enron-graph/internal/explorer"
-	_ "github.com/mattn/go-sqlite3"
+	integration "github.com/Blogem/enron-graph/tests/integration"
 )
 
-// setupTestService creates a test service with in-memory database and test data
+// setupTestService creates a test service with PostgreSQL database and test data
 func setupTestService(t *testing.T) *explorer.SchemaService {
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	t.Cleanup(func() { client.Close() })
+	client, db := integration.SetupTestDBWithSQL(t)
 
 	// Seed test data
 	ctx := context.Background()
@@ -74,7 +72,7 @@ func setupTestService(t *testing.T) *explorer.SchemaService {
 		t.Fatalf("Failed to create product entity: %v", err)
 	}
 
-	return explorer.NewSchemaService(client)
+	return explorer.NewSchemaService(client, db)
 }
 
 // T040: Integration test - Full flow from app start to schema display
@@ -93,9 +91,10 @@ func TestSchemaExplorer_FullFlow(t *testing.T) {
 		t.Fatal("Expected schema response, got nil")
 	}
 
-	// Verify promoted types section
-	if len(schema.PromotedTypes) != 2 {
-		t.Errorf("Expected 2 promoted types, got %d", len(schema.PromotedTypes))
+	// Verify promoted types section (actual Ent tables: emails)
+	// Note: person and organization are in schema_promotions but not actual tables yet
+	if len(schema.PromotedTypes) < 1 {
+		t.Errorf("Expected at least 1 promoted type (emails), got %d", len(schema.PromotedTypes))
 	}
 
 	promotedNames := make(map[string]bool)
@@ -104,21 +103,16 @@ func TestSchemaExplorer_FullFlow(t *testing.T) {
 		if !pt.IsPromoted {
 			t.Errorf("Type %s should be marked as promoted", pt.Name)
 		}
-		if pt.Count <= 0 {
-			t.Errorf("Type %s should have count > 0, got %d", pt.Name, pt.Count)
-		}
 	}
 
-	if !promotedNames["person"] {
-		t.Error("Expected 'person' in promoted types")
-	}
-	if !promotedNames["organization"] {
-		t.Error("Expected 'organization' in promoted types")
+	// emails is an actual Ent-generated table, so it should appear as promoted
+	if !promotedNames["emails"] {
+		t.Error("Expected 'emails' in promoted types (Ent-generated table)")
 	}
 
-	// Verify discovered types section
-	if len(schema.DiscoveredTypes) != 2 {
-		t.Errorf("Expected 2 discovered types, got %d", len(schema.DiscoveredTypes))
+	// Verify discovered types section (from discovered_entities table)
+	if len(schema.DiscoveredTypes) != 4 {
+		t.Errorf("Expected 4 discovered types, got %d", len(schema.DiscoveredTypes))
 	}
 
 	discoveredNames := make(map[string]bool)
@@ -129,6 +123,12 @@ func TestSchemaExplorer_FullFlow(t *testing.T) {
 		}
 	}
 
+	if !discoveredNames["person"] {
+		t.Error("Expected 'person' in discovered types")
+	}
+	if !discoveredNames["organization"] {
+		t.Error("Expected 'organization' in discovered types")
+	}
 	if !discoveredNames["location"] {
 		t.Error("Expected 'location' in discovered types")
 	}
@@ -155,7 +155,7 @@ func TestSchemaExplorer_TypeClickShowsDetails(t *testing.T) {
 	service := setupTestService(t)
 	ctx := context.Background()
 
-	// Simulate user clicking on "person" type in UI
+	// Simulate user clicking on "person" type in UI (discovered type)
 	details, err := service.GetTypeDetails(ctx, "person")
 	if err != nil {
 		t.Fatalf("GetTypeDetails for person failed: %v", err)
@@ -174,8 +174,9 @@ func TestSchemaExplorer_TypeClickShowsDetails(t *testing.T) {
 		t.Errorf("Expected count 1 for person, got %d", details.Count)
 	}
 
-	if !details.IsPromoted {
-		t.Error("Expected person to be marked as promoted in details view")
+	// Person is in discovered_entities, not a promoted table
+	if details.IsPromoted {
+		t.Error("Expected person to not be promoted (it's in discovered_entities)")
 	}
 
 	// Verify properties metadata is included
@@ -183,7 +184,7 @@ func TestSchemaExplorer_TypeClickShowsDetails(t *testing.T) {
 		t.Error("Expected properties array for person type")
 	}
 
-	// Test clicking on a discovered type
+	// Test clicking on another discovered type
 	locationDetails, err := service.GetTypeDetails(ctx, "location")
 	if err != nil {
 		t.Fatalf("GetTypeDetails for location failed: %v", err)
@@ -209,14 +210,11 @@ func TestSchemaExplorer_TypeClickShowsDetails(t *testing.T) {
 
 // T042: Integration test - Refresh updates schema
 func TestSchemaExplorer_RefreshUpdatesSchema(t *testing.T) {
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	t.Cleanup(func() { client.Close() })
+	client, db := integration.SetupTestDBWithSQL(t)
 
 	ctx := context.Background()
 
-	// Initial setup with 2 promoted types
-	client.SchemaPromotion.Create().SetTypeName("person").SaveX(ctx)
-	client.SchemaPromotion.Create().SetTypeName("organization").SaveX(ctx)
+	// Initial setup: Create some discovered entities
 	client.DiscoveredEntity.Create().
 		SetUniqueID("p1").SetTypeCategory("person").SetName("John").SetConfidenceScore(0.9).SaveX(ctx)
 	client.DiscoveredEntity.Create().
@@ -224,7 +222,7 @@ func TestSchemaExplorer_RefreshUpdatesSchema(t *testing.T) {
 	client.DiscoveredEntity.Create().
 		SetUniqueID("l1").SetTypeCategory("location").SetName("Houston").SetConfidenceScore(0.8).SaveX(ctx)
 
-	service := explorer.NewSchemaService(client)
+	service := explorer.NewSchemaService(client, db)
 
 	// Get initial schema
 	initialSchema, err := service.GetSchema(ctx)
@@ -232,18 +230,21 @@ func TestSchemaExplorer_RefreshUpdatesSchema(t *testing.T) {
 		t.Fatalf("Initial GetSchema failed: %v", err)
 	}
 
+	// Should have at least the emails table as promoted type
 	initialPromotedCount := len(initialSchema.PromotedTypes)
-	if initialPromotedCount != 2 {
-		t.Fatalf("Expected 2 initial promoted types, got %d", initialPromotedCount)
+	if initialPromotedCount < 1 {
+		t.Fatalf("Expected at least 1 initial promoted type (emails), got %d", initialPromotedCount)
 	}
 
-	// Simulate external promotion of location type
-	_, err = client.SchemaPromotion.Create().
-		SetTypeName("location").
-		Save(ctx)
-	if err != nil {
-		t.Fatalf("Failed to add location promotion: %v", err)
+	// Should have 3 discovered types
+	initialDiscoveredCount := len(initialSchema.DiscoveredTypes)
+	if initialDiscoveredCount != 3 {
+		t.Fatalf("Expected 3 initial discovered types, got %d", initialDiscoveredCount)
 	}
+
+	// Add a new discovered entity
+	client.DiscoveredEntity.Create().
+		SetUniqueID("c1").SetTypeCategory("contract").SetName("NDA-001").SetConfidenceScore(0.85).SaveX(ctx)
 
 	// Without refresh, cached schema should still show old data
 	schemaBeforeRefresh, err := service.GetSchema(ctx)
@@ -252,9 +253,9 @@ func TestSchemaExplorer_RefreshUpdatesSchema(t *testing.T) {
 	}
 
 	// Cache test: should still show old count
-	if len(schemaBeforeRefresh.PromotedTypes) != initialPromotedCount {
-		t.Logf("Cache behavior: Expected %d promoted types (cached), got %d",
-			initialPromotedCount, len(schemaBeforeRefresh.PromotedTypes))
+	if len(schemaBeforeRefresh.DiscoveredTypes) != initialDiscoveredCount {
+		t.Logf("Cache behavior: Expected %d discovered types (cached), got %d",
+			initialDiscoveredCount, len(schemaBeforeRefresh.DiscoveredTypes))
 	}
 
 	// Simulate user clicking refresh button in UI
@@ -269,32 +270,34 @@ func TestSchemaExplorer_RefreshUpdatesSchema(t *testing.T) {
 		t.Fatalf("GetSchema after refresh failed: %v", err)
 	}
 
-	// Verify the promoted count increased
-	if len(refreshedSchema.PromotedTypes) != initialPromotedCount+1 {
-		t.Errorf("Expected %d promoted types after refresh, got %d",
-			initialPromotedCount+1, len(refreshedSchema.PromotedTypes))
+	// Verify the discovered count increased by 1 (new contract type)
+	if len(refreshedSchema.DiscoveredTypes) != initialDiscoveredCount+1 {
+		t.Errorf("Expected %d discovered types after refresh, got %d",
+			initialDiscoveredCount+1, len(refreshedSchema.DiscoveredTypes))
 	}
 
-	// Verify location is now in promoted types
-	foundInPromoted := false
-	for _, pt := range refreshedSchema.PromotedTypes {
-		if pt.Name == "location" {
-			foundInPromoted = true
-			if !pt.IsPromoted {
-				t.Error("Location should be marked as promoted after refresh")
+	// Verify contract is now in discovered types
+	foundContract := false
+	for _, dt := range refreshedSchema.DiscoveredTypes {
+		if dt.Name == "contract" {
+			foundContract = true
+			if dt.IsPromoted {
+				t.Error("Contract should not be marked as promoted")
+			}
+			if dt.Count != 1 {
+				t.Errorf("Expected count 1 for contract, got %d", dt.Count)
 			}
 			break
 		}
 	}
 
-	if !foundInPromoted {
-		t.Error("Expected 'location' in promoted types after refresh")
+	if !foundContract {
+		t.Error("Expected 'contract' in discovered types after refresh")
 	}
 
-	// Verify location is no longer in discovered types
-	for _, dt := range refreshedSchema.DiscoveredTypes {
-		if dt.Name == "location" {
-			t.Error("Location should not appear in discovered types after being promoted")
-		}
+	// Verify promoted types count stayed the same
+	if len(refreshedSchema.PromotedTypes) != initialPromotedCount {
+		t.Errorf("Expected %d promoted types (unchanged), got %d",
+			initialPromotedCount, len(refreshedSchema.PromotedTypes))
 	}
 }
