@@ -1,90 +1,16 @@
-#!/bin/bash
-# Script to fix corrupted files from file creation tool issues
-
-cd "$(dirname "$0")/.."
-
-echo "Fixing internal/explorer/models.go..."
-cat > internal/explorer/models.go << 'ENDFILE'
-package explorer
-
-type GraphNode struct {
-	ID         string                 `json:"id"`
-	Type       string                 `json:"type"`
-	Category   string                 `json:"category"`
-	Properties map[string]interface{} `json:"properties"`
-	IsGhost    bool                   `json:"is_ghost"`
-	Degree     int                    `json:"degree,omitempty"`
-}
-
-type GraphEdge struct {
-	Source     string                 `json:"source"`
-	Target     string                 `json:"target"`
-	Type       string                 `json:"type"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
-}
-
-type PropertyDefinition struct {
-	Name         string   `json:"name"`
-	Type         string   `json:"data_type"`
-	SampleValues []string `json:"sample_value,omitempty"`
-	Nullable     bool     `json:"nullable"`
-}
-
-type SchemaType struct {
-	Name          string                 `json:"name"`
-	Category      string                 `json:"category"`
-	Count         int64                  `json:"count"`
-	Properties    []PropertyDefinition   `json:"properties"`
-	IsPromoted    bool                   `json:"is_promoted"`
-	Relationships []string               `json:"relationships,omitempty"`
-}
-
-type GraphResponse struct {
-	Nodes      []GraphNode `json:"nodes"`
-	Edges      []GraphEdge `json:"edges"`
-	TotalNodes int         `json:"total_nodes"`
-	HasMore    bool        `json:"has_more"`
-}
-
-type RelationshipsResponse struct {
-	Nodes      []GraphNode `json:"nodes"`
-	Edges      []GraphEdge `json:"edges"`
-	TotalCount int         `json:"total_count"`
-	HasMore    bool        `json:"has_more"`
-	Offset     int         `json:"offset"`
-}
-
-type SchemaResponse struct {
-	PromotedTypes   []SchemaType `json:"promoted_types"`
-	DiscoveredTypes []SchemaType `json:"discovered_types"`
-	TotalEntities   int          `json:"total_entities"`
-}
-
-type NodeFilter struct {
-	Types       []string `json:"types,omitempty"`
-	Category    string   `json:"category,omitempty"`
-	SearchQuery string   `json:"search_query,omitempty"`
-	Limit       int      `json:"limit,omitempty"`
-}
-ENDFILE
-
-echo "✅ Fixed models.go"
-
-echo "Fixing tests/contract/test_helper.go..."
-cat > tests/contract/test_helper.go << 'ENDFILE'
 package contract_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/ent/enttest"
+	"github.com/Blogem/enron-graph/internal/explorer"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func TestClient(t *testing.T) *ent.Client {
+func NewTestClient(t *testing.T) *ent.Client {
 	opts := []enttest.Option{
 		enttest.WithOptions(ent.Log(t.Log)),
 	}
@@ -92,7 +18,7 @@ func TestClient(t *testing.T) *ent.Client {
 	return client
 }
 
-func TestClientPostgres(t *testing.T) *ent.Client {
+func NewTestClientPostgres(t *testing.T) *ent.Client {
 	databaseURL := "postgres://enron:enron@localhost:5432/enron_test?sslmode=disable"
 	client, err := ent.Open("postgres", databaseURL)
 	if err != nil {
@@ -109,7 +35,7 @@ func TestClientPostgres(t *testing.T) *ent.Client {
 
 func CleanupDB(t *testing.T, client *ent.Client) {
 	ctx := context.Background()
-	
+
 	if _, err := client.Relationship.Delete().Exec(ctx); err != nil {
 		t.Logf("Failed to clean relationships: %v", err)
 	}
@@ -129,7 +55,6 @@ func SeedTestData(t *testing.T, client *ent.Client) {
 
 	_, err := client.SchemaPromotion.Create().
 		SetTypeName("person").
-		SetPromotedAt(1234567890).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create person schema promotion: %v", err)
@@ -137,18 +62,16 @@ func SeedTestData(t *testing.T, client *ent.Client) {
 
 	_, err = client.SchemaPromotion.Create().
 		SetTypeName("organization").
-		SetPromotedAt(1234567890).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create organization schema promotion: %v", err)
 	}
 
-	email1, err := client.Email.Create().
+	_, err = client.Email.Create().
 		SetMessageID("test1@enron.com").
 		SetSubject("Test Email 1").
-		SetSenderAddr("sender1@enron.com").
-		SetReceiverAddr("receiver1@enron.com").
-		SetTimestamp(1234567890).
+		SetFrom("sender1@enron.com").
+		SetTo([]string{"receiver1@enron.com"}).
 		SetBody("Test body 1").
 		Save(ctx)
 	if err != nil {
@@ -158,9 +81,8 @@ func SeedTestData(t *testing.T, client *ent.Client) {
 	email2, err := client.Email.Create().
 		SetMessageID("test2@enron.com").
 		SetSubject("Test Email 2").
-		SetSenderAddr("sender2@enron.com").
-		SetReceiverAddr("receiver2@enron.com").
-		SetTimestamp(1234567891).
+		SetFrom("sender2@enron.com").
+		SetTo([]string{"receiver2@enron.com"}).
 		SetBody("Test body 2").
 		Save(ctx)
 	if err != nil {
@@ -187,62 +109,55 @@ func SeedTestData(t *testing.T, client *ent.Client) {
 		t.Fatalf("Failed to create discovered entity org1: %v", err)
 	}
 
+	// Create some unpromoted discovered types
+	_, err = client.DiscoveredEntity.Create().
+		SetUniqueID("location-houston").
+		SetTypeCategory("location").
+		SetName("Houston").
+		SetConfidenceScore(0.75).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create discovered entity location1: %v", err)
+	}
+
+	_, err = client.DiscoveredEntity.Create().
+		SetUniqueID("product-electricity").
+		SetTypeCategory("product").
+		SetName("Electricity Trading").
+		SetConfidenceScore(0.70).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create discovered entity product1: %v", err)
+	}
+
 	_, err = client.Relationship.Create().
-		SetRelationshipType("works_for").
-		SetSourceEntityType("person").
-		SetSourceEntityValue(person1.Name).
-		SetTargetEntityType("organization").
-		SetTargetEntityValue(org1.Name).
-		SetSourceType("email").
-		SetSourceID(fmt.Sprintf("%d", email1.ID)).
-		SetConfidence(0.85).
-		SetExtractedAt(1234567890).
+		SetType("works_for").
+		SetFromType("person").
+		SetFromID(person1.ID).
+		SetToType("organization").
+		SetToID(org1.ID).
+		SetConfidenceScore(0.85).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create test relationship: %v", err)
 	}
 
 	_, err = client.Relationship.Create().
-		SetRelationshipType("mentioned_in").
-		SetSourceEntityType("person").
-		SetSourceEntityValue(person1.Name).
-		SetTargetEntityType("email").
-		SetTargetEntityValue(email2.MessageID).
-		SetSourceType("email").
-		SetSourceID(fmt.Sprintf("%d", email2.ID)).
-		SetConfidence(0.80).
-		SetExtractedAt(1234567891).
+		SetType("mentioned_in").
+		SetFromType("person").
+		SetFromID(person1.ID).
+		SetToType("email").
+		SetToID(email2.ID).
+		SetConfidenceScore(0.80).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create test relationship 2: %v", err)
 	}
 }
-ENDFILE
-
-echo "✅ Fixed test_helper.go"
-
-echo "Verifying compilation..."
-go build ./internal/explorer/... && echo "✅ internal/explorer compiles" || echo "❌ Compilation failed"
-
-go build ./cmd/explorer/... && echo "✅ cmd/explorer compiles" || echo "❌ Compilation failed"
-
-echo ""
-# Fix tests/contract/schema_service_test.go
-echo "Fixing tests/contract/schema_service_test.go..."
-cat > /Users/jochem/code/enron-graph-2/tests/contract/schema_service_test.go << 'ENDTEST'
-package contract_test
-
-import (
-	"context"
-	"testing"
-
-	"github.com/Blogem/enron-graph/internal/explorer"
-	_ "github.com/mattn/go-sqlite3"
-)
 
 // T016: Test GetSchema returns promoted types
 func TestSchemaService_GetSchema_ReturnsPromotedTypes(t *testing.T) {
-	client := TestClient(t)
+	client := NewTestClient(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
@@ -277,7 +192,7 @@ func TestSchemaService_GetSchema_ReturnsPromotedTypes(t *testing.T) {
 
 // T017: Test GetSchema returns discovered types
 func TestSchemaService_GetSchema_ReturnsDiscoveredTypes(t *testing.T) {
-	client := TestClient(t)
+	client := NewTestClient(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
@@ -303,7 +218,7 @@ func TestSchemaService_GetSchema_ReturnsDiscoveredTypes(t *testing.T) {
 
 // T018: Test no overlap between promoted and discovered types
 func TestSchemaService_GetSchema_NoOverlapBetweenCategories(t *testing.T) {
-	client := TestClient(t)
+	client := NewTestClient(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
@@ -331,7 +246,7 @@ func TestSchemaService_GetSchema_NoOverlapBetweenCategories(t *testing.T) {
 
 // T019: Test schema includes property metadata
 func TestSchemaService_GetSchema_IncludesPropertyMetadata(t *testing.T) {
-	client := TestClient(t)
+	client := NewTestClient(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
@@ -365,7 +280,7 @@ func TestSchemaService_GetSchema_IncludesPropertyMetadata(t *testing.T) {
 
 // T020: Test GetTypeDetails returns type details
 func TestSchemaService_GetTypeDetails_ReturnsTypeDetails(t *testing.T) {
-	client := TestClient(t)
+	client := NewTestClient(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
@@ -397,7 +312,7 @@ func TestSchemaService_GetTypeDetails_ReturnsTypeDetails(t *testing.T) {
 
 // T021: Test RefreshSchema updates schema
 func TestSchemaService_RefreshSchema_UpdatesSchema(t *testing.T) {
-	client := TestClient(t)
+	client := NewTestClient(t)
 	defer client.Close()
 	SeedTestData(t, client)
 
@@ -415,7 +330,6 @@ func TestSchemaService_RefreshSchema_UpdatesSchema(t *testing.T) {
 	// Add a new promoted type
 	_, err = client.SchemaPromotion.Create().
 		SetTypeName("location").
-		SetPromotedBy("test").
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create promotion: %v", err)
@@ -451,7 +365,3 @@ func TestSchemaService_RefreshSchema_UpdatesSchema(t *testing.T) {
 		t.Error("Expected 'location' in promoted types after refresh")
 	}
 }
-ENDTEST
-echo "✅ Fixed schema_service_test.go"
-
-echo "Done! Run this script anytime to restore corrupted files."

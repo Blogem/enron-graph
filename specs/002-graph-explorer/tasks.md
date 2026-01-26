@@ -59,12 +59,12 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T016 [P] [US1] Contract test: SchemaService.GetSchema returns promoted types in tests/contract/schema_service_contract_test.go
-- [ ] T017 [P] [US1] Contract test: SchemaService.GetSchema returns discovered types in tests/contract/schema_service_contract_test.go
-- [ ] T018 [P] [US1] Contract test: SchemaService.GetSchema has no overlap between categories in tests/contract/schema_service_contract_test.go
-- [ ] T019 [P] [US1] Contract test: SchemaService.GetSchema includes property metadata in tests/contract/schema_service_contract_test.go
-- [ ] T020 [P] [US1] Contract test: SchemaService.GetTypeDetails returns type details in tests/contract/schema_service_contract_test.go
-- [ ] T021 [P] [US1] Contract test: SchemaService.RefreshSchema updates schema in tests/contract/schema_service_contract_test.go
+- [X] T016 [P] [US1] Contract test: SchemaService.GetSchema returns promoted types in tests/contract/schema_service_contract_test.go
+- [X] T017 [P] [US1] Contract test: SchemaService.GetSchema returns discovered types in tests/contract/schema_service_contract_test.go
+- [X] T018 [P] [US1] Contract test: SchemaService.GetSchema has no overlap between categories in tests/contract/schema_service_contract_test.go
+- [X] T019 [P] [US1] Contract test: SchemaService.GetSchema includes property metadata in tests/contract/schema_service_contract_test.go
+- [X] T020 [P] [US1] Contract test: SchemaService.GetTypeDetails returns type details in tests/contract/schema_service_contract_test.go
+- [X] T021 [P] [US1] Contract test: SchemaService.RefreshSchema updates schema in tests/contract/schema_service_contract_test.go
 
 ### Backend Implementation for User Story 1
 

@@ -90,8 +90,8 @@ func (s *SchemaService) getPromotedTypes(ctx context.Context) ([]SchemaType, err
 
 func (s *SchemaService) getDiscoveredTypes(ctx context.Context) ([]SchemaType, error) {
 	var results []struct {
-		TypeCategory string
-		Count        int
+		TypeCategory string `sql:"type_category"`
+		Count        int    `sql:"count"`
 	}
 
 	err := s.client.DiscoveredEntity.
@@ -110,6 +110,11 @@ func (s *SchemaService) getDiscoveredTypes(ctx context.Context) ([]SchemaType, e
 			Where(schemapromotion.TypeNameEQ(r.TypeCategory)).
 			Exist(ctx)
 
+		// Skip promoted types - they're returned separately
+		if isPromoted {
+			continue
+		}
+
 		properties, err := s.extractProperties(ctx, r.TypeCategory)
 		if err != nil {
 			properties = []PropertyDefinition{}
@@ -118,7 +123,7 @@ func (s *SchemaService) getDiscoveredTypes(ctx context.Context) ([]SchemaType, e
 		types = append(types, SchemaType{
 			Name:       r.TypeCategory,
 			Count:      int64(r.Count),
-			IsPromoted: isPromoted,
+			IsPromoted: false,
 			Properties: properties,
 		})
 	}
@@ -189,9 +194,9 @@ func (s *SchemaService) GetTypeDetails(ctx context.Context, typeName string) (*S
 
 func (s *SchemaService) RefreshSchema(ctx context.Context) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.cache = nil
+	s.mu.Unlock()
+
 	_, err := s.GetSchema(ctx)
 	return err
 }
