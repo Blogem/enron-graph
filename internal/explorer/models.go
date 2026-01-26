@@ -1,70 +1,61 @@
 package explorer
-package explorer
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}	Limit       int      `json:"limit,omitempty"`	SearchQuery string   `json:"search_query,omitempty"`	Category    string   `json:"category,omitempty"` // "promoted", "discovered", or empty for all	Types       []string `json:"types,omitempty"`type NodeFilter struct {// NodeFilter specifies criteria for filtering graph nodes}	TotalEntities   int          `json:"total_entities"`	DiscoveredTypes []SchemaType `json:"discovered_types"`	PromotedTypes   []SchemaType `json:"promoted_types"`type SchemaResponse struct {// SchemaResponse contains complete schema metadata}	Offset     int         `json:"offset"`	HasMore    bool        `json:"has_more"`	TotalCount int         `json:"total_count"`	Nodes      []GraphNode `json:"nodes"`	Edges      []GraphEdge `json:"edges"`type RelationshipsResponse struct {// RelationshipsResponse contains paginated relationships for a node}	HasMore    bool        `json:"has_more"`	TotalNodes int         `json:"total_nodes"`	Edges      []GraphEdge `json:"edges"`	Nodes      []GraphNode `json:"nodes"`type GraphResponse struct {// GraphResponse contains a subset of the graph for visualization}	Relationships []string             `json:"relationships,omitempty"`	Properties    []PropertyDefinition `json:"properties"`	Count         int                  `json:"count"`	Category      string               `json:"category"` // "promoted" or "discovered"	Name          string               `json:"name"`type SchemaType struct {// SchemaType describes an entity type's schema}	Nullable    bool        `json:"nullable"`	SampleValue interface{} `json:"sample_value,omitempty"`	DataType    string      `json:"data_type"`	Name        string      `json:"name"`type PropertyDefinition struct {// PropertyDefinition describes a single property/field}	Properties map[string]interface{} `json:"properties,omitempty"`	Type       string                 `json:"type"`	Target     string                 `json:"target"`	Source     string                 `json:"source"`type GraphEdge struct {// GraphEdge represents a relationship between two entities}	Degree     int                    `json:"degree,omitempty"`	IsGhost    bool                   `json:"is_ghost"`	Properties map[string]interface{} `json:"properties"`	Category   string                 `json:"category"` // "promoted" or "discovered"	Type       string                 `json:"type"`	ID         string                 `json:"id"`type GraphNode struct {// GraphNode represents a unified entity (promoted or discovered) for visualization
+type GraphNode struct {
+	ID         string                 `json:"id"`
+	Type       string                 `json:"type"`
+	Category   string                 `json:"category"`
+	Properties map[string]interface{} `json:"properties"`
+	IsGhost    bool                   `json:"is_ghost"`
+	Degree     int                    `json:"degree,omitempty"`
+}
+
+type GraphEdge struct {
+	Source     string                 `json:"source"`
+	Target     string                 `json:"target"`
+	Type       string                 `json:"type"`
+	Properties map[string]interface{} `json:"properties,omitempty"`
+}
+
+type PropertyDefinition struct {
+	Name         string   `json:"name"`
+	Type         string   `json:"data_type"`
+	SampleValues []string `json:"sample_value,omitempty"`
+	Nullable     bool     `json:"nullable"`
+}
+
+type SchemaType struct {
+	Name          string                 `json:"name"`
+	Category      string                 `json:"category"`
+	Count         int64                  `json:"count"`
+	Properties    []PropertyDefinition   `json:"properties"`
+	IsPromoted    bool                   `json:"is_promoted"`
+	Relationships []string               `json:"relationships,omitempty"`
+}
+
+type GraphResponse struct {
+	Nodes      []GraphNode `json:"nodes"`
+	Edges      []GraphEdge `json:"edges"`
+	TotalNodes int         `json:"total_nodes"`
+	HasMore    bool        `json:"has_more"`
+}
+
+type RelationshipsResponse struct {
+	Nodes      []GraphNode `json:"nodes"`
+	Edges      []GraphEdge `json:"edges"`
+	TotalCount int         `json:"total_count"`
+	HasMore    bool        `json:"has_more"`
+	Offset     int         `json:"offset"`
+}
+
+type SchemaResponse struct {
+	PromotedTypes   []SchemaType `json:"promoted_types"`
+	DiscoveredTypes []SchemaType `json:"discovered_types"`
+	TotalEntities   int          `json:"total_entities"`
+}
+
+type NodeFilter struct {
+	Types       []string `json:"types,omitempty"`
+	Category    string   `json:"category,omitempty"`
+	SearchQuery string   `json:"search_query,omitempty"`
+	Limit       int      `json:"limit,omitempty"`
+}

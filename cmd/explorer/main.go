@@ -6,14 +6,15 @@ import (
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/pkg/utils"
+	_ "github.com/lib/pq"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	_ "github.com/lib/pq"
 )
 
 // Assets will be embedded here during build
 // For development, Wails uses the dev server
+//
 //go:embed frontend/dist
 var assets embed.FS
 
