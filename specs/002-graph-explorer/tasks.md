@@ -131,22 +131,22 @@
 
 ### Frontend Implementation for User Story 2
 
-- [ ] T058 [P] [US2] Create GraphData and GraphNodeWithPosition types in frontend/src/types/graph.ts
-- [ ] T059 [P] [US2] Create ExpandedNodeState type for batch tracking in frontend/src/types/graph.ts
-- [ ] T060 [US2] Implement GraphCanvas component in frontend/src/components/GraphCanvas.tsx (force-directed layout with react-force-graph)
-- [ ] T061 [US2] Configure react-force-graph with directional arrows (linkDirectionalArrowLength) in frontend/src/components/GraphCanvas.tsx
-- [ ] T062 [US2] Implement node color/shape differentiation by entity type in frontend/src/components/GraphCanvas.tsx
-- [ ] T063 [US2] Implement pan and zoom controls in frontend/src/components/GraphCanvas.tsx
-- [ ] T064 [US2] Implement node click handler to show details in frontend/src/components/GraphCanvas.tsx
-- [ ] T065 [US2] Implement node right-click handler to expand relationships in frontend/src/components/GraphCanvas.tsx
-- [ ] T065a [US2] Implement relationship count indicators on newly loaded nodes (FR-006b) in frontend/src/components/GraphCanvas.tsx
-- [ ] T065b [US2] Ensure newly loaded nodes do NOT auto-expand (require explicit click per FR-006b) in frontend/src/components/GraphCanvas.tsx
-- [ ] T066 [US2] Implement LoadMoreButton component for batched relationship loading in frontend/src/components/LoadMoreButton.tsx
-- [ ] T067 [US2] Integrate GraphCanvas into App.tsx with GetRandomNodes(100) call in useEffect hook on mount (empty dependency array) in frontend/src/App.tsx
-- [ ] T068 [US2] Add state management for expandedNodes tracking in frontend/src/App.tsx
-- [ ] T069 [US2] Implement batch loading logic: call GetRelationships() with offset in frontend/src/App.tsx
-- [ ] T070 [US2] Implement DetailPanel component to show selected node properties in frontend/src/components/DetailPanel.tsx
-- [ ] T071 [US2] Add loading state and error handling for graph operations in frontend/src/App.tsx
+- [X] T058 [P] [US2] Create GraphData and GraphNodeWithPosition types in frontend/src/types/graph.ts
+- [X] T059 [P] [US2] Create ExpandedNodeState type for batch tracking in frontend/src/types/graph.ts
+- [X] T060 [US2] Implement GraphCanvas component in frontend/src/components/GraphCanvas.tsx (force-directed layout with react-force-graph)
+- [X] T061 [US2] Configure react-force-graph with directional arrows (linkDirectionalArrowLength) in frontend/src/components/GraphCanvas.tsx
+- [X] T062 [US2] Implement node color/shape differentiation by entity type in frontend/src/components/GraphCanvas.tsx
+- [X] T063 [US2] Implement pan and zoom controls in frontend/src/components/GraphCanvas.tsx
+- [X] T064 [US2] Implement node click handler to show details in frontend/src/components/GraphCanvas.tsx
+- [X] T065 [US2] Implement node right-click handler to expand relationships in frontend/src/components/GraphCanvas.tsx
+- [X] T065a [US2] Implement relationship count indicators on newly loaded nodes (FR-006b) in frontend/src/components/GraphCanvas.tsx
+- [X] T065b [US2] Ensure newly loaded nodes do NOT auto-expand (require explicit click per FR-006b) in frontend/src/components/GraphCanvas.tsx
+- [X] T066 [US2] Implement LoadMoreButton component for batched relationship loading in frontend/src/components/LoadMoreButton.tsx
+- [X] T067 [US2] Integrate GraphCanvas into App.tsx with GetRandomNodes(100) call in useEffect hook on mount (empty dependency array) in frontend/src/App.tsx
+- [X] T068 [US2] Add state management for expandedNodes tracking in frontend/src/App.tsx
+- [X] T069 [US2] Implement batch loading logic: call GetRelationships() with offset in frontend/src/App.tsx
+- [X] T070 [US2] Implement DetailPanel component to show selected node properties in frontend/src/components/DetailPanel.tsx
+- [X] T071 [US2] Add loading state and error handling for graph operations in frontend/src/App.tsx
 
 ### Integration Tests for User Story 2
 

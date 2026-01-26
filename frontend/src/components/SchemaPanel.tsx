@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { explorer } from '../wailsjs/go/models';
 import './SchemaPanel.css';
 
@@ -6,6 +6,7 @@ interface SchemaPanelProps {
     schema: explorer.SchemaResponse | null;
     loading: boolean;
     error: string | null;
+    selectedTypeName: string | null;
     onRefresh: () => void;
     onTypeClick: (typeName: string) => void;
 }
@@ -14,13 +15,11 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
     schema,
     loading,
     error,
+    selectedTypeName,
     onRefresh,
     onTypeClick
 }) => {
-    const [selectedType, setSelectedType] = useState<string | null>(null);
-
     const handleTypeClick = (typeName: string) => {
-        setSelectedType(typeName);
         onTypeClick(typeName);
     };
 
@@ -80,7 +79,7 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                     {schema.promoted_types?.map((type) => (
                         <div
                             key={type.name}
-                            className={`type-item promoted ${selectedType === type.name ? 'selected' : ''}`}
+                            className={`type-item promoted ${selectedTypeName === type.name ? 'selected' : ''}`}
                             onClick={() => handleTypeClick(type.name)}
                         >
                             <div className="type-header">
@@ -116,7 +115,7 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                     {schema.discovered_types?.map((type) => (
                         <div
                             key={type.name}
-                            className={`type-item discovered ${selectedType === type.name ? 'selected' : ''}`}
+                            className={`type-item discovered ${selectedTypeName === type.name ? 'selected' : ''}`}
                             onClick={() => handleTypeClick(type.name)}
                         >
                             <div className="type-header">

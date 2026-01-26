@@ -56,3 +56,26 @@ export interface NodeFilter {
     search_query?: string;
     limit?: number;
 }
+
+// Types for force-directed graph visualization
+export interface GraphNodeWithPosition extends GraphNode {
+    x?: number;
+    y?: number;
+    vx?: number;
+    vy?: number;
+    fx?: number;
+    fy?: number;
+}
+
+export interface GraphData {
+    nodes: GraphNodeWithPosition[];
+    links: GraphEdge[];
+}
+
+// State tracking for expanded nodes with batched loading
+export interface ExpandedNodeState {
+    nodeId: string;
+    offset: number;
+    hasMore: boolean;
+    totalRelationships: number;
+}

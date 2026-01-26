@@ -34,11 +34,22 @@
     overflow: hidden;
 }
 
+.sidebar-right {
+    width: 360px;
+    border-left: 1px solid #30363d;
+    background: #0d1117;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16px;
+}
+
 .main-content {
     flex: 1;
-    padding: 24px;
-    overflow-y: auto;
+    padding: 0;
+    overflow: hidden;
     background: #0d1117;
+    position: relative;
 }
 
 .placeholder {

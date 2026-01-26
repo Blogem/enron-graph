@@ -13,3 +13,15 @@ export function GetTypeDetails(arg1) {
 export function RefreshSchema() {
   return window['go']['main']['App']['RefreshSchema']();
 }
+
+export function GetRandomNodes(arg1) {
+  return window['go']['main']['App']['GetRandomNodes'](arg1);
+}
+
+export function GetRelationships(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetRelationships'](arg1, arg2, arg3);
+}
+
+export function GetNodeDetails(arg1) {
+  return window['go']['main']['App']['GetNodeDetails'](arg1);
+}
