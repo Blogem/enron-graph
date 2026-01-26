@@ -210,7 +210,7 @@ Follow Test-Driven Development (Constitution Principle III):
    - Call `GetRelationships()` on button click
 
 5. **Verify acceptance scenarios** (User Story 2):
-   - App starts → see 50-100 nodes automatically loaded
+   - App starts → see exactly 100 nodes automatically loaded (via useEffect on mount)
    - Click node → see properties
    - Click expand → see connected nodes added
    - Expand node with >50 relationships → see "Load 50 more" button

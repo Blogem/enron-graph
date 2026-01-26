@@ -7,7 +7,7 @@
 
 ## Summary
 
-The Graph Explorer feature provides a graphical interface for exploring the Enron knowledge graph, displaying both promoted schema types (Email, Relationship, SchemaPromotion) and dynamically discovered entities. The explorer will use a hybrid web-local architecture with Wails (Go backend + web frontend in a single binary), featuring a force-directed graph visualization with interactive navigation, schema browsing, filtering, and detailed entity inspection capabilities.
+The Graph Explorer feature provides a graphical interface for exploring the Enron knowledge graph, displaying both promoted schema types (Email, Relationship, SchemaPromotion) and dynamically discovered entities. The explorer will use a hybrid web-local architecture with Wails (Go backend + web frontend in a single binary), featuring a force-directed graph visualization (auto-loading 100 nodes on startup) with interactive navigation, schema browsing, filtering, and detailed entity inspection capabilities. Newly expanded nodes show relationship counts but require explicit clicks to expand further. Filters show ghost node placeholders for relationships extending beyond filtered types.
 
 ## Technical Context
 
@@ -151,8 +151,10 @@ tests/
 
 ## Next Steps
 
-Run `/speckit.tasks` to generate implementation tasks organized by user story.
+Specification has been clarified with 7 Q&A items covering expansion behavior (FR-006b) and filter edge handling (FR-007a). Tasks.md has been generated with 122 tasks organized by user story.
+
+**Ready for**: `/speckit.implement` - Begin TDD implementation starting with Phase 1 (Setup) and Phase 2 (Foundation)
 
 ## Plan Status: ✅ COMPLETE
 
-**Ready for**: Phase 2 (tasks.md generation)
+**Ready for**: Implementation (all design artifacts complete, spec clarified, tasks broken down)

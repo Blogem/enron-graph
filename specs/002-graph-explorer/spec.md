@@ -14,6 +14,8 @@
 - Q: How should relationship directionality be displayed in the graph? → A: Arrows on edges - draw directional arrows pointing from source to target node
 - Q: What information should be displayed for each property in the schema view? → A: Names, types, and sample values - include example data from actual entities
 - Q: How should the system handle expanding nodes that have many relationships (e.g., >50)? → A: Auto-batch with load-more - initially show first 50 relationships with "Load 50 more" button showing remaining count
+- Q: When a user expands a node and the connected nodes are loaded, what should happen if those newly loaded nodes also have relationships? → A: Show newly loaded nodes as expandable with relationship count, require explicit click to expand further
+- Q: When a user applies a filter to show only specific entity types, what should happen to edges/relationships in the graph? → A: Show all edges from filtered nodes, including edges to nodes outside the filter (creates ghost node placeholders)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -44,9 +46,9 @@ As a user investigating the Enron dataset, I need to visualize the graph structu
 
 **Acceptance Scenarios**:
 
-1. **Given** I have opened the graph explorer, **When** the application starts, **Then** I see a small sample of 50-100 random nodes automatically loaded and displayed using force-directed layout
+1. **Given** I have opened the graph explorer, **When** the application starts, **Then** I see exactly 100 random nodes automatically loaded and displayed using force-directed layout
 2. **Given** nodes are displayed in the graph view, **When** I click on a node, **Then** I see its properties and can identify what entity type it represents
-3. **Given** I see a node with connected relationships, **When** I click to expand it, **Then** I see its connected nodes rendered in the graph
+3. **Given** I see a node with connected relationships, **When** I click to expand it, **Then** I see its connected nodes rendered in the graph, and those newly loaded nodes show relationship count indicators but are not auto-expanded
 4. **Given** I expand a node with more than 50 relationships, **When** the initial batch loads, **Then** I see the first 50 relationships and a "Load 50 more" button showing the remaining count
 5. **Given** the graph visualization is displayed, **When** I use pan and zoom controls, **Then** I can navigate large graphs smoothly
 5. **Given** I have multiple entity types in the view, **When** I look at the graph, **Then** different entity types are visually distinguishable (color, shape, or icon)
@@ -63,7 +65,7 @@ As a user analyzing the graph, I need to filter the displayed entities by type, 
 
 **Acceptance Scenarios**:
 
-1. **Given** the graph contains multiple entity types, **When** I filter to show only Email entities, **Then** only Email nodes and their relationships are displayed
+1. **Given** the graph contains multiple entity types, **When** I filter to show only Email entities, **Then** I see Email nodes with all their relationships, including edges to non-Email entities shown as ghost placeholders
 2. **Given** I want to find a specific entity, **When** I search by a property value (e.g., email address), **Then** matching entities are highlighted or isolated in the view
 3. **Given** I have applied filters, **When** I clear them, **Then** the full graph view is restored
 4. **Given** the graph has both promoted and discovered entities, **When** I filter by entity source (promoted vs discovered), **Then** only entities from that source are shown
@@ -106,14 +108,16 @@ As a user examining specific entities, I need to view detailed information about
 - **FR-001**: System MUST display a schema view showing all promoted/concrete entity types from the database schema with property names, data types, and sample values from actual entities
 - **FR-002**: System MUST display discovered entity types separately from promoted types in the schema view
 - **FR-003**: System MUST provide a graphical visualization of graph nodes and edges with interactive pan and zoom capabilities
-- **FR-003a**: System MUST auto-load a sample of 50-100 random nodes on startup to provide immediate visual feedback
+- **FR-003a**: System MUST auto-load exactly 100 random nodes on startup to provide immediate visual feedback
 - **FR-003b**: System MUST use a force-directed layout algorithm to position nodes (connected nodes attract, all nodes repel)
 - **FR-003c**: System MUST display relationship edges with directional arrows pointing from source to target node
 - **FR-004**: System MUST allow users to click on nodes to view their properties and connected relationships
 - **FR-005**: System MUST visually differentiate between different entity types (through color, shape, size, or icons)
 - **FR-006**: System MUST support expanding nodes to load and display their connected entities
 - **FR-006a**: System MUST batch relationship loading for high-degree nodes (>50 relationships) by initially showing 50 relationships with a "Load more" control displaying remaining count
+- **FR-006b**: System MUST show newly loaded nodes as expandable with relationship count indicators, but MUST NOT auto-expand them (user must explicitly click to expand further)
 - **FR-007**: System MUST provide filtering capabilities to show/hide entities by type
+- **FR-007a**: When filters are applied, system MUST show all edges from filtered nodes including edges to nodes outside the filter, rendering unmatched target nodes as ghost placeholders
 - **FR-008**: System MUST allow searching for entities by property values
 - **FR-009**: System MUST display entity counts for each type in the schema view
 - **FR-010**: System MUST handle large graphs by limiting initial render size and providing load-more functionality
