@@ -26,7 +26,7 @@
 - [X] T004 [P] Configure Wails build in wails.json to reference frontend/ directory
 - [X] T005 [P] Create internal/explorer package directory structure
 - [X] T006 [P] Add frontend/dist to .gitignore
-- [ ] T007 Verify Wails dev server starts with `wails dev` from cmd/explorer/
+- [X] T007 Verify Wails dev server starts with `wails dev` from cmd/explorer/
 
 ---
 
@@ -36,14 +36,14 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Create shared DTO models in internal/explorer/models.go (GraphNode, GraphEdge, SchemaType, PropertyDefinition)
-- [ ] T009 Create GraphResponse and RelationshipsResponse types in internal/explorer/models.go
-- [ ] T010 Create SchemaResponse type in internal/explorer/models.go
-- [ ] T011 Create NodeFilter type in internal/explorer/models.go
-- [ ] T012 Setup database connection helper in cmd/explorer/main.go using existing ent client
-- [ ] T013 Create test fixtures directory structure tests/contract/ and tests/integration/explorer/
-- [ ] T014 Setup test database configuration and helper functions for contract tests in tests/contract/test_helper.go
-- [ ] T015 Generate TypeScript types from Go models using `wails generate module` in frontend/
+- [X] T008 Create shared DTO models in internal/explorer/models.go (GraphNode, GraphEdge, SchemaType, PropertyDefinition)
+- [X] T009 Create GraphResponse and RelationshipsResponse types in internal/explorer/models.go
+- [X] T010 Create SchemaResponse type in internal/explorer/models.go
+- [X] T011 Create NodeFilter type in internal/explorer/models.go
+- [X] T012 Setup database connection helper in cmd/explorer/main.go using existing ent client
+- [X] T013 Create test fixtures directory structure tests/contract/ and tests/integration/explorer/
+- [X] T014 Setup test database configuration and helper functions for contract tests in tests/contract/test_helper.go
+- [X] T015 Generate TypeScript types from Go models using `wails generate module` in frontend/
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

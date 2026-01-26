@@ -2,24 +2,43 @@ package main
 
 import (
 	"embed"
+	"log"
 
+	"github.com/Blogem/enron-graph/ent"
+	"github.com/Blogem/enron-graph/pkg/utils"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	_ "github.com/lib/pq"
 )
 
-//go:embed all:../../frontend/dist
+// Assets will be embedded here during build
+// For development, Wails uses the dev server
+//go:embed frontend/dist
 var assets embed.FS
 
 func main() {
+	// Load configuration
+	cfg, err := utils.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Connect to database
+	client, err := ent.Open("postgres", cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer client.Close()
+
 	// Create an instance of the app structure
-	app := NewApp()
+	app := NewApp(client)
 
 	// Create application with options
-	err := wails.Run(&options.App{
-		Title:  "explorer",
-		Width:  1024,
-		Height: 768,
+	err = wails.Run(&options.App{
+		Title:  "Enron Graph Explorer",
+		Width:  1400,
+		Height: 900,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
@@ -31,6 +50,6 @@ func main() {
 	})
 
 	if err != nil {
-		println("Error:", err.Error())
+		log.Fatalf("Error: %v", err)
 	}
 }
