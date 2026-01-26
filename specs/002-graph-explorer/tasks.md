@@ -150,10 +150,10 @@
 
 ### Integration Tests for User Story 2
 
-- [ ] T072 [US2] Integration test: Auto-load 50-100 nodes on startup in tests/integration/explorer/graph_explorer_test.go
-- [ ] T073 [US2] Integration test: Node click shows details panel in tests/integration/explorer/graph_explorer_test.go
-- [ ] T074 [US2] Integration test: Expand node loads relationships in tests/integration/explorer/graph_explorer_test.go
-- [ ] T075 [US2] Integration test: Batched loading for high-degree nodes in tests/integration/explorer/graph_explorer_test.go
+- [X] T072 [US2] Integration test: Auto-load 50-100 nodes on startup in tests/integration/explorer/graph_explorer_test.go
+- [X] T073 [US2] Integration test: Node click shows details panel in tests/integration/explorer/graph_explorer_test.go
+- [X] T074 [US2] Integration test: Expand node loads relationships in tests/integration/explorer/graph_explorer_test.go
+- [X] T075 [US2] Integration test: Batched loading for high-degree nodes in tests/integration/explorer/graph_explorer_test.go
 
 **Checkpoint**: At this point, User Story 2 should be fully functional - users can browse the graph visually with force-directed layout, pan/zoom, click nodes, and expand relationships with batching
 
