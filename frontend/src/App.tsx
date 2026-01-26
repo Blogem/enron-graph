@@ -407,74 +407,76 @@ function App() {
                             )}
                         </ErrorBoundary>
                     </div>
-                    <div className="sidebar-right">
-                        <ErrorBoundary
-                            componentName="Detail Panel"
-                            resetKeys={[selectedNode?.id || '', selectedType?.name || '']}
-                        >
-                            {selectedType ? (
-                                <div className="type-details-panel">
-                                    <div className="detail-header">
-                                        <div className="detail-title">
-                                            <h2>{selectedType.name}</h2>
-                                            <span className={`type-badge ${selectedType.name.toLowerCase()}`}>
-                                                {selectedType.count} instances
-                                            </span>
-                                        </div>
-                                        <button className="close-button" onClick={() => { setSelectedType(null); setSelectedTypeName(null); }} title="Close (Escape)">
-                                            ✕
-                                        </button>
-                                    </div>
-                                    {detailsLoading ? (
-                                        <div className="detail-loading">
-                                            <div className="spinner-large"></div>
-                                            <p>Loading type details...</p>
-                                        </div>
-                                    ) : (
-                                        <div className="detail-content">
-                                            <div className="detail-section">
-                                                <h3>Properties ({selectedType.properties?.length || 0})</h3>
-                                                {selectedType.properties && selectedType.properties.length > 0 ? (
-                                                    <div className="properties-list">
-                                                        {selectedType.properties.map((prop, idx) => (
-                                                            <div key={idx} className="property-item">
-                                                                <div className="property-key">{prop.name}</div>
-                                                                <div className="property-meta">
-                                                                    <span className="property-type">{prop.data_type}</span>
-                                                                    {prop.sample_value && prop.sample_value.length > 0 && (
-                                                                        <div className="sample-values">
-                                                                            <strong>Samples:</strong>
-                                                                            <ul>
-                                                                                {prop.sample_value.slice(0, 3).map((val, i) => (
-                                                                                    <li key={i}>{String(val)}</li>
-                                                                                ))}
-                                                                            </ul>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <p className="empty-message">No properties defined</p>
-                                                )}
+                    {(selectedNode || selectedType) && (
+                        <div className="sidebar-right">
+                            <ErrorBoundary
+                                componentName="Detail Panel"
+                                resetKeys={[selectedNode?.id || '', selectedType?.name || '']}
+                            >
+                                {selectedType ? (
+                                    <div className="type-details-panel">
+                                        <div className="detail-header">
+                                            <div className="detail-title">
+                                                <h2>{selectedType.name}</h2>
+                                                <span className={`type-badge ${selectedType.name.toLowerCase()}`}>
+                                                    {selectedType.count} instances
+                                                </span>
                                             </div>
+                                            <button className="close-button" onClick={() => { setSelectedType(null); setSelectedTypeName(null); }} title="Close (Escape)">
+                                                ✕
+                                            </button>
                                         </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <DetailPanel
-                                    node={selectedNode}
-                                    loading={loadingNodeId === selectedNode?.id}
-                                    expandedNodeState={selectedNode ? expandedNodes.get(selectedNode.id) || null : null}
-                                    onLoadMore={handleLoadMore}
-                                    onClose={handleCloseDetail}
-                                    relatedEntities={relatedEntities}
-                                    onExpandRelationship={handleExpandRelationship}
-                                />
-                            )}
-                        </ErrorBoundary>
-                    </div>
+                                        {detailsLoading ? (
+                                            <div className="detail-loading">
+                                                <div className="spinner-large"></div>
+                                                <p>Loading type details...</p>
+                                            </div>
+                                        ) : (
+                                            <div className="detail-content">
+                                                <div className="detail-section">
+                                                    <h3>Properties ({selectedType.properties?.length || 0})</h3>
+                                                    {selectedType.properties && selectedType.properties.length > 0 ? (
+                                                        <div className="properties-list">
+                                                            {selectedType.properties.map((prop, idx) => (
+                                                                <div key={idx} className="property-item">
+                                                                    <div className="property-key">{prop.name}</div>
+                                                                    <div className="property-meta">
+                                                                        <span className="property-type">{prop.data_type}</span>
+                                                                        {prop.sample_value && prop.sample_value.length > 0 && (
+                                                                            <div className="sample-values">
+                                                                                <strong>Samples:</strong>
+                                                                                <ul>
+                                                                                    {prop.sample_value.slice(0, 3).map((val, i) => (
+                                                                                        <li key={i}>{String(val)}</li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="empty-message">No properties defined</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <DetailPanel
+                                        node={selectedNode}
+                                        loading={loadingNodeId === selectedNode?.id}
+                                        expandedNodeState={selectedNode ? expandedNodes.get(selectedNode.id) || null : null}
+                                        onLoadMore={handleLoadMore}
+                                        onClose={handleCloseDetail}
+                                        relatedEntities={relatedEntities}
+                                        onExpandRelationship={handleExpandRelationship}
+                                    />
+                                )}
+                            </ErrorBoundary>
+                        </div>
+                    )}
                 </div>
             </div>
         </ErrorBoundary>
