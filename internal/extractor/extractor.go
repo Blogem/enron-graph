@@ -185,7 +185,7 @@ func (e *Extractor) createPersonEntity(ctx context.Context, email, name string, 
 	}
 
 	// Create entity
-	return e.repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
+	entity, err := e.repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
 		UniqueID:     email,
 		TypeCategory: "person",
 		Name:         name,
@@ -195,6 +195,16 @@ func (e *Extractor) createPersonEntity(ctx context.Context, email, name string, 
 		Embedding:       embedding,
 		ConfidenceScore: confidence,
 	})
+
+	// If creation failed due to duplicate key, fetch the existing entity
+	if err != nil && strings.Contains(err.Error(), "duplicate key") {
+		existing, fetchErr := e.repo.FindEntityByUniqueID(ctx, email)
+		if fetchErr == nil && existing != nil {
+			return existing, nil
+		}
+	}
+
+	return entity, err
 }
 
 // createOrUpdateEntity creates or updates an entity with deduplication
@@ -214,7 +224,7 @@ func (e *Extractor) createOrUpdateEntity(ctx context.Context, uniqueID, typeCate
 	}
 
 	// Create new entity
-	return e.repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
+	entity, err := e.repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
 		UniqueID:        uniqueID,
 		TypeCategory:    typeCategory,
 		Name:            name,
@@ -222,6 +232,16 @@ func (e *Extractor) createOrUpdateEntity(ctx context.Context, uniqueID, typeCate
 		Embedding:       embedding,
 		ConfidenceScore: confidence,
 	})
+
+	// If creation failed due to duplicate key, fetch the existing entity
+	if err != nil && strings.Contains(err.Error(), "duplicate key") {
+		existing, fetchErr := e.repo.FindEntityByUniqueID(ctx, uniqueID)
+		if fetchErr == nil && existing != nil {
+			return existing, nil
+		}
+	}
+
+	return entity, err
 }
 
 // ExtractionSummary summarizes the extraction results
