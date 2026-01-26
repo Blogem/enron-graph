@@ -216,12 +216,12 @@
 
 > Note: Backend already implemented in US2 (GetNodeDetails). This phase focuses on enhanced UI.
 
-- [ ] T096 [P] [US4] Enhance DetailPanel component with property list view in frontend/src/components/DetailPanel.tsx
-- [ ] T097 [P] [US4] Enhance DetailPanel component with metadata section (timestamps, category) in frontend/src/components/DetailPanel.tsx
-- [ ] T098 [US4] Add related entities list to DetailPanel in frontend/src/components/DetailPanel.tsx
-- [ ] T099 [US4] Implement null/missing value display logic in DetailPanel in frontend/src/components/DetailPanel.tsx
-- [ ] T100 [US4] Add expand button for each relationship in detail panel in frontend/src/components/DetailPanel.tsx
-- [ ] T101 [US4] Style DetailPanel for readability (collapsible sections, copy buttons) in frontend/src/components/DetailPanel.tsx
+- [X] T096 [P] [US4] Enhance DetailPanel component with property list view in frontend/src/components/DetailPanel.tsx
+- [X] T097 [P] [US4] Enhance DetailPanel component with metadata section (timestamps, category) in frontend/src/components/DetailPanel.tsx
+- [X] T098 [US4] Add related entities list to DetailPanel in frontend/src/components/DetailPanel.tsx
+- [X] T099 [US4] Implement null/missing value display logic in DetailPanel in frontend/src/components/DetailPanel.tsx
+- [X] T100 [US4] Add expand button for each relationship in detail panel in frontend/src/components/DetailPanel.tsx
+- [X] T101 [US4] Style DetailPanel for readability (collapsible sections, copy buttons) in frontend/src/components/DetailPanel.tsx
 
 ### Integration Tests for User Story 4
 

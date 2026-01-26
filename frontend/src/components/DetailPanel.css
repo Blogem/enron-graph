@@ -234,3 +234,244 @@
         transform: rotate(360deg);
     }
 }
+
+/* T101: Collapsible section headers */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.section-header.collapsible {
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.section-header.collapsible:hover {
+    background-color: #21262d;
+}
+
+.collapse-icon {
+    font-size: 12px;
+    color: #8b949e;
+    transition: transform 0.2s;
+}
+
+/* T099: Value type-specific styling */
+.null-value {
+    color: #6e7681;
+    font-style: italic;
+    font-family: monospace;
+}
+
+.empty-value {
+    color: #6e7681;
+    font-style: italic;
+    font-size: 12px;
+}
+
+.boolean-value {
+    font-family: monospace;
+    font-weight: 600;
+}
+
+.boolean-value.true {
+    color: #7ee787;
+}
+
+.boolean-value.false {
+    color: #ff7b72;
+}
+
+.number-value {
+    color: #79c0ff;
+    font-family: monospace;
+}
+
+.string-value {
+    color: #c9d1d9;
+}
+
+.json-value {
+    color: #a5d6ff;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 0;
+}
+
+/* T096: Enhanced property items with copy buttons */
+.property-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #21262d;
+    padding: 8px 12px;
+}
+
+.copy-button-small {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.copy-button-small:hover {
+    opacity: 1;
+}
+
+/* T097: Metadata section styling */
+.metadata-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: #0d1117;
+    border-radius: 4px;
+    border: 1px solid #30363d;
+}
+
+.metadata-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 1px solid #21262d;
+}
+
+.metadata-item:last-child {
+    border-bottom: none;
+}
+
+.metadata-label {
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #8b949e;
+    letter-spacing: 0.5px;
+    min-width: 120px;
+}
+
+.metadata-value {
+    flex: 1;
+    font-family: monospace;
+    font-size: 12px;
+    color: #c9d1d9;
+    text-align: right;
+}
+
+.category-promoted {
+    color: #58a6ff;
+    font-weight: 600;
+}
+
+.category-discovered {
+    color: #bc8cff;
+    font-weight: 600;
+}
+
+.category-unknown {
+    color: #6e7681;
+    font-style: italic;
+}
+
+/* T098: Related entities list styling */
+.related-entities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.related-entity-item {
+    padding: 8px 10px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.related-entity-item:hover {
+    border-color: #4ecdc4;
+    background: #161b22;
+}
+
+.relationship-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.relationship-type {
+    font-size: 10px;
+    font-weight: 600;
+    color: #7ee787;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.relationship-direction {
+    font-size: 14px;
+    color: #8b949e;
+}
+
+.related-node-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.related-node-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #f0f6fc;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.related-node-type {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.related-node-type .type-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+}
+
+/* T100: Expand relationship button */
+.expand-relationship-btn {
+    width: 100%;
+    padding: 6px 10px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    color: #58a6ff;
+    transition: all 0.2s;
+}
+
+.expand-relationship-btn:hover {
+    background: #30363d;
+    border-color: #58a6ff;
+}
+
+.expand-relationship-btn:active {
+    transform: scale(0.98);
+}

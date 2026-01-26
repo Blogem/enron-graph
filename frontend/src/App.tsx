@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import './App.css';
 import './components/TypeDetailsPanel.css';
 import SchemaPanel from './components/SchemaPanel';
@@ -7,7 +7,7 @@ import DetailPanel from './components/DetailPanel';
 import FilterBar from './components/FilterBar';
 import { wailsAPI } from './services/wails';
 import type { explorer } from './wailsjs/go/models';
-import type { GraphData, GraphNodeWithPosition, ExpandedNodeState, NodeFilter } from './types/graph';
+import type { GraphData, GraphNodeWithPosition, ExpandedNodeState, NodeFilter, GraphEdge } from './types/graph';
 
 function App() {
     // Schema state
@@ -201,12 +201,54 @@ function App() {
             const details = await wailsAPI.getNodeDetails(node.id);
             setSelectedNode({
                 ...node,
-                properties: details.properties
+                properties: details.properties,
+                category: details.category
             });
         } catch (err) {
             console.error('Error loading node details:', err);
         }
     }, []);
+
+    // T098: Compute related entities from graph edges for the selected node
+    const relatedEntities = useMemo(() => {
+        if (!selectedNode) return [];
+
+        const nodeId = selectedNode.id;
+        const related: Array<{ edge: GraphEdge; node: GraphNodeWithPosition }> = [];
+
+        // Find all edges connected to this node
+        graphData.links.forEach(edge => {
+            // react-force-graph modifies source/target to be object references after first render
+            // We need to handle both string IDs and object references
+            const sourceId = typeof edge.source === 'string' ? edge.source : (edge.source as any).id;
+            const targetId = typeof edge.target === 'string' ? edge.target : (edge.target as any).id;
+
+            if (sourceId === nodeId || targetId === nodeId) {
+                // Determine the connected node ID
+                const connectedNodeId = sourceId === nodeId ? targetId : sourceId;
+
+                // Find the connected node in our graph data
+                const connectedNode = graphData.nodes.find(n => n.id === connectedNodeId);
+
+                if (connectedNode) {
+                    related.push({
+                        edge: edge,
+                        node: connectedNode
+                    });
+                }
+            }
+        });
+
+        return related;
+    }, [selectedNode, graphData]);
+
+    // T100: Handle expand relationship button click
+    const handleExpandRelationship = useCallback((nodeId: string) => {
+        const node = graphData.nodes.find(n => n.id === nodeId);
+        if (node) {
+            handleNodeClick(node);
+        }
+    }, [graphData.nodes, handleNodeClick]);
 
     const handleNodeRightClick = useCallback(async (node: GraphNodeWithPosition) => {
         // Don't auto-expand if already expanded (FR-006b: explicit click required)
@@ -407,6 +449,8 @@ function App() {
                             expandedNodeState={selectedNode ? expandedNodes.get(selectedNode.id) || null : null}
                             onLoadMore={handleLoadMore}
                             onClose={handleCloseDetail}
+                            relatedEntities={relatedEntities}
+                            onExpandRelationship={handleExpandRelationship}
                         />
                     )}
                 </div>

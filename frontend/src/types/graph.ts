@@ -26,6 +26,7 @@ export interface GraphNode {
     id: string;
     label: string;
     type: string;
+    category?: string;
     properties: Record<string, any>;
 }
 
