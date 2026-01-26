@@ -13,6 +13,7 @@ type App struct {
 	ctx           context.Context
 	client        *ent.Client
 	schemaService *explorer.SchemaService
+	graphService  *explorer.GraphService
 }
 
 // NewApp creates a new App application struct
@@ -20,6 +21,7 @@ func NewApp(client *ent.Client, db *sql.DB) *App {
 	return &App{
 		client:        client,
 		schemaService: explorer.NewSchemaService(client, db),
+		graphService:  explorer.NewGraphService(client, db),
 	}
 }
 
@@ -42,4 +44,19 @@ func (a *App) GetTypeDetails(typeName string) (*explorer.SchemaType, error) {
 // RefreshSchema clears the cache and reloads schema from database
 func (a *App) RefreshSchema() error {
 	return a.schemaService.RefreshSchema(a.ctx)
+}
+
+// GetRandomNodes returns exactly limit random nodes with connecting edges
+func (a *App) GetRandomNodes(limit int) (*explorer.GraphResponse, error) {
+	return a.graphService.GetRandomNodes(a.ctx, limit)
+}
+
+// GetRelationships returns paginated relationships for a specific node
+func (a *App) GetRelationships(nodeID string, offset, limit int) (*explorer.RelationshipsResponse, error) {
+	return a.graphService.GetRelationships(a.ctx, nodeID, offset, limit)
+}
+
+// GetNodeDetails returns complete information for a specific node
+func (a *App) GetNodeDetails(nodeID string) (*explorer.GraphNode, error) {
+	return a.graphService.GetNodeDetails(a.ctx, nodeID)
 }

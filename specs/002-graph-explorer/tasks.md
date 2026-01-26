@@ -119,15 +119,15 @@
 
 ### Backend Implementation for User Story 2
 
-- [ ] T049 [US2] Implement GraphService interface in internal/explorer/graph_service.go
-- [ ] T050 [US2] Implement GetRandomNodes() method: query exactly 100 random nodes from all entity types in internal/explorer/graph_service.go
-- [ ] T051 [US2] Implement GetRandomNodes() method: include connecting edges in response in internal/explorer/graph_service.go
-- [ ] T052 [US2] Implement GetRelationships() method: paginated query with OFFSET/LIMIT in internal/explorer/graph_service.go
-- [ ] T053 [US2] Implement GetRelationships() method: count total relationships for has_more flag in internal/explorer/graph_service.go
-- [ ] T054 [US2] Implement GetRelationships() method: return connected nodes in internal/explorer/graph_service.go
-- [ ] T055 [US2] Implement GetNodeDetails() method in internal/explorer/graph_service.go
-- [ ] T056 [US2] Add GraphService to Wails app binding in cmd/explorer/main.go
-- [ ] T057 [US2] Verify all contract tests pass for GraphService
+- [X] T049 [US2] Implement GraphService interface in internal/explorer/graph_service.go
+- [X] T050 [US2] Implement GetRandomNodes() method: query exactly 100 random nodes from all entity types in internal/explorer/graph_service.go
+- [X] T051 [US2] Implement GetRandomNodes() method: include connecting edges in response in internal/explorer/graph_service.go
+- [X] T052 [US2] Implement GetRelationships() method: paginated query with OFFSET/LIMIT in internal/explorer/graph_service.go
+- [X] T053 [US2] Implement GetRelationships() method: count total relationships for has_more flag in internal/explorer/graph_service.go
+- [X] T054 [US2] Implement GetRelationships() method: return connected nodes in internal/explorer/graph_service.go
+- [X] T055 [US2] Implement GetNodeDetails() method in internal/explorer/graph_service.go
+- [X] T056 [US2] Add GraphService to Wails app binding in cmd/explorer/main.go
+- [X] T057 [US2] Verify all contract tests pass for GraphService
 
 ### Frontend Implementation for User Story 2
 
