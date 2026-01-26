@@ -856,7 +856,7 @@ assets/         # Enron email dataset
 - [ ] T154 Fix issues found during integration testing
 - [ ] T155 Improve error messages and user feedback
 - [ ] T156 Add missing input validation
-- [ ] T157 Optimize slow queries identified in performance testing
+- [-] T157 Optimize slow queries identified in performance testing (SKIPPED - performance tests not completed, deferred for production optimization)
 
 ---
 
