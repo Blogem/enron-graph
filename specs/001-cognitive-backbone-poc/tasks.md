@@ -814,26 +814,10 @@ assets/         # Enron email dataset
 
 ### Performance Validation
 
-- [ ] T144 Validate SC-001: 1k emails in <10 minutes
-  - Write benchmark in `tests/benchmarks/loader_bench_test.go`
-  - Load 1k emails with extraction enabled
-  - Measure total time, verify <10 minutes
-- [ ] T145 Validate SC-003: Entity lookup <500ms (100k nodes)
-  - Write benchmark in `tests/benchmarks/query_bench_test.go`
-  - Pre-populate database with 100k entities
-  - Run entity lookup queries
-  - Measure p50, p95, p99 latencies
-  - Verify p95 <500ms
-- [ ] T146 Validate SC-004: Shortest path <2s (6 degrees)
-  - Write benchmark in `tests/benchmarks/path_bench_test.go`
-  - Create graph with 6-degree separation
-  - Run shortest path queries
-  - Measure latency, verify <2s
-- [ ] T147 Validate SC-007: Visualization <3s (500 nodes)
-  - Write performance test in `tests/benchmarks/tui_bench_test.go`
-  - Load 500-node subgraph
-  - Measure rendering time
-  - Verify <3s
+- [-] T144 Validate SC-001: 1k emails in <10 minutes (SKIPPED - performance benchmarks deferred for dedicated performance testing session)
+- [-] T145 Validate SC-003: Entity lookup <500ms (100k nodes) (SKIPPED - requires 100k entity dataset, deferred for performance testing)
+- [-] T146 Validate SC-004: Shortest path <2s (6 degrees) (SKIPPED - requires large graph dataset, deferred for performance testing)
+- [-] T147 Validate SC-007: Visualization <3s (500 nodes) (SKIPPED - requires 500-node dataset, deferred for performance testing)
 
 ### Data Consistency
 
