@@ -809,8 +809,8 @@ assets/         # Enron email dataset
 
 - [X] T140 Full workflow test: load emails → extract → query → promote → query promoted entities
 - [-] T141 Test with full 1k+ email dataset (SKIPPED - 1k emails requires significant processing time, deferred for separate performance test run)
-- [ ] T142 Verify all P1-P3 user stories pass acceptance scenarios
-- [ ] T143 Test P4-P5 demo features
+- [X] T142 Verify all P1-P3 user stories pass acceptance scenarios
+- [X] T143 Test P4-P5 demo features
 
 ### Performance Validation
 
