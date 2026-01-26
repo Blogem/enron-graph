@@ -838,14 +838,14 @@ assets/         # Enron email dataset
 
 ### Documentation & Demo
 
-- [ ] T151 Update README.md with setup instructions
-- [ ] T152 Create demo script for stakeholders in `docs/demo.md`:
+- [X] T151 Update README.md with setup instructions
+- [X] T152 Create demo script for stakeholders in `docs/demo.md`:
   - Step 1: Load sample emails
   - Step 2: Query entities via API
   - Step 3: Run analyst, promote type
   - Step 4: Explore via TUI
   - Step 5: Chat interface demo
-- [ ] T153 Document lessons learned in `specs/001-cognitive-backbone-poc/lessons-learned.md`
+- [X] T153 Document lessons learned in `specs/001-cognitive-backbone-poc/lessons-learned.md`
   - What worked well
   - What challenges encountered
   - What would be done differently
