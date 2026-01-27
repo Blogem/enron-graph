@@ -452,7 +452,7 @@ function App() {
                                                     <h3>Properties ({selectedType.properties?.length || 0})</h3>
                                                     {selectedType.properties && selectedType.properties.length > 0 ? (
                                                         <div className="properties-list">
-                                                            {selectedType.properties.map((prop, idx) => (
+                                                            {selectedType.properties.map((prop: any, idx: number) => (
                                                                 <div key={idx} className="property-item">
                                                                     <div className="property-key">{prop.name}</div>
                                                                     <div className="property-meta">
@@ -461,7 +461,7 @@ function App() {
                                                                             <div className="sample-values">
                                                                                 <strong>Samples:</strong>
                                                                                 <ul>
-                                                                                    {prop.sample_value.slice(0, 3).map((val, i) => (
+                                                                                    {prop.sample_value.slice(0, 3).map((val: any, i: number) => (
                                                                                         <li key={i}>{String(val)}</li>
                                                                                     ))}
                                                                                 </ul>

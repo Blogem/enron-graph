@@ -44,8 +44,8 @@ const FilterBar: React.FC<FilterBarProps> = ({ schema, onFilterChange, initialFi
     const allTypes = React.useMemo(() => {
         if (!schema) return [];
         const types = [
-            ...(schema.promoted_types?.map(t => t.name) || []),
-            ...(schema.discovered_types?.map(t => t.name) || [])
+            ...(schema.promoted_types?.map((t: any) => t.name) || []),
+            ...(schema.discovered_types?.map((t: any) => t.name) || [])
         ];
         return Array.from(new Set(types)).sort();
     }, [schema]);

@@ -24,18 +24,20 @@ export interface SchemaResponse {
 
 export interface GraphNode {
     id: string;
-    label: string;
+    label?: string;
     type: string;
     category?: string;
     properties: Record<string, any>;
+    is_ghost?: boolean;
+    degree?: number;
 }
 
 export interface GraphEdge {
-    id: string;
+    id?: string;
     source: string;
     target: string;
     type: string;
-    properties: Record<string, any>;
+    properties?: Record<string, any>;
 }
 
 export interface GraphResponse {

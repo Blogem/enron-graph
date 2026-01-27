@@ -118,18 +118,38 @@ func main() {
 	if *extract {
 		logger.Info("Starting entity extraction...")
 
-		// Initialize Ollama LLM client
-		ollamaURL := config.OllamaURL
-		if ollamaURL == "" {
-			ollamaURL = "http://localhost:11434"
+		// Initialize LLM client based on provider
+		var llmClient llm.Client
+		switch config.LLMProvider {
+		case "litellm":
+			logger.Info("Using LiteLLM provider",
+				"url", config.LiteLLMURL,
+				"completion_model", config.CompletionModel,
+				"embedding_model", config.EmbeddingModel)
+			llmClient = llm.NewLiteLLMClient(
+				config.LiteLLMURL,
+				config.CompletionModel,
+				config.EmbeddingModel,
+				config.LiteLLMAPIKey,
+				logger,
+			)
+		default:
+			// Default to Ollama
+			ollamaURL := config.OllamaURL
+			if ollamaURL == "" {
+				ollamaURL = "http://localhost:11434"
+			}
+			logger.Info("Using Ollama provider",
+				"url", ollamaURL,
+				"completion_model", config.CompletionModel,
+				"embedding_model", config.EmbeddingModel)
+			llmClient = llm.NewOllamaClient(
+				ollamaURL,
+				config.CompletionModel,
+				config.EmbeddingModel,
+				logger,
+			)
 		}
-
-		llmClient := llm.NewOllamaClient(
-			ollamaURL,
-			"llama3.1:8b",
-			"mxbai-embed-large",
-			logger,
-		)
 
 		// Query emails that were just loaded
 		logger.Info("Querying emails for extraction...")
