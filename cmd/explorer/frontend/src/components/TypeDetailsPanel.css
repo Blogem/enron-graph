@@ -1,0 +1,159 @@
+/* Type details panel styling */
+.type-details-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.type-details-panel .detail-header {
+    padding: 0 0 16px 0;
+    border-bottom: 1px solid #30363d;
+    margin-bottom: 16px;
+}
+
+.type-details-panel .detail-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.type-details-panel .detail-title h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #f0f6fc;
+}
+
+.type-details-panel .type-badge {
+    padding: 4px 12px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #8b949e;
+}
+
+.type-details-panel .close-button {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: #8b949e;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.2s;
+}
+
+.type-details-panel .close-button:hover {
+    color: #f0f6fc;
+}
+
+.type-details-panel .detail-content {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.type-details-panel .detail-section {
+    margin-bottom: 24px;
+}
+
+.type-details-panel .detail-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.type-details-panel .properties-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.type-details-panel .property-item {
+    padding: 12px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+}
+
+.type-details-panel .property-key {
+    font-weight: 600;
+    color: #f0f6fc;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.type-details-panel .property-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.type-details-panel .property-type {
+    font-size: 12px;
+    color: #8b949e;
+    font-family: 'SF Mono', monospace;
+}
+
+.type-details-panel .sample-values {
+    margin-top: 4px;
+}
+
+.type-details-panel .sample-values strong {
+    display: block;
+    font-size: 11px;
+    color: #8b949e;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.type-details-panel .sample-values ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.type-details-panel .sample-values li {
+    font-size: 12px;
+    color: #c9d1d9;
+    padding: 4px 8px;
+    background: #0d1117;
+    border-radius: 3px;
+    font-family: 'SF Mono', monospace;
+}
+
+.type-details-panel .empty-message {
+    color: #8b949e;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.type-details-panel .detail-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+}
+
+.type-details-panel .spinner-large {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #30363d;
+    border-top-color: #4ecdc4;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+}
+
+.type-details-panel .detail-loading p {
+    color: #8b949e;
+    font-size: 14px;
+}
