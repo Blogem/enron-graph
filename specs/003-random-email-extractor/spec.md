@@ -10,7 +10,7 @@
 ### Session 2026-01-27
 
 - Q: When the utility extracts emails and creates an output CSV file, what naming convention should be used? → A: Timestamp-based naming (e.g., "sampled-emails-20260127-143022.csv")
-- Q: What format should the tracking file use to store extracted email identifiers? → A: Simple text file with one identifier per line (e.g., tracking.txt)
+- Q: What format should the tracking file use to store extracted email identifiers? → A: Simple text file with one identifier per line, timestamped per extraction (e.g., "extracted-20260127-143022.txt")
 - Q: What level of logging/output should the utility provide during normal operation? → A: Verbose logging showing progress (e.g., "Processed 500/1000 emails...")
 - Q: How should the sample size be specified when running the utility? → A: Command-line flag (e.g., --count 1000 or -n 1000)
 - Q: Where should the tracking file and output CSV files be stored? → A: Fixed location in assets/enron-emails/ directory
@@ -83,8 +83,8 @@ A developer needs different dataset sizes for different testing scenarios (unit 
 - **FR-002**: Utility MUST accept a command-line flag parameter (e.g., --count or -n) specifying the number of emails to extract
 - **FR-003**: Utility MUST randomly select emails from the source file that have not been previously extracted
 - **FR-004**: Utility MUST write extracted emails to a new CSV file in the assets/enron-emails/ directory with timestamp-based naming (format: sampled-emails-YYYYMMDD-HHMMSS.csv) maintaining the same format as the source (file, message columns)
-- **FR-005**: Utility MUST maintain a tracking file in the assets/enron-emails/ directory (simple text format with one identifier per line) that records unique identifiers of all extracted emails
-- **FR-006**: Utility MUST read the tracking file before each extraction to determine which emails to exclude from selection
+- **FR-005**: Utility MUST create a timestamped tracking file per extraction in the assets/enron-emails/ directory (format: extracted-YYYYMMDD-HHMMSS.txt, simple text format with one identifier per line) that records unique identifiers of all extracted emails in that session
+- **FR-006**: Utility MUST read all tracking files (extracted-*.txt) before each extraction to determine which emails to exclude from selection
 - **FR-007**: Utility MUST use the "file" column value as the unique identifier for tracking extracted emails (uniqueness verified: static dataset has unique file identifiers)
 - **FR-008**: Utility MUST update the tracking file after each successful extraction to include newly extracted email identifiers
 - **FR-009**: Utility MUST handle the case where requested sample size exceeds available unextracted emails by extracting all remaining available emails and notifying the user of the actual count extracted
