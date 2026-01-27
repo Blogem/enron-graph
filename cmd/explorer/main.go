@@ -38,7 +38,7 @@ func main() {
 	defer db.Close()
 
 	// Create an instance of the app structure
-	app := NewApp(client, db)
+	app := NewApp(client, db, cfg)
 
 	// Create application with options
 	err = wails.Run(&options.App{

@@ -122,15 +122,15 @@ description: "Task breakdown for Graph Explorer Chat Interface implementation"
 
 ### Tests for User Story 3
 
-- [ ] T043 [US3] Write test for conversation scrolling behavior in ChatPanel.test.tsx
+- [X] T043 [US3] Write test for conversation scrolling behavior in ChatPanel.test.tsx
 
 ### Implementation for User Story 3
 
-- [ ] T044 [US3] Add scrollable container to conversation area in ChatPanel.tsx (FR-013)
-- [ ] T045 [US3] Implement auto-scroll to latest message in ChatPanel component (FR-014)
-- [ ] T046 [US3] Add scroll-to-bottom on new message logic in ChatPanel useEffect hook
-- [ ] T047 [US3] Test with 50+ messages to verify performance (SC-006). Measure query response time for 10 sample queries to verify SC-003: 95% complete within 3 seconds
-- [ ] T048 [US3] Run component tests to verify User Story 3 (npm test from cmd/explorer/frontend/)
+- [X] T044 [US3] Add scrollable container to conversation area in ChatPanel.tsx (FR-013)
+- [X] T045 [US3] Implement auto-scroll to latest message in ChatPanel component (FR-014)
+- [X] T046 [US3] Add scroll-to-bottom on new message logic in ChatPanel useEffect hook
+- [X] T047 [US3] Test with 50+ messages to verify performance (SC-006). Measure query response time for 10 sample queries to verify SC-003: 95% complete within 3 seconds
+- [X] T048 [US3] Run component tests to verify User Story 3 (npm test from cmd/explorer/frontend/)
 
 **Checkpoint**: Conversation history scrollable, auto-scrolls to new messages, handles large message counts
 

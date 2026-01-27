@@ -342,15 +342,19 @@ function App() {
     // Keyboard shortcuts (T109)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Escape: Clear selection
-            if (e.key === 'Escape') {
+            // Check if user is typing in an input field
+            const target = e.target as HTMLElement;
+            const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+            // Escape: Clear selection (unless typing)
+            if (e.key === 'Escape' && !isTyping) {
                 e.preventDefault(); // Prevent browser beep
                 setSelectedNode(null);
                 setSelectedType(null);
                 setSelectedTypeName(null);
             }
-            // Space: Recenter graph view
-            else if (e.key === ' ' || e.code === 'Space') {
+            // Space: Recenter graph view (only when not typing)
+            else if ((e.key === ' ' || e.code === 'Space') && !isTyping) {
                 // Prevent default space behavior (page scroll)
                 e.preventDefault();
                 if (graphRecenterRef.current) {

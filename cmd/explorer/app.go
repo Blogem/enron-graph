@@ -10,12 +10,14 @@ import (
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/internal/chat"
 	"github.com/Blogem/enron-graph/internal/explorer"
+	"github.com/Blogem/enron-graph/pkg/utils"
 )
 
 // App struct
 type App struct {
 	ctx           context.Context
 	client        *ent.Client
+	config        *utils.Config
 	schemaService *explorer.SchemaService
 	graphService  *explorer.GraphService
 	chatHandler   chat.Handler
@@ -23,15 +25,16 @@ type App struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp(client *ent.Client, db *sql.DB) *App {
+func NewApp(client *ent.Client, db *sql.DB, cfg *utils.Config) *App {
 	// Create chat dependencies
-	llmClient := chat.NewStubLLMClient()
+	llmClient := newProductionLLMClient(cfg)
 	// chatRepo needs context, will be initialized in startup
 	chatHandler := chat.NewHandler(llmClient, nil)
 	chatContext := chat.NewContext()
 
 	return &App{
 		client:        client,
+		config:        cfg,
 		schemaService: explorer.NewSchemaService(client, db),
 		graphService:  explorer.NewGraphService(client, db),
 		chatHandler:   chatHandler,
@@ -45,7 +48,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
 	// Initialize chat adapter with context
-	llmClient := chat.NewStubLLMClient()
+	llmClient := newProductionLLMClient(a.config)
 	chatRepo := newChatAdapter(a.client, ctx)
 	a.chatHandler = chat.NewHandler(llmClient, chatRepo)
 }

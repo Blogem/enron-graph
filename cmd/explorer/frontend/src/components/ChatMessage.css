@@ -15,12 +15,14 @@
     border-radius: 8px;
     word-wrap: break-word;
     white-space: pre-wrap;
+    text-align: left;
 }
 
 .chat-message__text {
     font-size: 14px;
     line-height: 1.5;
     margin-bottom: 4px;
+    text-align: left;
 }
 
 .chat-message__timestamp {
