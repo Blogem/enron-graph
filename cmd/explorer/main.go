@@ -13,10 +13,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 )
 
-// Assets will be embedded here during build
-// For development, Wails uses the dev server
-//
-//go:embed frontend/dist
+//go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
