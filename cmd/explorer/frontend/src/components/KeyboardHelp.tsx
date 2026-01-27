@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './KeyboardHelp.css';
 
-const KeyboardHelp: React.FC = () => {
+interface KeyboardHelpProps {
+    chatPanelCollapsed?: boolean;
+}
+
+const KeyboardHelp: React.FC<KeyboardHelpProps> = ({ chatPanelCollapsed = false }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     // Close on Escape key
@@ -18,8 +22,12 @@ const KeyboardHelp: React.FC = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isOpen]);
 
+    // Calculate bottom position based on chat panel state
+    // Chat panel footer (input) is ~60px, expanded body is ~350px, add 20px margin
+    const bottomOffset = chatPanelCollapsed ? 90 : 440; // collapsed: footer + margin, expanded: footer + body + margin
+
     return (
-        <div className="keyboard-help">
+        <div className="keyboard-help" style={{ bottom: `${bottomOffset}px` }}>
             <button
                 className="keyboard-help-button"
                 onClick={() => setIsOpen(!isOpen)}
