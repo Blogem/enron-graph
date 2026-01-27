@@ -252,7 +252,7 @@
 - [X] T117 Verify success criteria SC-007: exploration task in <5 minutes first use
 - [X] T118 Verify success criteria SC-008: 1000 nodes pan/zoom in <500ms
 - [X] T119 [P] Create user documentation in README.md for Graph Explorer
-- [ ] T120 [P] Document build and deployment process in specs/002-graph-explorer/deployment.md
+- [X] T120 [P] Document build and deployment process in specs/002-graph-explorer/deployment.md
 - [ ] T121 Run full test suite and verify all tests pass
 - [ ] T122 Build production binary with `wails build` and test on target platforms
 
