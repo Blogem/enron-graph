@@ -31,7 +31,7 @@ func TestSamplerBasicWorkflow(t *testing.T) {
 	}
 
 	// Step 1: Load tracking registry (should be empty initially)
-	registry, err := sampler.LoadTracking(outputDir)
+	registry, _, err := sampler.LoadTracking(outputDir)
 	if err != nil {
 		t.Fatalf("Failed to load tracking: %v", err)
 	}

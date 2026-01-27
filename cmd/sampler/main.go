@@ -50,13 +50,13 @@ func runExtraction(requestedCount int) error {
 
 	// Step 1: Load tracking registry
 	fmt.Println("Loading tracking registry...")
-	registry, err := sampler.LoadTracking(outputDir)
+	registry, fileCount, err := sampler.LoadTracking(outputDir)
 	if err != nil {
 		return fmt.Errorf("failed to load tracking: %w", err)
 	}
 
 	if registry.Count() > 0 {
-		fmt.Printf("Found %d previously extracted emails (from tracking files)\n", registry.Count())
+		fmt.Printf("Found %d previously extracted emails (from %d tracking files)\n", registry.Count(), fileCount)
 	}
 
 	// Step 2: Parse source CSV file (T021: error handling for missing file)
@@ -116,15 +116,28 @@ func runExtraction(requestedCount int) error {
 		return fmt.Errorf("no emails available for extraction (all emails have been extracted)")
 	}
 
-	// Step 4: Generate random indices
-	fmt.Printf("Selecting %d random emails...\n", actualCount)
-	indices := sampler.GenerateIndices(nil, availableCount, actualCount)
+	// Step 4: Filter to only available emails
+	var availableEmails []sampler.EmailRecord
+	for _, email := range emails {
+		if !registry.Contains(email.File) {
+			availableEmails = append(availableEmails, email)
+		}
+	}
 
-	// Step 5: Extract emails at selected indices
-	extracted := sampler.ExtractEmails(emails, indices, registry)
+	// Step 5: Generate random indices from available emails
+	fmt.Printf("Selecting %d random emails...\n", actualCount)
+	indices := sampler.GenerateIndices(nil, len(availableEmails), actualCount)
+
+	// Step 6: Extract emails at selected indices from available emails
+	var extracted []sampler.EmailRecord
+	for _, idx := range indices {
+		if idx >= 0 && idx < len(availableEmails) {
+			extracted = append(extracted, availableEmails[idx])
+		}
+	}
 	fmt.Printf("Extracted %d emails\n", len(extracted))
 
-	// Step 6: Generate timestamped output filename (T020)
+	// Step 7: Generate timestamped output filename (T020)
 	outputFilename := fmt.Sprintf("sampled-emails-%s.csv", timestamp.Format("20060102-150405"))
 	outputPath := filepath.Join(outputDir, outputFilename)
 
@@ -134,7 +147,7 @@ func runExtraction(requestedCount int) error {
 		return fmt.Errorf("failed to write output CSV: %w", err)
 	}
 
-	// Step 7: Create tracking file (T020: same timestamp format)
+	// Step 8: Create tracking file (T020: same timestamp format)
 	trackingFilename := fmt.Sprintf("extracted-%s.txt", timestamp.Format("20060102-150405"))
 
 	// Extract file IDs for tracking

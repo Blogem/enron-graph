@@ -12,31 +12,34 @@ import (
 // LoadTracking reads all extracted-*.txt tracking files from the specified directory
 // and aggregates the email identifiers into a TrackingRegistry.
 // Corrupted files are skipped with a warning logged.
-func LoadTracking(dir string) (*TrackingRegistry, error) {
+// Returns the registry and the number of successfully loaded tracking files.
+func LoadTracking(dir string) (*TrackingRegistry, int, error) {
 	registry := NewTrackingRegistry()
 
 	// Find all tracking files matching pattern extracted-*.txt
 	pattern := filepath.Join(dir, "extracted-*.txt")
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find tracking files: %w", err)
+		return nil, 0, fmt.Errorf("failed to find tracking files: %w", err)
 	}
 
 	// No tracking files is valid (first run)
 	if len(matches) == 0 {
-		return registry, nil
+		return registry, 0, nil
 	}
 
 	// Load each tracking file
+	loadedCount := 0
 	for _, filePath := range matches {
 		if err := loadTrackingFile(filePath, registry); err != nil {
 			// Log warning but continue with other files
 			log.Printf("WARNING: Skipping corrupted tracking file %s: %v", filePath, err)
 			continue
 		}
+		loadedCount++
 	}
 
-	return registry, nil
+	return registry, loadedCount, nil
 }
 
 // loadTrackingFile reads a single tracking file and adds IDs to the registry

@@ -1,6 +1,7 @@
 package sampler
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 )
@@ -329,5 +330,527 @@ func TestExtractEmails_PreservesContent(t *testing.T) {
 	if extracted[0].Message != multiLineMsg {
 		t.Errorf("Expected message to be preserved exactly, got:\n%s\nwant:\n%s",
 			extracted[0].Message, multiLineMsg)
+	}
+}
+
+// T024: Additional tests for CountAvailable with exclusion logic (US2)
+
+// TestCountAvailable_LargeRegistry tests performance with large tracking registry
+func TestCountAvailable_LargeRegistry(t *testing.T) {
+	// Arrange: Create registry with 10,000 extracted emails
+	registry := NewTrackingRegistry()
+	for i := 0; i < 10000; i++ {
+		registry.Add(fmt.Sprintf("email-%d", i))
+	}
+
+	// Create sample emails with some overlap
+	emails := make([]EmailRecord, 100)
+	for i := 0; i < 100; i++ {
+		emails[i] = EmailRecord{
+			File:    fmt.Sprintf("email-%d", i+5000), // Emails 5000-5099, overlap with registry 0-9999
+			Message: fmt.Sprintf("Message %d", i),
+		}
+	}
+
+	// Act: Count available emails
+	count := CountAvailable(emails, registry)
+
+	// Assert: All 100 emails should be in registry (range 5000-5099 is within 0-9999)
+	expectedAvailable := 0
+	if count != expectedAvailable {
+		t.Errorf("Expected count=%d with large registry (all in registry), got %d", expectedAvailable, count)
+	}
+}
+
+// TestCountAvailable_MultipleRunsSimulation tests counting across multiple extraction runs
+func TestCountAvailable_MultipleRunsSimulation(t *testing.T) {
+	// Arrange: Simulate multiple runs
+	registry := NewTrackingRegistry()
+	allEmails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+		{File: "email-3", Message: "Message 3"},
+		{File: "email-4", Message: "Message 4"},
+		{File: "email-5", Message: "Message 5"},
+	}
+
+	// First run: Extract 2 emails
+	count1 := CountAvailable(allEmails, registry)
+	if count1 != 5 {
+		t.Errorf("First run: expected 5 available, got %d", count1)
+	}
+
+	registry.Add("email-1")
+	registry.Add("email-3")
+
+	// Second run: Should have 3 available
+	count2 := CountAvailable(allEmails, registry)
+	if count2 != 3 {
+		t.Errorf("Second run: expected 3 available, got %d", count2)
+	}
+
+	registry.Add("email-2")
+	registry.Add("email-4")
+
+	// Third run: Should have 1 available
+	count3 := CountAvailable(allEmails, registry)
+	if count3 != 1 {
+		t.Errorf("Third run: expected 1 available, got %d", count3)
+	}
+
+	registry.Add("email-5")
+
+	// Fourth run: Should have 0 available
+	count4 := CountAvailable(allEmails, registry)
+	if count4 != 0 {
+		t.Errorf("Fourth run: expected 0 available, got %d", count4)
+	}
+}
+
+// T025: Additional tests for ExtractEmails with duplicate filtering (US2)
+
+// TestExtractEmails_AllDuplicates tests extraction when all selected emails are duplicates
+func TestExtractEmails_AllDuplicates(t *testing.T) {
+	// Arrange: All emails in registry
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+		{File: "email-3", Message: "Message 3"},
+	}
+	registry := NewTrackingRegistry()
+	registry.Add("email-1")
+	registry.Add("email-2")
+	registry.Add("email-3")
+
+	indices := []int{0, 1, 2} // Try to extract all
+
+	// Act: Extract emails
+	extracted := ExtractEmails(emails, indices, registry)
+
+	// Assert: Should extract nothing
+	if len(extracted) != 0 {
+		t.Errorf("Expected 0 extracted emails (all duplicates), got %d", len(extracted))
+	}
+}
+
+// TestExtractEmails_ConsecutiveDuplicates tests filtering consecutive duplicates
+func TestExtractEmails_ConsecutiveDuplicates(t *testing.T) {
+	// Arrange: Registry with some consecutive emails
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"}, // Available
+		{File: "email-2", Message: "Message 2"}, // Duplicate
+		{File: "email-3", Message: "Message 3"}, // Duplicate
+		{File: "email-4", Message: "Message 4"}, // Available
+		{File: "email-5", Message: "Message 5"}, // Available
+	}
+	registry := NewTrackingRegistry()
+	registry.Add("email-2")
+	registry.Add("email-3")
+
+	indices := []int{0, 1, 2, 3, 4} // Try to extract all
+
+	// Act: Extract emails
+	extracted := ExtractEmails(emails, indices, registry)
+
+	// Assert: Should extract only 3 emails (1, 4, 5)
+	if len(extracted) != 3 {
+		t.Errorf("Expected 3 extracted emails, got %d", len(extracted))
+	}
+
+	// Assert: Verify correct emails were extracted
+	expectedFiles := []string{"email-1", "email-4", "email-5"}
+	for i, email := range extracted {
+		if email.File != expectedFiles[i] {
+			t.Errorf("Expected extracted[%d].File='%s', got '%s'",
+				i, expectedFiles[i], email.File)
+		}
+	}
+}
+
+// TestExtractEmails_DuplicatePreservesOrder tests that filtering maintains index order
+func TestExtractEmails_DuplicatePreservesOrder(t *testing.T) {
+	// Arrange: Mix of available and duplicate emails
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+		{File: "email-3", Message: "Message 3"},
+		{File: "email-4", Message: "Message 4"},
+		{File: "email-5", Message: "Message 5"},
+	}
+	registry := NewTrackingRegistry()
+	registry.Add("email-2")
+	registry.Add("email-4")
+
+	indices := []int{0, 1, 2, 3, 4} // Sorted indices
+
+	// Act: Extract emails
+	extracted := ExtractEmails(emails, indices, registry)
+
+	// Assert: Extracted emails should maintain order (1, 3, 5)
+	expectedFiles := []string{"email-1", "email-3", "email-5"}
+	for i, email := range extracted {
+		if email.File != expectedFiles[i] {
+			t.Errorf("Expected extracted[%d].File='%s', got '%s'",
+				i, expectedFiles[i], email.File)
+		}
+	}
+}
+
+// T036: Test for count exceeding available emails
+// TestCountExceedsAvailable_RequestMoreThanTotal tests requesting more emails than exist in source
+func TestCountExceedsAvailable_RequestMoreThanTotal(t *testing.T) {
+	// Arrange: Create small set of emails
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+		{File: "email-3", Message: "Message 3"},
+	}
+	registry := NewTrackingRegistry() // Empty registry
+
+	// Act: Request more emails than available (requesting 10, only 3 available)
+	availableCount := CountAvailable(emails, registry)
+
+	// Assert: Available count should be 3
+	if availableCount != 3 {
+		t.Errorf("Expected availableCount=3, got %d", availableCount)
+	}
+
+	// Act: Try to generate indices for more than available
+	// Should only generate as many as available
+	requestedCount := 10
+	actualCount := requestedCount
+	if requestedCount > availableCount {
+		actualCount = availableCount
+	}
+
+	indices := GenerateIndices(nil, availableCount, actualCount)
+
+	// Assert: Should only get 3 indices
+	if len(indices) != 3 {
+		t.Errorf("Expected 3 indices (limited by available), got %d", len(indices))
+	}
+
+	// Assert: All indices should be valid (0-2)
+	for i, idx := range indices {
+		if idx < 0 || idx >= availableCount {
+			t.Errorf("Index[%d]=%d is out of bounds [0, %d)", i, idx, availableCount)
+		}
+	}
+}
+
+// TestCountExceedsAvailable_RequestMoreAfterExtractions tests requesting more than remaining
+func TestCountExceedsAvailable_RequestMoreAfterExtractions(t *testing.T) {
+	// Arrange: Create emails with some already extracted
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+		{File: "email-3", Message: "Message 3"},
+		{File: "email-4", Message: "Message 4"},
+		{File: "email-5", Message: "Message 5"},
+	}
+	registry := NewTrackingRegistry()
+	registry.Add("email-2")
+	registry.Add("email-4")
+	registry.Add("email-5")
+	// Only 2 emails available (email-1, email-3)
+
+	// Act: Count available
+	availableCount := CountAvailable(emails, registry)
+
+	// Assert: Only 2 should be available
+	if availableCount != 2 {
+		t.Errorf("Expected availableCount=2, got %d", availableCount)
+	}
+
+	// Act: Request 10 emails when only 2 available
+	requestedCount := 10
+	actualCount := requestedCount
+	if requestedCount > availableCount {
+		actualCount = availableCount
+	}
+
+	// Filter to available emails
+	var availableEmails []EmailRecord
+	for _, email := range emails {
+		if !registry.Contains(email.File) {
+			availableEmails = append(availableEmails, email)
+		}
+	}
+
+	indices := GenerateIndices(nil, len(availableEmails), actualCount)
+
+	// Assert: Should only get 2 indices
+	if len(indices) != 2 {
+		t.Errorf("Expected 2 indices (limited by available), got %d", len(indices))
+	}
+
+	// Act: Extract
+	extracted := ExtractEmails(availableEmails, indices, NewTrackingRegistry())
+
+	// Assert: Should extract exactly 2 emails
+	if len(extracted) != 2 {
+		t.Errorf("Expected 2 extracted emails, got %d", len(extracted))
+	}
+}
+
+// TestCountExceedsAvailable_ExactMatch tests requesting exactly the available count
+func TestCountExceedsAvailable_ExactMatch(t *testing.T) {
+	// Arrange: Create emails with exact count available
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+		{File: "email-3", Message: "Message 3"},
+	}
+	registry := NewTrackingRegistry()
+
+	// Act: Request exactly what's available
+	availableCount := CountAvailable(emails, registry)
+	requestedCount := 3
+
+	// Assert: Available should match requested
+	if availableCount != requestedCount {
+		t.Errorf("Expected availableCount=%d, got %d", requestedCount, availableCount)
+	}
+
+	// Act: Generate indices
+	indices := GenerateIndices(nil, availableCount, requestedCount)
+
+	// Assert: Should get exactly 3 indices
+	if len(indices) != 3 {
+		t.Errorf("Expected 3 indices, got %d", len(indices))
+	}
+
+	// Act: Extract
+	extracted := ExtractEmails(emails, indices, registry)
+
+	// Assert: Should extract all 3 emails
+	if len(extracted) != 3 {
+		t.Errorf("Expected 3 extracted emails, got %d", len(extracted))
+	}
+}
+
+// TestCountExceedsAvailable_OneRemaining tests edge case with only one email left
+func TestCountExceedsAvailable_OneRemaining(t *testing.T) {
+	// Arrange: Create emails with all but one extracted
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+		{File: "email-3", Message: "Message 3"},
+	}
+	registry := NewTrackingRegistry()
+	registry.Add("email-1")
+	registry.Add("email-2")
+	// Only email-3 remains
+
+	// Act: Count available
+	availableCount := CountAvailable(emails, registry)
+
+	// Assert: Only 1 should be available
+	if availableCount != 1 {
+		t.Errorf("Expected availableCount=1, got %d", availableCount)
+	}
+
+	// Act: Request 100 emails when only 1 available
+	requestedCount := 100
+	actualCount := requestedCount
+	if requestedCount > availableCount {
+		actualCount = availableCount
+	}
+
+	// Filter to available
+	var availableEmails []EmailRecord
+	for _, email := range emails {
+		if !registry.Contains(email.File) {
+			availableEmails = append(availableEmails, email)
+		}
+	}
+
+	indices := GenerateIndices(nil, len(availableEmails), actualCount)
+
+	// Assert: Should only get 1 index
+	if len(indices) != 1 {
+		t.Errorf("Expected 1 index, got %d", len(indices))
+	}
+
+	// Act: Extract
+	extracted := ExtractEmails(availableEmails, indices, NewTrackingRegistry())
+
+	// Assert: Should extract exactly 1 email
+	if len(extracted) != 1 {
+		t.Errorf("Expected 1 extracted email, got %d", len(extracted))
+	}
+
+	// Assert: Should be email-3
+	if extracted[0].File != "email-3" {
+		t.Errorf("Expected extracted email-3, got %s", extracted[0].File)
+	}
+}
+
+// T037: Tests for zero emails available edge case
+// TestZeroEmailsAvailable_AllExtracted tests when all emails have been extracted
+func TestZeroEmailsAvailable_AllExtracted(t *testing.T) {
+	// Arrange: Create emails with all already extracted
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+		{File: "email-3", Message: "Message 3"},
+	}
+	registry := NewTrackingRegistry()
+	registry.Add("email-1")
+	registry.Add("email-2")
+	registry.Add("email-3")
+
+	// Act: Count available
+	availableCount := CountAvailable(emails, registry)
+
+	// Assert: Should be zero
+	if availableCount != 0 {
+		t.Errorf("Expected availableCount=0, got %d", availableCount)
+	}
+
+	// Act: Filter to available emails
+	var availableEmails []EmailRecord
+	for _, email := range emails {
+		if !registry.Contains(email.File) {
+			availableEmails = append(availableEmails, email)
+		}
+	}
+
+	// Assert: Should have no available emails
+	if len(availableEmails) != 0 {
+		t.Errorf("Expected 0 available emails, got %d", len(availableEmails))
+	}
+}
+
+// TestZeroEmailsAvailable_EmptySource tests when source CSV has no emails
+func TestZeroEmailsAvailable_EmptySource(t *testing.T) {
+	// Arrange: Empty email list
+	emails := []EmailRecord{}
+	registry := NewTrackingRegistry()
+
+	// Act: Count available
+	availableCount := CountAvailable(emails, registry)
+
+	// Assert: Should be zero
+	if availableCount != 0 {
+		t.Errorf("Expected availableCount=0 for empty source, got %d", availableCount)
+	}
+
+	// Act: Try to generate indices
+	indices := GenerateIndices(nil, 0, 10)
+
+	// Assert: Should generate no indices
+	if len(indices) != 0 {
+		t.Errorf("Expected 0 indices for zero available, got %d", len(indices))
+	}
+}
+
+// TestZeroEmailsAvailable_RequestWithZeroAvailable tests requesting emails when none available
+func TestZeroEmailsAvailable_RequestWithZeroAvailable(t *testing.T) {
+	// Arrange: All emails already extracted
+	emails := []EmailRecord{
+		{File: "email-1", Message: "Message 1"},
+		{File: "email-2", Message: "Message 2"},
+	}
+	registry := NewTrackingRegistry()
+	registry.Add("email-1")
+	registry.Add("email-2")
+
+	// Act: Count available
+	availableCount := CountAvailable(emails, registry)
+
+	// Assert: Zero available
+	if availableCount != 0 {
+		t.Errorf("Expected availableCount=0, got %d", availableCount)
+	}
+
+	// Act: Request 10 emails
+	requestedCount := 10
+	actualCount := requestedCount
+	if requestedCount > availableCount {
+		actualCount = availableCount
+	}
+
+	// Assert: Actual count should be capped at 0
+	if actualCount != 0 {
+		t.Errorf("Expected actualCount=0 (capped), got %d", actualCount)
+	}
+
+	// Act: Filter available emails
+	var availableEmails []EmailRecord
+	for _, email := range emails {
+		if !registry.Contains(email.File) {
+			availableEmails = append(availableEmails, email)
+		}
+	}
+
+	// Act: Generate indices for zero available
+	indices := GenerateIndices(nil, len(availableEmails), actualCount)
+
+	// Assert: Should get no indices
+	if len(indices) != 0 {
+		t.Errorf("Expected 0 indices when none available, got %d", len(indices))
+	}
+
+	// Act: Extract with no indices
+	extracted := ExtractEmails(availableEmails, indices, NewTrackingRegistry())
+
+	// Assert: Should extract nothing
+	if len(extracted) != 0 {
+		t.Errorf("Expected 0 extracted emails, got %d", len(extracted))
+	}
+}
+
+// TestZeroEmailsAvailable_EmptyRegistry tests zero count with empty tracking
+func TestZeroEmailsAvailable_EmptyRegistry(t *testing.T) {
+	// Arrange: Empty emails and empty registry
+	emails := []EmailRecord{}
+	registry := NewTrackingRegistry()
+
+	// Act: Count available
+	availableCount := CountAvailable(emails, registry)
+
+	// Assert: Should be zero
+	if availableCount != 0 {
+		t.Errorf("Expected availableCount=0, got %d", availableCount)
+	}
+
+	// Act: Extract with empty inputs
+	indices := []int{}
+	extracted := ExtractEmails(emails, indices, registry)
+
+	// Assert: Should extract nothing
+	if len(extracted) != 0 {
+		t.Errorf("Expected 0 extracted emails, got %d", len(extracted))
+	}
+}
+
+// TestZeroEmailsAvailable_GenerateIndicesWithZeroCount tests GenerateIndices edge case
+func TestZeroEmailsAvailable_GenerateIndicesWithZeroCount(t *testing.T) {
+	// Arrange: Request zero emails
+	poolSize := 100
+	requestedCount := 0
+
+	// Act: Generate indices for zero count
+	indices := GenerateIndices(nil, poolSize, requestedCount)
+
+	// Assert: Should return empty slice
+	if len(indices) != 0 {
+		t.Errorf("Expected 0 indices for requestedCount=0, got %d", len(indices))
+	}
+}
+
+// TestZeroEmailsAvailable_GenerateIndicesWithZeroPool tests GenerateIndices with empty pool
+func TestZeroEmailsAvailable_GenerateIndicesWithZeroPool(t *testing.T) {
+	// Arrange: Request from empty pool
+	poolSize := 0
+	requestedCount := 10
+
+	// Act: Generate indices from empty pool
+	indices := GenerateIndices(nil, poolSize, requestedCount)
+
+	// Assert: Should return empty slice (can't generate from empty pool)
+	if len(indices) != 0 {
+		t.Errorf("Expected 0 indices for poolSize=0, got %d", len(indices))
 	}
 }

@@ -84,21 +84,21 @@
 
 ### Tests for User Story 2 (Write These First)
 
-- [ ] T023 [P] [US2] Add tests to internal/sampler/tracker_test.go for CreateTrackingFile() function
-- [ ] T024 [P] [US2] Add tests to internal/sampler/sampler_test.go for CountAvailable() with exclusion logic
-- [ ] T025 [P] [US2] Add tests to internal/sampler/sampler_test.go for ExtractEmails() with duplicate filtering
-- [ ] T026 [US2] Create tests/integration/sampler_duplicate_test.go for multi-run uniqueness verification
-- [ ] T027 [US2] Add tests to internal/sampler/tracker_test.go for corrupted tracking file handling
+- [X] T023 [P] [US2] Add tests to internal/sampler/tracker_test.go for CreateTrackingFile() function
+- [X] T024 [P] [US2] Add tests to internal/sampler/sampler_test.go for CountAvailable() with exclusion logic
+- [X] T025 [P] [US2] Add tests to internal/sampler/sampler_test.go for ExtractEmails() with duplicate filtering
+- [X] T026 [US2] Create tests/integration/sampler_duplicate_test.go for multi-run uniqueness verification
+- [X] T027 [US2] Add tests to internal/sampler/tracker_test.go for corrupted tracking file handling
 
 ### Implementation for User Story 2 (Make Tests Pass)
 
-- [ ] T028 [US2] Implement CreateTrackingFile() function in internal/sampler/tracker.go to write extracted-YYYYMMDD-HHMMSS.txt
-- [ ] T029 [US2] Update CountAvailable() to exclude emails that exist in loaded tracking set
-- [ ] T030 [US2] Update ExtractEmails() to skip emails found in tracking set during extraction
-- [ ] T031 [US2] Wire up main.go to call CreateTrackingFile() after successful extraction
-- [ ] T032 [US2] Add logging to show "Found N previously extracted emails (from M tracking files)"
-- [ ] T033 [US2] Add handling for corrupted tracking files (skip file, log warning, continue)
-- [ ] T034 [US2] Create tests/test_us2_duplicates.sh that tests duplicate prevention: runs sampler twice with --count 5, verifies 10 unique emails across both files, verifies tracking files created, verifies no duplicates between runs
+- [X] T028 [US2] Implement CreateTrackingFile() function in internal/sampler/tracker.go to write extracted-YYYYMMDD-HHMMSS.txt
+- [X] T029 [US2] Update CountAvailable() to exclude emails that exist in loaded tracking set
+- [X] T030 [US2] Update ExtractEmails() to skip emails found in tracking set during extraction
+- [X] T031 [US2] Wire up main.go to call CreateTrackingFile() after successful extraction
+- [X] T032 [US2] Add logging to show "Found N previously extracted emails (from M tracking files)"
+- [X] T033 [US2] Add handling for corrupted tracking files (skip file, log warning, continue)
+- [X] T034 [US2] Create tests/test_us2_duplicates.sh that tests duplicate prevention: runs sampler twice with --count 5, verifies 10 unique emails across both files, verifies tracking files created, verifies no duplicates between runs
 
 ---
 
@@ -112,19 +112,19 @@
 
 ### Tests for User Story 3 (Write These First)
 
-- [ ] T035 [P] [US3] Create cmd/sampler/main_test.go with tests for --count flag validation
-- [ ] T036 [P] [US3] Add tests to internal/sampler/sampler_test.go for count exceeding available emails
-- [ ] T037 [P] [US3] Add tests for edge case: zero emails available
-- [ ] T038 [US3] Create tests/integration/sampler_config_test.go for various count scenarios (10, 100, 1000)
+- [X] T035 [P] [US3] Create cmd/sampler/main_test.go with tests for --count flag validation
+- [X] T036 [P] [US3] Add tests to internal/sampler/sampler_test.go for count exceeding available emails
+- [X] T037 [P] [US3] Add tests for edge case: zero emails available
+- [X] T038 [US3] Create tests/integration/sampler_config_test.go for various count scenarios (10, 100, 1000)
 
 ### Implementation for User Story 3 (Make Tests Pass)
 
-- [ ] T039 [US3] Add validation in main.go for --count flag (must be positive integer)
-- [ ] T040 [US3] Implement edge case handling when requested count exceeds available emails
-- [ ] T041 [US3] Add warning message "Only N emails available, extracting all remaining"
-- [ ] T042 [US3] Add --help flag with usage documentation
-- [ ] T043 [US3] Add final summary logging: "Successfully extracted N emails to [path]"
-- [ ] T044 [US3] Create tests/test_us3_configuration.sh that tests various count scenarios: runs sampler with --count 10, 100, 1000, verifies exact counts, tests --help flag, tests invalid count values, verifies appropriate error messages
+- [X] T039 [US3] Add validation in main.go for --count flag (must be positive integer)
+- [X] T040 [US3] Implement edge case handling when requested count exceeds available emails
+- [X] T041 [US3] Add warning message "Only N emails available, extracting all remaining"
+- [X] T042 [US3] Add --help flag with usage documentation
+- [X] T043 [US3] Add final summary logging: "Successfully extracted N emails to [path]"
+- [X] T044 [US3] Create tests/test_us3_configuration.sh that tests various count scenarios: runs sampler with --count 10, 100, 1000, verifies exact counts, tests --help flag, tests invalid count values, verifies appropriate error messages
 
 **Checkpoint**: At this point, User Story 3 should be fully functional - can handle various sample sizes and edge cases
 
