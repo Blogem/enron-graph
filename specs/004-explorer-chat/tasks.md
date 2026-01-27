@@ -36,13 +36,13 @@ description: "Task breakdown for Graph Explorer Chat Interface implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Create stub LLM client implementation (internal/chat/stub_llm.go) implementing chat.LLMClient interface
-- [ ] T005 Create chat adapter implementation (cmd/explorer/chat_adapter.go) implementing chat.Repository interface using ent client
-- [ ] T006 Add chat handler initialization to App struct in cmd/explorer/main.go (NewApp function)
-- [ ] T007 Write contract test for ProcessChatQuery in tests/contract/chat_bindings_test.go (RED phase)
-- [ ] T008 Implement ProcessChatQuery method in cmd/explorer/app.go with validation and timeout
-- [ ] T009 Implement ClearChatContext method in cmd/explorer/app.go
-- [ ] T010 Run contract tests to verify backend integration (GREEN phase)
+- [x] T004 Create stub LLM client implementation (internal/chat/stub_llm.go) implementing chat.LLMClient interface
+- [x] T005 Create chat adapter implementation (cmd/explorer/chat_adapter.go) implementing chat.Repository interface using ent client
+- [x] T006 Add chat handler initialization to App struct in cmd/explorer/main.go (NewApp function)
+- [x] T007 Write contract test for ProcessChatQuery in tests/contract/chat_bindings_test.go (RED phase)
+- [x] T008 Implement ProcessChatQuery method in cmd/explorer/app.go with validation and timeout
+- [x] T009 Implement ClearChatContext method in cmd/explorer/app.go
+- [x] T010 Run contract tests to verify backend integration (GREEN phase)
 
 **Checkpoint**: Foundation ready - backend methods callable from frontend, all tests passing
 
