@@ -89,26 +89,26 @@ description: "Task breakdown for Graph Explorer Chat Interface implementation"
 
 ### Tests for User Story 2
 
-- [ ] T026 [US2] Write chat service wrapper test in cmd/explorer/frontend/src/services/chat.test.ts
-- [ ] T027 [US2] Extend ChatPanel test to verify query submission and response display
+- [X] T026 [US2] Write chat service wrapper test in cmd/explorer/frontend/src/services/chat.test.ts
+- [X] T027 [US2] Extend ChatPanel test to verify query submission and response display
 
 ### Implementation for User Story 2
 
-- [ ] T028 [US2] Create chat service wrapper in cmd/explorer/frontend/src/services/chat.ts wrapping Wails API calls
-- [ ] T029 [US2] Add conversation state management to ChatPanel (messages array, isLoading, error)
-- [ ] T030 [US2] Implement query submission handler in ChatPanel calling ProcessChatQuery via chat service
-- [ ] T031 [US2] Add loading indicator to ChatPanel (shown while isLoading is true)
-- [ ] T032 [US2] Implement message display logic in ChatPanel rendering ChatMessage components
-- [ ] T033 [US2] Add visual distinction styles to ChatMessage.css (user right-aligned, system left-aligned, different backgrounds per FR-006)
-- [ ] T034 [US2] Implement Enter key submission in ChatInput component (FR-003)
-- [ ] T035 [US2] Implement Shift+Enter newline in ChatInput component (FR-004)
-- [ ] T036 [US2] Implement empty query prevention in ChatInput component (FR-015)
-- [ ] T037 [US2] Implement query submission disabling while loading in ChatInput component (FR-021)
-- [ ] T038 [US2] Add error handling with user-friendly messages in ChatPanel (FR-011)
-- [ ] T039 [US2] Add timeout error handling (60 seconds) in chat service wrapper (FR-024)
-- [ ] T040 [US2] Add retry functionality for errors and timeouts in ChatPanel (FR-022)
-- [ ] T041 [US2] Run component tests to verify User Story 2 (npm test from cmd/explorer/frontend/)
-- [ ] T042 [US2] Manual test: Submit query, verify query and response appear with correct styling. Verify SC-002: measure that submitting a query requires ≤2 clicks/keystrokes (type + Enter = 1 keystroke)
+- [X] T028 [US2] Create chat service wrapper in cmd/explorer/frontend/src/services/chat.ts wrapping Wails API calls
+- [X] T029 [US2] Add conversation state management to ChatPanel (messages array, isLoading, error)
+- [X] T030 [US2] Implement query submission handler in ChatPanel calling ProcessChatQuery via chat service
+- [X] T031 [US2] Add loading indicator to ChatPanel (shown while isLoading is true)
+- [X] T032 [US2] Implement message display logic in ChatPanel rendering ChatMessage components
+- [X] T033 [US2] Add visual distinction styles to ChatMessage.css (user right-aligned, system left-aligned, different backgrounds per FR-006)
+- [X] T034 [US2] Implement Enter key submission in ChatInput component (FR-003)
+- [X] T035 [US2] Implement Shift+Enter newline in ChatInput component (FR-004)
+- [X] T036 [US2] Implement empty query prevention in ChatInput component (FR-015)
+- [X] T037 [US2] Implement query submission disabling while loading in ChatInput component (FR-021)
+- [X] T038 [US2] Add error handling with user-friendly messages in ChatPanel (FR-011)
+- [X] T039 [US2] Add timeout error handling (60 seconds) in chat service wrapper (FR-024)
+- [X] T040 [US2] Add retry functionality for errors and timeouts in ChatPanel (FR-022)
+- [X] T041 [US2] Run component tests to verify User Story 2 (npm test from cmd/explorer/frontend/)
+- [X] T042 [US2] Manual test: Submit query, verify query and response appear with correct styling. Verify SC-002: measure that submitting a query requires ≤2 clicks/keystrokes (type + Enter = 1 keystroke)
 
 **Checkpoint**: Full query submission and response display working, visual distinction clear, loading states correct, error handling functional
 

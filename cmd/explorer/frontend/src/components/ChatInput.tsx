@@ -7,8 +7,12 @@ const ChatInput: FC<ChatInputProps> = ({
     onSubmit,
     disabled = false,
     placeholder = 'Ask about the graph...',
+    value: externalValue,
+    onChange: externalOnChange,
 }) => {
-    const [query, setQuery] = useState('');
+    const [internalQuery, setInternalQuery] = useState('');
+    const query = externalValue !== undefined ? externalValue : internalQuery;
+    const setQuery = externalOnChange !== undefined ? externalOnChange : setInternalQuery;
 
     const handleSubmit = () => {
         const trimmedQuery = query.trim();
@@ -17,7 +21,10 @@ const ChatInput: FC<ChatInputProps> = ({
             return;
         }
         onSubmit(trimmedQuery);
-        setQuery('');
+        // Only clear in uncontrolled mode
+        if (externalValue === undefined) {
+            setQuery('');
+        }
     };
 
     const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -28,6 +35,8 @@ const ChatInput: FC<ChatInputProps> = ({
         }
         // FR-004: Shift+Enter creates newline (default behavior, just don't prevent)
     };
+
+    const isButtonDisabled = disabled || !query.trim();
 
     return (
         <div className="chat-input">
@@ -44,7 +53,7 @@ const ChatInput: FC<ChatInputProps> = ({
             <button
                 className="chat-input__button"
                 onClick={handleSubmit}
-                disabled={disabled}
+                disabled={isButtonDisabled}
                 aria-label="Send message"
             >
                 Send

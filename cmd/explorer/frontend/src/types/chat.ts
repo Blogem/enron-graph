@@ -71,6 +71,12 @@ export interface ChatInputProps {
 
     /** Placeholder text for the input field */
     placeholder?: string;
+
+    /** Controlled value for the input (optional) */
+    value?: string;
+
+    /** Callback when input value changes (optional) */
+    onChange?: (value: string) => void;
 }
 
 /**
