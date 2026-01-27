@@ -9,7 +9,7 @@ import {
     GetNodes
 } from '../wailsjs/go/main/App';
 import type { explorer } from '../wailsjs/go/models';
-import type { GraphResponse, RelationshipsResponse, GraphNode, NodeFilter } from '../types/graph';
+import type { NodeFilter } from '../types/graph';
 
 export const wailsAPI = {
     // Schema operations
@@ -26,19 +26,19 @@ export const wailsAPI = {
     },
 
     // Graph operations
-    async getRandomNodes(limit: number): Promise<GraphResponse> {
+    async getRandomNodes(limit: number): Promise<explorer.GraphResponse> {
         return await GetRandomNodes(limit);
     },
 
-    async getRelationships(nodeId: string, offset: number, limit: number): Promise<RelationshipsResponse> {
+    async getRelationships(nodeId: string, offset: number, limit: number): Promise<explorer.RelationshipsResponse> {
         return await GetRelationships(nodeId, offset, limit);
     },
 
-    async getNodeDetails(nodeId: string): Promise<GraphNode> {
+    async getNodeDetails(nodeId: string): Promise<explorer.GraphNode> {
         return await GetNodeDetails(nodeId);
     },
 
-    async getNodes(filter: NodeFilter): Promise<GraphResponse> {
+    async getNodes(filter: NodeFilter): Promise<explorer.GraphResponse> {
         // Convert TypeScript filter to Go-compatible format
         const goFilter: any = {
             types: filter.types || [],

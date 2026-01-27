@@ -59,9 +59,8 @@ cd enron-graph
 go mod download
 
 # Install Node.js dependencies for Graph Explorer frontend
-cd frontend
+cd cmd/explorer/frontend
 npm install
-cd ..
 ```
 
 ### 2. Install and Configure Ollama
@@ -111,6 +110,8 @@ go run cmd/migrate/main.go
 
 This step uses LLM to extract entities and relationships from emails - **this is where the magic happens**.
 
+For testing you can create a smaller set of emails from the large emails.csv. See [Random Email Sampler](#random-email-sampler).
+
 ```bash
 # Load test dataset with entity extraction (10 emails)
 go run cmd/loader/main.go --csv-path assets/enron-emails/emails-test-10.csv --extract --workers 5
@@ -152,10 +153,14 @@ Now visualize the extracted entities and evolved schema:
 cd cmd/explorer
 
 # Development mode (recommended for testing)
+# Note: First run will generate TypeScript bindings and install dependencies
 wails dev
 ```
 
-This will start the Graph Explorer in development mode with hot reload.
+This will start the Graph Explorer in development mode with hot reload. The first run may take a few minutes as it:
+- Generates Wails TypeScript bindings from Go structs
+- Installs Node.js dependencies
+- Compiles the React frontend
 
 **For production builds**:
 
@@ -516,6 +521,28 @@ go clean -modcache
 rm go.sum
 go mod tidy
 go mod download
+```
+
+**Wails/Graph Explorer Issues**:
+```bash
+# Error: "Cannot find module './wailsjs/go/models'"
+# Solution: wails.json is configured correctly, bindings are auto-generated
+# Make sure you're in cmd/explorer directory when running wails dev
+cd cmd/explorer
+wails dev
+
+# TypeScript compilation errors on first run
+# Solution: First run generates bindings, may need to retry
+cd cmd/explorer
+rm -rf frontend/src/wailsjs  # Clean old bindings if any
+wails dev
+
+# Frontend won't start
+# Ensure Node.js dependencies are installed
+cd cmd/explorer/frontend
+npm install
+cd ..
+wails dev
 ```
 
 ## Features

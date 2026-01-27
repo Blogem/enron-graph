@@ -80,7 +80,7 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                     Promoted Types ({schema.promoted_types?.length || 0})
                 </h3>
                 <div className="type-list">
-                    {schema.promoted_types?.map((type) => (
+                    {schema.promoted_types?.map((type: any) => (
                         <div
                             key={type.name}
                             className={`type-item promoted ${selectedTypeName === type.name ? 'selected' : ''}`}
@@ -96,7 +96,7 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                             </div>
                             {type.properties && type.properties.length > 0 && (
                                 <div className="type-properties">
-                                    {type.properties.slice(0, 3).map((prop, idx) => (
+                                    {type.properties.slice(0, 3).map((prop: any, idx: number) => (
                                         <span key={idx} className="property-badge">
                                             {prop.name}
                                         </span>
@@ -120,7 +120,7 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                     Discovered Types ({schema.discovered_types?.length || 0})
                 </h3>
                 <div className="type-list">
-                    {schema.discovered_types?.map((type) => (
+                    {schema.discovered_types?.map((type: any) => (
                         <div
                             key={type.name}
                             className={`type-item discovered ${selectedTypeName === type.name ? 'selected' : ''}`}
@@ -136,7 +136,7 @@ const SchemaPanel: React.FC<SchemaPanelProps> = ({
                             </div>
                             {type.properties && type.properties.length > 0 && (
                                 <div className="type-properties">
-                                    {type.properties.slice(0, 3).map((prop, idx) => (
+                                    {type.properties.slice(0, 3).map((prop: any, idx: number) => (
                                         <span key={idx} className="property-badge">
                                             {prop.name}
                                         </span>
