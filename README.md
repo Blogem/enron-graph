@@ -192,6 +192,7 @@ The **Graph Explorer** is a desktop application built with Wails (Go + React) th
 - **Node Expansion**: Click nodes to expand relationships (batched loading for high-degree nodes)
 - **Detail Panel**: Click any node to view full properties and metadata
 - **Filter Bar**: Search and filter by entity type or property values
+- **Chat Interface**: Natural language queries about the graph with AI-powered responses
 - **Performance**: Handles 1000+ nodes smoothly with optimized rendering
 
 **Keyboard Shortcuts**:
@@ -207,6 +208,24 @@ The **Graph Explorer** is a desktop application built with Wails (Go + React) th
 3. **Expand Connections**: Right-click a node (or click the expand icon) to load its relationships.
 4. **Filter Data**: Use the filter bar to search or show only promoted/discovered entities.
 5. **Inspect Details**: Click a node to see full properties in the right panel.
+6. **Ask Questions**: Use the chat interface at the bottom to ask natural language questions about the graph.
+
+**Using the Chat Interface**:
+
+The chat panel provides AI-powered assistance for exploring the graph:
+
+1. **Ask Questions**: Type queries like "What relationships does this entity have?" or "Show me all people in the engineering department"
+2. **Submit Queries**: Press Enter or click the Send button to submit your question
+3. **View Responses**: AI-generated answers appear in the conversation area with context from the graph
+4. **Conversation History**: Scroll through previous queries and responses within your session
+5. **Collapse/Expand**: Click the ▼/▲ button to hide or show the chat panel as needed
+6. **Clear History**: Click the "Clear" button to start a fresh conversation
+
+**Chat Tips**:
+- Use Shift+Enter to add multiple lines to your query
+- The chat remembers context from your conversation
+- Responses typically appear within 3 seconds
+- If an error occurs, use the "Retry" button to try again
 
 ---
 

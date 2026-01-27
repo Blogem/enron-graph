@@ -1,0 +1,325 @@
+/**
+ * ChatPanel Styles
+ * FR-001: Bottom panel positioning
+ */
+
+.chat-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: #0d1117;
+    border-top: 1px solid #30363d;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 100;
+}
+
+.chat-panel--bottom {
+    /* Bottom panel - uses natural document flow */
+    flex-shrink: 0;
+}
+
+.chat-panel--collapsed {
+    /* Minimal height when collapsed - just show header */
+}
+
+.chat-panel__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+
+.chat-panel__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #f0f6fc;
+}
+
+.chat-panel__toggle {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: #8b949e;
+    transition: color 0.2s ease;
+}
+
+.chat-panel__toggle:hover {
+    color: #58a6ff;
+}
+
+.chat-panel__toggle:focus {
+    outline: 2px solid #58a6ff;
+    outline-offset: 2px;
+}
+
+.chat-panel__body {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-panel__footer {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    background-color: #161b22;
+    border-top: 1px solid #30363d;
+}
+
+.chat-panel__toggle-compact {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 8px 12px;
+    color: #8b949e;
+    transition: color 0.2s ease;
+    align-self: stretch;
+    min-width: 40px;
+}
+
+.chat-panel__toggle-compact:hover {
+    color: #58a6ff;
+    background: #21262d;
+}
+
+.chat-panel__toggle-compact:focus {
+    outline: 2px solid #58a6ff;
+    outline-offset: -2px;
+}
+
+.chat-panel__clear-button-container {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.chat-panel__clear-button {
+    background: rgba(22, 27, 34, 0.95);
+    color: #6e7681;
+    border: 1px solid #30363d;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+    pointer-events: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.chat-panel__clear-button:hover:not(:disabled) {
+    background-color: #21262d;
+    color: #8b949e;
+}
+
+.chat-panel__clear-button:focus {
+    outline: 2px solid #58a6ff;
+    outline-offset: -2px;
+}
+
+.chat-panel__clear-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.chat-panel__body--hidden {
+    display: none;
+    visibility: hidden;
+}
+
+.chat-panel__conversation {
+    position: relative;
+    flex: 1;
+    padding: 12px 0;
+    background-color: #0d1117;
+    overflow-y: auto;
+}
+
+.chat-panel__conversation::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-panel__conversation::-webkit-scrollbar-track {
+    background: #161b22;
+}
+
+.chat-panel__conversation::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 4px;
+}
+
+.chat-panel__conversation::-webkit-scrollbar-thumb:hover {
+    background: #484f58;
+}
+
+.chat-panel__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #8b949e;
+    font-size: 14px;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Loading indicator styles */
+.chat-panel__loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 8px 16px;
+    background-color: #161b22;
+    border-radius: 8px;
+    color: #8b949e;
+    font-size: 14px;
+}
+
+.chat-panel__loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #30363d;
+    border-top-color: #58a6ff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Error display styles */
+.chat-panel__error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 8px 16px;
+    background-color: #3d1a1a;
+    border: 1px solid #8b2525;
+    border-radius: 8px;
+    color: #f85149;
+    font-size: 14px;
+}
+
+.chat-panel__error-message {
+    flex: 1;
+}
+
+.chat-panel__error-retry {
+    background-color: #8b2525;
+    color: #f0f6fc;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.chat-panel__error-retry:hover {
+    background-color: #a83232;
+}
+
+.chat-panel__error-retry:focus {
+    outline: 2px solid #f85149;
+    outline-offset: 2px;
+}
+
+/* Confirmation dialog styles */
+.chat-panel__confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.chat-panel__confirm-dialog {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.chat-panel__confirm-title {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f0f6fc;
+}
+
+.chat-panel__confirm-message {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    color: #8b949e;
+    line-height: 1.5;
+}
+
+.chat-panel__confirm-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.chat-panel__confirm-button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid #30363d;
+    transition: all 0.2s ease;
+}
+
+.chat-panel__confirm-button--cancel {
+    background-color: #21262d;
+    color: #f0f6fc;
+}
+
+.chat-panel__confirm-button--cancel:hover {
+    background-color: #30363d;
+}
+
+.chat-panel__confirm-button--cancel:focus {
+    outline: 2px solid #58a6ff;
+    outline-offset: 2px;
+}
+
+.chat-panel__confirm-button--confirm {
+    background-color: #da3633;
+    color: #f0f6fc;
+    border-color: #da3633;
+}
+
+.chat-panel__confirm-button--confirm:hover {
+    background-color: #e5534b;
+}
+
+.chat-panel__confirm-button--confirm:focus {
+    outline: 2px solid #f85149;
+    outline-offset: 2px;
+}
