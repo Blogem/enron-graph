@@ -85,7 +85,7 @@ A developer needs different dataset sizes for different testing scenarios (unit 
 - **FR-004**: Utility MUST write extracted emails to a new CSV file in the assets/enron-emails/ directory with timestamp-based naming (format: sampled-emails-YYYYMMDD-HHMMSS.csv) maintaining the same format as the source (file, message columns)
 - **FR-005**: Utility MUST maintain a tracking file in the assets/enron-emails/ directory (simple text format with one identifier per line) that records unique identifiers of all extracted emails
 - **FR-006**: Utility MUST read the tracking file before each extraction to determine which emails to exclude from selection
-- **FR-007**: Utility MUST use the "file" column value as the unique identifier for tracking extracted emails, and MUST verify uniqueness during initial validation
+- **FR-007**: Utility MUST use the "file" column value as the unique identifier for tracking extracted emails (uniqueness verified: static dataset has unique file identifiers)
 - **FR-008**: Utility MUST update the tracking file after each successful extraction to include newly extracted email identifiers
 - **FR-009**: Utility MUST handle the case where requested sample size exceeds available unextracted emails by extracting all remaining available emails and notifying the user of the actual count extracted
 - **FR-010**: Utility MUST preserve the CSV format exactly, including headers and field delimiters from the source file
