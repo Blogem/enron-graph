@@ -21,6 +21,13 @@ import (
 // ProcessChatQuery processes a user's natural language query and returns a response.
 // This method is automatically bound by Wails and callable from the React frontend.
 //
+// Architecture Note (Context Management):
+//
+//	Conversation context is maintained internally within the App struct's chat.Handler
+//	and chat.Context instances. The frontend does not need to pass context explicitly -
+//	it is preserved across calls within the same application session. This satisfies
+//	FR-008 and FR-012 requirements for context passing and maintenance.
+//
 // Parameters:
 //   - query: The user's natural language query string (non-empty, max 1000 chars)
 //

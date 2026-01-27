@@ -100,27 +100,27 @@ Users can clear the conversation history to start fresh without restarting the a
 - **FR-001**: System MUST provide a chat interface panel positioned as a bottom panel below the graph visualization within the graph explorer GUI
 - **FR-002**: System MUST provide a text input field where users can type queries
 - **FR-003**: System MUST submit queries when user presses Enter key or clicks a submit button
-- **FR-022**: System MUST support multi-line input by adding a newline when user presses Shift+Enter
-- **FR-004**: System MUST display a conversation area showing query and response history
-- **FR-005**: System MUST visually distinguish between user queries and system responses using different background colors with user messages right-aligned and system messages left-aligned
-- **FR-006**: System MUST call the existing chat.Handler.ProcessQuery method to process queries
-- **FR-007**: System MUST pass user input and conversation context to the ProcessQuery method
-- **FR-008**: System MUST display responses returned from ProcessQuery in the conversation area
-- **FR-009**: System MUST show a loading indicator while waiting for ProcessQuery to return
-- **FR-010**: System MUST handle errors from ProcessQuery gracefully with user-friendly messages
-- **FR-011**: System MUST maintain conversation context using the chat.Context interface from internal/chat
-- **FR-012**: System MUST make the conversation area scrollable when content exceeds visible space
-- **FR-013**: System MUST auto-scroll to show the latest message when a new response arrives
-- **FR-014**: System MUST prevent empty queries from being submitted
-- **FR-015**: System MUST provide a way to clear the conversation history
-- **FR-016**: System MUST preserve conversation history within a session (until cleared or app closed)
-- **FR-017**: System MUST provide a way to collapse/hide the chat interface panel
-- **FR-018**: System MUST provide a way to expand/show the chat interface panel when it is collapsed
-- **FR-024**: System MUST remember the collapsed/expanded state of the chat panel within a session (but not across app restarts)
-- **FR-019**: System MUST disable query submission while a query is being processed
-- **FR-020**: System MUST provide a "try again" option when errors occur or responses timeout
-- **FR-021**: System MUST display special characters and formatting from responses without modification
-- **FR-023**: System MUST timeout query processing after 60 seconds and display a timeout error message
+- **FR-004**: System MUST support multi-line input by adding a newline when user presses Shift+Enter
+- **FR-005**: System MUST display a conversation area showing query and response history
+- **FR-006**: System MUST visually distinguish between user queries and system responses using different background colors with user messages right-aligned and system messages left-aligned
+- **FR-007**: System MUST call the existing chat.Handler.ProcessQuery method to process queries
+- **FR-008**: System MUST pass user input and conversation context to the ProcessQuery method
+- **FR-009**: System MUST display responses returned from ProcessQuery in the conversation area
+- **FR-010**: System MUST show a loading indicator while waiting for ProcessQuery to return
+- **FR-011**: System MUST handle errors from ProcessQuery gracefully with user-friendly messages
+- **FR-012**: System MUST maintain conversation context using the chat.Context interface from internal/chat
+- **FR-013**: System MUST make the conversation area scrollable when content exceeds visible space
+- **FR-014**: System MUST auto-scroll to show the latest message when a new response arrives
+- **FR-015**: System MUST prevent empty queries from being submitted
+- **FR-016**: System MUST provide a way to clear the conversation history
+- **FR-017**: System MUST preserve conversation history within a session (until cleared or app closed)
+- **FR-018**: System MUST provide a way to collapse/hide the chat interface panel
+- **FR-019**: System MUST provide a way to expand/show the chat interface panel when it is collapsed
+- **FR-020**: System MUST remember the collapsed/expanded state of the chat panel within a session (but not across app restarts)
+- **FR-021**: System MUST disable query submission while a query is being processed
+- **FR-022**: System MUST provide a "try again" option when errors occur or responses timeout
+- **FR-023**: System MUST display special characters and formatting from responses without modification
+- **FR-024**: System MUST timeout query processing after 60 seconds and display a timeout error message
 
 ### Key Entities
 
