@@ -10,8 +10,14 @@
 # Go build output
 /bin/
 /dist/
-/build/
 /target/
+
+# Wails build artifacts (keep appicon.png but ignore build outputs)
+**/build/bin/
+**/build/darwin/
+**/build/windows/
+**/build/linux/
+**/src/wailsjs/
 
 # Dependency directories
 vendor/
@@ -49,6 +55,10 @@ logs/
 
 # Generated files
 ent/generated/
+frontend/dist/
+frontend/node_modules/
+frontend/wailsjs/
+cmd/explorer/frontend/
 
 # Temporary files
 tmp/
@@ -68,3 +78,4 @@ assets/enron-emails
 /query
 /analyst
 /promoter
+/explorer

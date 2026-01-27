@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,7 +22,7 @@ func TestPromoterIntegration(t *testing.T) {
 
 	// Setup: Connect to test database with clean schema
 	ctx := context.Background()
-	client := SetupTestDB(t)
+	client, db := SetupTestDBWithSQL(t)
 
 	// Create a temporary directory for generated schema files
 	tempSchemaDir, err := os.MkdirTemp("", "ent-schema-test-*")
@@ -88,15 +87,6 @@ func TestPromoterIntegration(t *testing.T) {
 	schema := convertSchemaDefinition(analystSchema)
 
 	// Step 2: Test promotion workflow
-	// Get raw SQL connection for data migration
-	testDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		testDBHost, testDBPort, testDBUser, testDBPassword, testDBName)
-
-	db, err := sql.Open("postgres", testDSN)
-	if err != nil {
-		t.Fatalf("Failed to open raw SQL connection: %v", err)
-	}
-	defer db.Close()
 
 	// Create promoter instance
 	p := promoter.NewPromoter(client)

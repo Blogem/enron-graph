@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/ent/enttest"
@@ -16,13 +18,30 @@ const (
 	testDBPort     = "5432"
 	testDBUser     = "enron"
 	testDBPassword = "enron123"
-	testDBName     = "enron_test"
 )
+
+// generateTestDBName creates a unique database name for each test to avoid conflicts
+// when running tests in parallel
+func generateTestDBName(t *testing.T) string {
+	// Use test name and timestamp to ensure uniqueness
+	testName := strings.ReplaceAll(t.Name(), "/", "_")
+	testName = strings.ReplaceAll(testName, " ", "_")
+	testName = strings.ToLower(testName)
+	// Keep it under PostgreSQL's 63 char limit
+	if len(testName) > 40 {
+		testName = testName[:40]
+	}
+	timestamp := time.Now().UnixNano()
+	return fmt.Sprintf("test_%s_%d", testName, timestamp)
+}
 
 // SetupTestDB creates a test database with pgvector extension and returns an ent client.
 // It automatically cleans up the database when the test completes.
 func SetupTestDB(t *testing.T) *ent.Client {
 	t.Helper()
+
+	// Generate unique database name for this test
+	testDBName := generateTestDBName(t)
 
 	// Connect to postgres database to create test database
 	adminDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=postgres sslmode=disable",
@@ -96,6 +115,9 @@ func SetupTestDB(t *testing.T) *ent.Client {
 // This is needed for tests that require direct SQL access (e.g., pgvector similarity search).
 func SetupTestDBWithSQL(t *testing.T) (*ent.Client, *sql.DB) {
 	t.Helper()
+
+	// Generate unique database name for this test
+	testDBName := generateTestDBName(t)
 
 	// Connect to postgres database to create test database
 	adminDSN := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=postgres sslmode=disable",
