@@ -55,10 +55,9 @@ logs/
 
 # Generated files
 ent/generated/
-frontend/dist/
-frontend/node_modules/
-frontend/wailsjs/
-cmd/explorer/frontend/
+cmd/explorer/frontend/dist/
+cmd/explorer/frontend/node_modules/
+cmd/explorer/frontend/wailsjs/
 
 # Temporary files
 tmp/
