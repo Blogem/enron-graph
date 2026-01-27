@@ -33,10 +33,10 @@
 
 **TDD Workflow**: Write tests first, then implement to pass tests
 
-- [ ] T005 [P] Create internal/sampler/tracker_test.go with unit tests for LoadTracking()
-- [ ] T006 Create internal/sampler/tracker.go with LoadTracking() function to read all extracted-*.txt files
-- [ ] T007 [P] Create internal/sampler/writer_test.go with unit tests for CSV output format preservation
-- [ ] T008 Create internal/sampler/writer.go with WriteCSV() function using encoding/csv
+- [X] T005 [P] Create internal/sampler/tracker_test.go with unit tests for LoadTracking()
+- [X] T006 Create internal/sampler/tracker.go with LoadTracking() function to read all extracted-*.txt files
+- [X] T007 [P] Create internal/sampler/writer_test.go with unit tests for CSV output format preservation
+- [X] T008 Create internal/sampler/writer.go with WriteCSV() function using encoding/csv
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
