@@ -254,7 +254,7 @@
 - [X] T119 [P] Create user documentation in README.md for Graph Explorer
 - [X] T120 [P] Document build and deployment process in specs/002-graph-explorer/deployment.md
 - [X] T121 Run full test suite and verify all tests pass
-- [ ] T122 Build production binary with `wails build` and test on target platforms
+- [X] T122 Build production binary with `wails build` and test on target platforms
 
 ---
 
