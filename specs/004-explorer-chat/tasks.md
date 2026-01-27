@@ -144,14 +144,14 @@ description: "Task breakdown for Graph Explorer Chat Interface implementation"
 
 ### Tests for User Story 4
 
-- [ ] T049 [US4] Write test for clear conversation functionality in ChatPanel.test.tsx
+- [X] T049 [US4] Write test for clear conversation functionality in ChatPanel.test.tsx
 
 ### Implementation for User Story 4
 
-- [ ] T050 [US4] Add clear button to ChatPanel UI in ChatPanel.tsx
-- [ ] T051 [US4] Implement clear handler calling ClearChatContext via chat service in ChatPanel
-- [ ] T052 [US4] Reset local conversation state in ChatPanel when clearing (messages array, error, lastQuery)
-- [ ] T053 [US4] Run component tests to verify User Story 4 (npm test from cmd/explorer/frontend/)
+- [X] T050 [US4] Add clear button to ChatPanel UI in ChatPanel.tsx
+- [X] T051 [US4] Implement clear handler calling ClearChatContext via chat service in ChatPanel
+- [X] T052 [US4] Reset local conversation state in ChatPanel when clearing (messages array, error, lastQuery)
+- [X] T053 [US4] Run component tests to verify User Story 4 (npm test from cmd/explorer/frontend/)
 
 **Checkpoint**: All user stories complete - users can display, use, scroll, and clear chat interface
 
@@ -161,12 +161,12 @@ description: "Task breakdown for Graph Explorer Chat Interface implementation"
 
 **Purpose**: Final improvements and validation across all user stories
 
-- [ ] T054 [P] Add accessibility attributes (ARIA labels) to chat components
-- [ ] T055 [P] Verify special characters display correctly (FR-023)
-- [ ] T056 Verify all 24 functional requirements are implemented (FR-001 through FR-024)
-- [ ] T057 Verify all success criteria (SC-001 through SC-008) are met
-- [ ] T058 [P] Update README.md with chat interface usage instructions
-- [ ] T059 Run full quickstart.md validation workflow (wails dev, manual testing)
+- [X] T054 [P] Add accessibility attributes (ARIA labels) to chat components
+- [X] T055 [P] Verify special characters display correctly (FR-023)
+- [X] T056 Verify all 24 functional requirements are implemented (FR-001 through FR-024)
+- [X] T057 Verify all success criteria (SC-001 through SC-008) are met
+- [X] T058 [P] Update README.md with chat interface usage instructions
+- [X] T059 Run full quickstart.md validation workflow (wails dev, manual testing)
 
 ---
 

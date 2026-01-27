@@ -57,6 +57,7 @@ describe('ChatPanel Component', () => {
       writable: true,
       value: vi.fn(),
     });
+    // Note: No longer mocking window.confirm since we use a custom dialog
   });
 
   afterEach(() => {
@@ -1333,6 +1334,487 @@ describe('ChatPanel Component', () => {
 
         // Should still auto-scroll even after resize
         expect(conversationArea).toBeInTheDocument();
+      });
+    });
+  });
+
+  /**
+   * T049: User Story 4 - Clear Conversation Functionality Tests
+   * 
+   * Requirements tested:
+   * - FR-016: System MUST provide a way to clear the conversation history
+   * - FR-017: System MUST preserve conversation history within a session
+   * - Acceptance Scenario 1: Conversation area emptied after clear action
+   * - Acceptance Scenario 2: Fresh conversation can be started after clearing
+   */
+  describe('User Story 4: Clear Conversation Functionality', () => {
+    beforeEach(() => {
+      vi.mocked(processChatQuery).mockReset();
+      vi.mocked(clearChatContext).mockReset();
+    });
+
+    // Helper function to click clear button and confirm
+    const clickClearAndConfirm = async (user: ReturnType<typeof userEvent.setup>) => {
+      const clearButton = screen.getByRole('button', { name: /clear conversation/i });
+      await user.click(clearButton);
+
+      // Wait for confirmation dialog and click confirm
+      const confirmButton = await screen.findByRole('button', { name: /^clear$/i });
+      await user.click(confirmButton);
+    };
+
+    describe('FR-016: Clear Conversation', () => {
+      it('renders a clear button in the chat panel', () => {
+        render(<ChatPanel />);
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        expect(clearButton).toBeInTheDocument();
+      });
+
+      it('clear button is visible when panel is expanded', () => {
+        render(<ChatPanel />);
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        expect(clearButton).toBeVisible();
+      });
+
+      it('clear button is enabled when conversation has messages', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        expect(clearButton).not.toBeDisabled();
+      });
+
+      it('clear button is disabled when conversation is empty', () => {
+        render(<ChatPanel />);
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        expect(clearButton).toBeDisabled();
+      });
+
+      it('calls clearChatContext when clear button is clicked', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        expect(vi.mocked(clearChatContext)).toHaveBeenCalledTimes(1);
+      });
+
+      it('empties conversation area after clearing', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const conversationArea = screen.getByRole('log');
+        let messages = within(conversationArea).getAllByRole('article');
+        expect(messages.length).toBe(2); // User message + system response
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        // Wait for clear to complete
+        await vi.waitFor(() => {
+          const messagesAfterClear = within(conversationArea).queryAllByRole('article');
+          expect(messagesAfterClear.length).toBe(0);
+        });
+      });
+
+      it('clears all messages including multiple query-response pairs', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+
+        // Submit multiple queries
+        for (let i = 0; i < 3; i++) {
+          await user.type(input, `Query ${i}{Enter}`);
+          await screen.findByText(`Query ${i}`);
+        }
+
+        const conversationArea = screen.getByRole('log');
+        let messages = within(conversationArea).getAllByRole('article');
+        expect(messages.length).toBe(6); // 3 queries + 3 responses
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        // Wait for clear to complete
+        await vi.waitFor(() => {
+          const messagesAfterClear = within(conversationArea).queryAllByRole('article');
+          expect(messagesAfterClear.length).toBe(0);
+        });
+      });
+
+      it('clears error state when clearing conversation', async () => {
+        const user = userEvent.setup();
+        const error = new Error('Query failed');
+        (error as any).canRetry = true;
+        vi.mocked(processChatQuery).mockRejectedValue(error);
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText(/error|failed/i);
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        // Error message should be cleared
+        await vi.waitFor(() => {
+          expect(screen.queryByText(/error|failed/i)).not.toBeInTheDocument();
+        });
+      });
+
+      it('clears lastQuery state when clearing conversation', async () => {
+        const user = userEvent.setup();
+        const error = new Error('Query failed');
+        (error as any).canRetry = true;
+        vi.mocked(processChatQuery)
+          .mockRejectedValueOnce(error)
+          .mockResolvedValueOnce('Retry success');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText(/error|failed/i);
+
+        // Clear conversation
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        await vi.waitFor(() => {
+          expect(screen.queryByText(/error|failed/i)).not.toBeInTheDocument();
+        });
+
+        // Retry button should not be present after clearing
+        expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument();
+      });
+    });
+
+    describe('Acceptance Scenario 1: Conversation emptied after clear', () => {
+      it('given conversation history exists, when clear is triggered, then conversation area is emptied', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('System response');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        // Given: conversation history exists
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'First query{Enter}');
+        await vi.waitFor(() => {
+          expect(screen.getAllByText('System response').length).toBeGreaterThanOrEqual(1);
+        });
+        await user.type(input, 'Second query{Enter}');
+        await vi.waitFor(() => {
+          expect(screen.getAllByText('System response').length).toBeGreaterThanOrEqual(2);
+        });
+
+        const conversationArea = screen.getByRole('log');
+        let messages = within(conversationArea).getAllByRole('article');
+        expect(messages.length).toBeGreaterThan(0);
+
+        // When: clear is triggered
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        // Then: conversation area is emptied
+        await vi.waitFor(() => {
+          const messagesAfterClear = within(conversationArea).queryAllByRole('article');
+          expect(messagesAfterClear.length).toBe(0);
+        });
+      });
+    });
+
+    describe('Acceptance Scenario 2: Fresh conversation after clearing', () => {
+      it('given conversation is cleared, when user submits a new query, then it starts a fresh conversation', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('New response');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        // Given: conversation is cleared
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'Old query{Enter}');
+        await screen.findByText('New response');
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        await vi.waitFor(() => {
+          const conversationArea = screen.getByRole('log');
+          const messages = within(conversationArea).queryAllByRole('article');
+          expect(messages.length).toBe(0);
+        });
+
+        // When: user submits a new query
+        await user.type(input, 'Fresh query{Enter}');
+
+        // Then: it starts a fresh conversation
+        const freshQuery = await screen.findByText('Fresh query');
+        const freshResponse = await screen.findByText('New response');
+
+        expect(freshQuery).toBeInTheDocument();
+        expect(freshResponse).toBeInTheDocument();
+
+        // Old query should not be present
+        expect(screen.queryByText('Old query')).not.toBeInTheDocument();
+
+        // Should only have the new query-response pair
+        const conversationArea = screen.getByRole('log');
+        const messages = within(conversationArea).getAllByRole('article');
+        expect(messages.length).toBe(2); // Fresh query + response
+      });
+    });
+
+    describe('Error Handling', () => {
+      it('displays error message if clearChatContext fails', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockRejectedValue(new Error('Clear failed'));
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        // Should display an error message
+        const errorMessage = await screen.findByText(/failed|error/i);
+        expect(errorMessage).toBeInTheDocument();
+      });
+
+      it('preserves messages if clearChatContext fails', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockRejectedValue(new Error('Clear failed'));
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const conversationArea = screen.getByRole('log');
+        const messagesBefore = within(conversationArea).getAllByRole('article');
+        const messageCountBefore = messagesBefore.length;
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        // Wait for error to appear
+        await screen.findByText(/failed|error/i);
+
+        // Messages should still be present
+        const messagesAfter = within(conversationArea).getAllByRole('article');
+        expect(messagesAfter.length).toBe(messageCountBefore);
+      });
+
+      it('does not disable clear button after failed clear attempt', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockRejectedValue(new Error('Clear failed'));
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        // Wait for error
+        await screen.findByText(/failed|error/i);
+
+        // Clear button should still be enabled for retry
+        expect(clearButton).not.toBeDisabled();
+      });
+    });
+
+    describe('UI Behavior', () => {
+      it('shows loading state while clearing conversation', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+
+        let resolveClear: () => void;
+        const clearPromise = new Promise<void>((resolve) => {
+          resolveClear = resolve;
+        });
+        vi.mocked(clearChatContext).mockReturnValue(clearPromise);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        // Should show some loading indication (button disabled or text change)
+        expect(clearButton).toBeDisabled();
+
+        // Resolve clear
+        resolveClear!();
+        await vi.waitFor(() => {
+          const conversationArea = screen.getByRole('log');
+          const messages = within(conversationArea).queryAllByRole('article');
+          expect(messages.length).toBe(0);
+        });
+      });
+
+      it('maintains collapsed state after clearing conversation', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        // Collapse panel
+        const collapseButton = screen.getByRole('button', { name: /collapse/i });
+        await user.click(collapseButton);
+
+        // Clear conversation
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        await user.click(clearButton);
+
+        await vi.waitFor(() => {
+          expect(vi.mocked(clearChatContext)).toHaveBeenCalled();
+        });
+
+        // Panel should still be collapsed
+        const conversationArea = screen.queryByRole('log');
+        expect(conversationArea).not.toBeVisible();
+      });
+
+      it('auto-disables clear button when conversation is empty', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const clearButton = screen.getByRole('button', { name: /clear/i });
+        expect(clearButton).not.toBeDisabled();
+
+        await user.click(clearButton);
+
+        // Wait for clear to complete
+        await vi.waitFor(() => {
+          const conversationArea = screen.getByRole('log');
+          const messages = within(conversationArea).queryAllByRole('article');
+          expect(messages.length).toBe(0);
+        });
+
+        // Clear button should now be disabled
+        expect(clearButton).toBeDisabled();
+      });
+    });
+
+    describe('Confirmation Dialog', () => {
+      it('shows confirmation dialog before clearing conversation with multiple messages', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+        vi.mocked(clearChatContext).mockResolvedValue(undefined);
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+
+        // Add multiple messages
+        for (let i = 0; i < 3; i++) {
+          await user.type(input, `Query ${i}{Enter}`);
+          await screen.findByText(`Query ${i}`);
+        }
+
+        const clearButton = screen.getByRole('button', { name: /clear conversation/i });
+        await user.click(clearButton);
+
+        // Should show confirmation dialog
+        const confirmDialog = await screen.findByText(/are you sure you want to clear/i);
+        expect(confirmDialog).toBeInTheDocument();
+
+        // Click confirm button
+        const confirmButton = screen.getByRole('button', { name: /^clear$/i });
+        await user.click(confirmButton);
+
+        // Wait for clear to complete
+        await vi.waitFor(() => {
+          expect(vi.mocked(clearChatContext)).toHaveBeenCalled();
+        });
+      });
+
+      it('does not clear if user cancels confirmation dialog', async () => {
+        const user = userEvent.setup();
+        vi.mocked(processChatQuery).mockResolvedValue('Response');
+
+        render(<ChatPanel />);
+
+        const input = screen.getByRole('textbox');
+        await user.type(input, 'test query{Enter}');
+        await screen.findByText('Response');
+
+        const conversationArea = screen.getByRole('log');
+        const messagesBefore = within(conversationArea).getAllByRole('article');
+
+        const clearButton = screen.getByRole('button', { name: /clear conversation/i });
+        await user.click(clearButton);
+
+        // Should show confirmation dialog
+        await screen.findByText(/are you sure you want to clear/i);
+
+        // Click cancel button
+        const cancelButton = screen.getByRole('button', { name: /cancel/i });
+        await user.click(cancelButton);
+
+        // Should not call clearChatContext
+        expect(vi.mocked(clearChatContext)).not.toHaveBeenCalled();
+
+        // Messages should still be present
+        const messagesAfter = within(conversationArea).getAllByRole('article');
+        expect(messagesAfter.length).toBe(messagesBefore.length);
       });
     });
   });

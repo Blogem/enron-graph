@@ -38,8 +38,8 @@ function App() {
     // Graph recenter callback ref (T109)
     const graphRecenterRef = useRef<(() => void) | null>(null);
 
-    // Chat panel state (T020)
-    const [chatPanelCollapsed, setChatPanelCollapsed] = useState<boolean>(false);
+    // Chat panel state (T020) - starts collapsed
+    const [chatPanelCollapsed, setChatPanelCollapsed] = useState<boolean>(true);
 
     // Load schema on mount
     useEffect(() => {
