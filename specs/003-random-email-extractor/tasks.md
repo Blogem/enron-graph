@@ -52,23 +52,23 @@
 
 ### Tests for User Story 1 (Write These First)
 
-- [ ] T009 [P] [US1] Create internal/sampler/parser_test.go with tests for ParseCSV() wrapper
-- [ ] T010 [P] [US1] Create internal/sampler/sampler_test.go with tests for CountAvailable() function
-- [ ] T011 [P] [US1] Add tests to internal/sampler/sampler_test.go for GenerateIndices() randomization logic
-- [ ] T012 [P] [US1] Add tests to internal/sampler/sampler_test.go for ExtractEmails() function
-- [ ] T013 [US1] Create tests/integration/sampler_basic_test.go for end-to-end extraction workflow
+- [X] T009 [P] [US1] Create internal/sampler/parser_test.go with tests for ParseCSV() wrapper
+- [X] T010 [P] [US1] Create internal/sampler/sampler_test.go with tests for CountAvailable() function
+- [X] T011 [P] [US1] Add tests to internal/sampler/sampler_test.go for GenerateIndices() randomization logic
+- [X] T012 [P] [US1] Add tests to internal/sampler/sampler_test.go for ExtractEmails() function
+- [X] T013 [US1] Create tests/integration/sampler_basic_test.go for end-to-end extraction workflow
 
 ### Implementation for User Story 1 (Make Tests Pass)
 
-- [ ] T014 [US1] Implement ParseCSV() wrapper in internal/sampler/parser.go that calls loader.ParseCSV()
-- [ ] T015 [US1] Implement CountAvailable() function in internal/sampler/sampler.go for first-pass counting
-- [ ] T016 [US1] Implement GenerateIndices() function in internal/sampler/sampler.go for random selection using math/rand
-- [ ] T017 [US1] Implement ExtractEmails() function in internal/sampler/sampler.go for second-pass extraction
-- [ ] T018 [US1] Wire up main.go to call counting, selection, and extraction functions
-- [ ] T019 [US1] Add progress logging to main.go showing "Processing N/M emails..." every 100 records
-- [ ] T020 [US1] Implement timestamp-based output filename generation (sampled-emails-YYYYMMDD-HHMMSS.csv)
-- [ ] T021 [US1] Add error handling for missing source CSV file with clear error message
-- [ ] T022 [US1] Create tests/test_us1_extraction.sh that tests basic extraction flow: runs sampler with --count 10, verifies output file exists, verifies exactly 10 emails extracted, verifies CSV format preserved
+- [X] T014 [US1] Implement ParseCSV() wrapper in internal/sampler/parser.go that calls loader.ParseCSV()
+- [X] T015 [US1] Implement CountAvailable() function in internal/sampler/sampler.go for first-pass counting
+- [X] T016 [US1] Implement GenerateIndices() function in internal/sampler/sampler.go for random selection using math/rand
+- [X] T017 [US1] Implement ExtractEmails() function in internal/sampler/sampler.go for second-pass extraction
+- [X] T018 [US1] Wire up main.go to call counting, selection, and extraction functions
+- [X] T019 [US1] Add progress logging to main.go showing "Processing N/M emails..." every 100 records
+- [X] T020 [US1] Implement timestamp-based output filename generation (sampled-emails-YYYYMMDD-HHMMSS.csv)
+- [X] T021 [US1] Add error handling for missing source CSV file with clear error message
+- [X] T022 [US1] Create tests/test_us1_extraction.sh that tests basic extraction flow: runs sampler with --count 10, verifies output file exists, verifies exactly 10 emails extracted, verifies CSV format preserved
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - can extract random samples and create output CSV
 
