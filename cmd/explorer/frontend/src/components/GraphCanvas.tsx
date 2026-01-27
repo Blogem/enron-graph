@@ -233,7 +233,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
                 }}
                 linkDirectionalArrowLength={6}
                 linkDirectionalArrowRelPos={1}
-                linkColor={() => 'rgba(0,0,0,0.2)'}
+                linkColor={() => 'rgba(255,255,255,0.5)'}
                 linkWidth={1}
                 onNodeClick={handleNodeClick}
                 onNodeRightClick={handleNodeRightClick}
