@@ -359,3 +359,47 @@ func TestWriteCSV_EmptyFields(t *testing.T) {
 		}
 	}
 }
+
+// TestWriteCSV_DiskSpaceError tests error handling when writing output fails
+// due to disk issues (simulated via write-protected directory on Unix systems).
+func TestWriteCSV_DiskSpaceError(t *testing.T) {
+	// This test is best-effort and may not work on all systems
+	// We'll test write permission errors as a proxy for disk space issues
+
+	tmpDir := t.TempDir()
+
+	// Create a subdirectory
+	readOnlyDir := filepath.Join(tmpDir, "readonly")
+	err := os.Mkdir(readOnlyDir, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+
+	// Make directory read-only (Unix-like systems)
+	err = os.Chmod(readOnlyDir, 0444)
+	if err != nil {
+		t.Skip("Cannot change directory permissions on this system")
+	}
+
+	// Restore permissions for cleanup
+	defer os.Chmod(readOnlyDir, 0755)
+
+	outputPath := filepath.Join(readOnlyDir, "output.csv")
+
+	records := []EmailRecord{
+		{File: "test", Message: "test"},
+	}
+
+	// Act: Try to write to read-only directory
+	err = WriteCSV(outputPath, records)
+
+	// Assert: Should return an error
+	if err == nil {
+		t.Fatal("Expected error when writing to read-only directory, got nil")
+	}
+
+	// Error message should indicate file creation failure
+	if !strings.Contains(err.Error(), "failed to create output file") {
+		t.Errorf("Expected 'failed to create output file' error, got: %v", err)
+	}
+}

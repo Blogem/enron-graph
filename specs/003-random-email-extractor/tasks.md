@@ -138,21 +138,21 @@
 
 ### Additional Tests (Write These First)
 
-- [ ] T046 [P] Add test to internal/sampler/parser_test.go for edge case: source file missing (should fail gracefully)
-- [ ] T047 [P] Add test to internal/sampler/parser_test.go for edge case: corrupted CSV row (should skip and continue)
-- [ ] T048 [P] Add test to internal/sampler/sampler_test.go for edge case: all emails already extracted (should extract 0)
-- [ ] T049 [P] Add test to internal/sampler/writer_test.go for disk space issues when writing output
-- [ ] T050 [P] Create tests/integration/sampler_performance_test.go: verify 10k emails extracted in <10 seconds (SC-001)
-- [ ] T051 [P] Add test to internal/sampler/parser_test.go for CSV format compatibility with loader.ParseCSV() (SC-003)
+- [X] T046 [P] Add test to internal/sampler/parser_test.go for edge case: source file missing (should fail gracefully)
+- [X] T047 [P] Add test to internal/sampler/parser_test.go for edge case: corrupted CSV row (should skip and continue)
+- [X] T048 [P] Add test to internal/sampler/sampler_test.go for edge case: all emails already extracted (should extract 0)
+- [X] T049 [P] Add test to internal/sampler/writer_test.go for disk space issues when writing output
+- [X] T050 [P] Create tests/integration/sampler_performance_test.go: verify 10k emails extracted in <10 seconds (SC-001)
+- [X] T051 [P] Add test to internal/sampler/parser_test.go for CSV format compatibility with loader.ParseCSV() (SC-003)
 
 ### Implementation & Refinements (Make Tests Pass)
 
-- [ ] T052 Add error handling for source file missing with clear error message
-- [ ] T053 Add error handling for corrupted CSV rows (skip and continue with warning)
-- [ ] T054 Add handling for all emails already extracted scenario
-- [ ] T055 Add error handling for disk space issues when writing output
-- [ ] T056 Verify quickstart.md examples work as documented
-- [ ] T057 Optimize extraction performance to meet <10s requirement for 10k emails
+- [X] T052 Add error handling for source file missing with clear error message
+- [X] T053 Add error handling for corrupted CSV rows (skip and continue with warning)
+- [X] T054 Add handling for all emails already extracted scenario
+- [X] T055 Add error handling for disk space issues when writing output
+- [X] T056 Verify quickstart.md examples work as documented
+- [X] T057 Optimize extraction performance to meet <10s requirement for 10k emails
 
 ---
 

@@ -111,9 +111,11 @@ func runExtraction(requestedCount int) error {
 		actualCount = availableCount
 	}
 
-	// Handle edge case: no emails available
+	// Handle edge case: no emails available (T054)
+	// Continue with extraction of 0 emails and create tracking file
 	if availableCount == 0 {
-		return fmt.Errorf("no emails available for extraction (all emails have been extracted)")
+		fmt.Println("WARNING: No unextracted emails available")
+		actualCount = 0
 	}
 
 	// Step 4: Filter to only available emails
