@@ -238,11 +238,24 @@ func TestGraphPerformance_FilteredQuery(t *testing.T) {
 	// SC-004: Filters should update in <1 second
 	assert.Less(t, filterDuration, 1*time.Second, "Filter should apply in <1s (SC-004)")
 
-	// Verify filtering worked correctly
-	for _, node := range response.Nodes {
-		assert.Contains(t, []string{"person", "organization"}, node.Type,
-			"Filtered nodes should match requested types")
+	// Verify filtering worked correctly - non-ghost nodes should match requested types
+	// Ghost nodes (IsGhost=true) can be any type as they're connected to filtered nodes
+	typeMap := make(map[string]bool)
+	for _, t := range filter.Types {
+		typeMap[t] = true
 	}
+
+	nonGhostCount := 0
+	for _, node := range response.Nodes {
+		if !node.IsGhost {
+			nonGhostCount++
+			assert.True(t, typeMap[node.Type],
+				"Filtered non-ghost node type '%s' should be one of the requested types: %v", node.Type, filter.Types)
+		}
+	}
+
+	// Verify we actually got some non-ghost results
+	assert.Greater(t, nonGhostCount, 0, "Filter should return some non-ghost nodes")
 }
 
 // T105: Benchmark - Overall rendering pipeline simulation
