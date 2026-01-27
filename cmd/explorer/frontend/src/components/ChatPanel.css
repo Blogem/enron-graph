@@ -1,0 +1,127 @@
+/**
+ * ChatPanel Styles
+ * FR-001: Bottom panel positioning
+ */
+
+.chat-panel {
+    display: flex;
+    flex-direction: column;
+    background-color: #0d1117;
+    border-top: 1px solid #30363d;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.chat-panel--collapsed {
+    /* Minimal height when collapsed - just show header */
+}
+
+.chat-panel__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+
+.chat-panel__title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #f0f6fc;
+}
+
+.chat-panel__toggle {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: #8b949e;
+    transition: color 0.2s ease;
+}
+
+.chat-panel__toggle:hover {
+    color: #58a6ff;
+}
+
+.chat-panel__toggle:focus {
+    outline: 2px solid #58a6ff;
+    outline-offset: 2px;
+}
+
+.chat-panel__body {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-panel__footer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    background-color: #161b22;
+    border-top: 1px solid #30363d;
+}
+
+.chat-panel__toggle-compact {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 8px 12px;
+    color: #8b949e;
+    transition: color 0.2s ease;
+    align-self: stretch;
+    min-width: 40px;
+}
+
+.chat-panel__toggle-compact:hover {
+    color: #58a6ff;
+    background: #21262d;
+}
+
+.chat-panel__toggle-compact:focus {
+    outline: 2px solid #58a6ff;
+    outline-offset: -2px;
+}
+
+.chat-panel__body--hidden {
+    display: none;
+    visibility: hidden;
+}
+
+.chat-panel__conversation {
+    flex: 1;
+    padding: 12px 0;
+    background-color: #0d1117;
+    overflow-y: auto;
+}
+
+.chat-panel__conversation::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-panel__conversation::-webkit-scrollbar-track {
+    background: #161b22;
+}
+
+.chat-panel__conversation::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 4px;
+}
+
+.chat-panel__conversation::-webkit-scrollbar-thumb:hover {
+    background: #484f58;
+}
+
+.chat-panel__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #8b949e;
+    font-size: 14px;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}

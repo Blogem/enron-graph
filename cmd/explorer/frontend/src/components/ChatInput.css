@@ -1,0 +1,71 @@
+/**
+ * ChatInput Styles
+ * Styling for the chat input field and submit button
+ */
+
+.chat-input {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background-color: transparent;
+    flex: 1;
+}
+
+.chat-input__field {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 36px;
+    max-height: 120px;
+    line-height: 1.5;
+    background-color: #0d1117;
+    color: #c9d1d9;
+}
+
+.chat-input__field:focus {
+    outline: none;
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);
+}
+
+.chat-input__field:disabled {
+    background-color: #161b22;
+    color: #6e7681;
+    cursor: not-allowed;
+}
+
+.chat-input__button {
+    padding: 8px 16px;
+    background-color: #238636;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.chat-input__button:hover:not(:disabled) {
+    background-color: #2ea043;
+}
+
+.chat-input__button:active:not(:disabled) {
+    background-color: #1f7a2e;
+}
+
+.chat-input__button:disabled {
+    background-color: #21262d;
+    color: #6e7681;
+    cursor: not-allowed;
+}
+
+.chat-input__button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(46, 160, 67, 0.4);
+}

@@ -9,6 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import Tooltip from './components/Tooltip';
 import KeyboardHelp from './components/KeyboardHelp';
+import ChatPanel from './components/ChatPanel';
 import { wailsAPI } from './services/wails';
 import type { explorer } from './wailsjs/go/models';
 import type { GraphData, GraphNodeWithPosition, ExpandedNodeState, NodeFilter, GraphEdge } from './types/graph';
@@ -36,6 +37,9 @@ function App() {
 
     // Graph recenter callback ref (T109)
     const graphRecenterRef = useRef<(() => void) | null>(null);
+
+    // Chat panel state (T020)
+    const [chatPanelCollapsed, setChatPanelCollapsed] = useState<boolean>(false);
 
     // Load schema on mount
     useEffect(() => {
@@ -493,7 +497,11 @@ function App() {
                         </div>
                     )}
                 </div>
-                <KeyboardHelp />
+                <ChatPanel
+                    initialCollapsed={chatPanelCollapsed}
+                    onCollapseChange={setChatPanelCollapsed}
+                />
+                <KeyboardHelp chatPanelCollapsed={chatPanelCollapsed} />
             </div>
         </ErrorBoundary>
     );

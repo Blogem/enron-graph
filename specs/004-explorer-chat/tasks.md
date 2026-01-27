@@ -58,24 +58,24 @@ description: "Task breakdown for Graph Explorer Chat Interface implementation"
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T011 [P] [US1] Write ChatInput component test in cmd/explorer/frontend/src/components/ChatInput.test.tsx
-- [ ] T012 [P] [US1] Write ChatMessage component test in cmd/explorer/frontend/src/components/ChatMessage.test.tsx
-- [ ] T013 [US1] Write ChatPanel component test in cmd/explorer/frontend/src/components/ChatPanel.test.tsx (depends on T011, T012 for understanding component contracts)
+- [x] T011 [P] [US1] Write ChatInput component test in cmd/explorer/frontend/src/components/ChatInput.test.tsx
+- [x] T012 [P] [US1] Write ChatMessage component test in cmd/explorer/frontend/src/components/ChatMessage.test.tsx
+- [x] T013 [US1] Write ChatPanel component test in cmd/explorer/frontend/src/components/ChatPanel.test.tsx (depends on T011, T012 for understanding component contracts)
 
 ### Implementation for User Story 1
 
-- [ ] T014 [P] [US1] Create ChatInput component in cmd/explorer/frontend/src/components/ChatInput.tsx
-- [ ] T015 [P] [US1] Create ChatInput styles in cmd/explorer/frontend/src/components/ChatInput.css
-- [ ] T016 [P] [US1] Create ChatMessage component in cmd/explorer/frontend/src/components/ChatMessage.tsx
-- [ ] T017 [P] [US1] Create ChatMessage styles in cmd/explorer/frontend/src/components/ChatMessage.css
-- [ ] T018 [US1] Create ChatPanel component in cmd/explorer/frontend/src/components/ChatPanel.tsx
-- [ ] T019 [US1] Create ChatPanel styles in cmd/explorer/frontend/src/components/ChatPanel.css
-- [ ] T020 [US1] Add chat panel state to App component in cmd/explorer/frontend/src/App.tsx (collapsed state only)
-- [ ] T021 [US1] Add ChatPanel to App layout in cmd/explorer/frontend/src/App.tsx (bottom panel positioning)
-- [ ] T022 [US1] Update App.css to support bottom panel layout in cmd/explorer/frontend/src/App.css
-- [ ] T023 [US1] Implement collapse/expand functionality in ChatPanel component
-- [ ] T024 [US1] Persist collapsed state in session storage within ChatPanel component
-- [ ] T025 [US1] Run component tests to verify User Story 1 (npm test from cmd/explorer/frontend/)
+- [X] T014 [P] [US1] Create ChatInput component in cmd/explorer/frontend/src/components/ChatInput.tsx
+- [X] T015 [P] [US1] Create ChatInput styles in cmd/explorer/frontend/src/components/ChatInput.css
+- [X] T016 [P] [US1] Create ChatMessage component in cmd/explorer/frontend/src/components/ChatMessage.tsx
+- [X] T017 [P] [US1] Create ChatMessage styles in cmd/explorer/frontend/src/components/ChatMessage.css
+- [X] T018 [US1] Create ChatPanel component in cmd/explorer/frontend/src/components/ChatPanel.tsx
+- [X] T019 [US1] Create ChatPanel styles in cmd/explorer/frontend/src/components/ChatPanel.css
+- [X] T020 [US1] Add chat panel state to App component in cmd/explorer/frontend/src/App.tsx (collapsed state only)
+- [X] T021 [US1] Add ChatPanel to App layout in cmd/explorer/frontend/src/App.tsx (bottom panel positioning)
+- [X] T022 [US1] Update App.css to support bottom panel layout in cmd/explorer/frontend/src/App.css
+- [X] T023 [US1] Implement collapse/expand functionality in ChatPanel component
+- [X] T024 [US1] Persist collapsed state in session storage within ChatPanel component
+- [X] T025 [US1] Run component tests to verify User Story 1 (npm test from cmd/explorer/frontend/)
 
 **Checkpoint**: Chat panel visible at bottom, can type in input field, can collapse/expand, tests passing
 
