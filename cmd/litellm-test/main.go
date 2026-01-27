@@ -15,9 +15,9 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
 	// Configuration - adjust these as needed
-	baseURL := "https://litellm.sbp.ai"   // Default LiteLLM URL
-	completionModel := "azure/gpt-5-mini" // Change to your model
-	embeddingModel := "azure/text-embedding-ada-002"
+	baseURL := "https://litellm.sbp.ai"        // Default LiteLLM URL
+	completionModel := "aws/claude-4-5-sonnet" // Change to your model
+	embeddingModel := "azure/text-embedding-3-large"
 	apiKey := os.Getenv("LITELLM_API_KEY") // Optional, leave empty if not needed
 
 	// Create client

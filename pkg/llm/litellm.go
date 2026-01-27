@@ -54,6 +54,21 @@ func (c *LiteLLMClient) GenerateCompletion(ctx context.Context, prompt string) (
 		"stream":      false,
 	}
 
+	// handle special case for Claude models
+	if c.completionModel == "aws/claude-4-5-sonnet" {
+		requestBody = map[string]interface{}{
+			"model": c.completionModel,
+			"messages": []map[string]string{
+				{
+					"role":    "user",
+					"content": prompt,
+				},
+			},
+			"temperature": 1.0,
+			"stream":      false,
+		}
+	}
+
 	var lastErr error
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {
 		if attempt > 0 {

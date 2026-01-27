@@ -14,6 +14,12 @@ type Config struct {
 	DBSSLMode   string
 	DatabaseURL string
 	OllamaURL   string
+	// LLM Provider settings
+	LLMProvider     string // "ollama" (default) or "litellm"
+	LiteLLMURL      string
+	LiteLLMAPIKey   string
+	CompletionModel string
+	EmbeddingModel  string
 }
 
 func LoadConfig() (*Config, error) {
@@ -25,6 +31,12 @@ func LoadConfig() (*Config, error) {
 		DBName:     getEnv("DB_NAME", "enron_graph"),
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
 		OllamaURL:  getEnv("OLLAMA_URL", "http://localhost:11434"),
+		// LLM Provider configuration
+		LLMProvider:     getEnv("LLM_PROVIDER", "ollama"),
+		LiteLLMURL:      getEnv("LITELLM_URL", "http://localhost:4000"),
+		LiteLLMAPIKey:   getEnv("LITELLM_API_KEY", ""),
+		CompletionModel: getEnv("LLM_COMPLETION_MODEL", "llama3.1:8b"),
+		EmbeddingModel:  getEnv("LLM_EMBEDDING_MODEL", "mxbai-embed-large"),
 	}
 
 	// Build DatabaseURL

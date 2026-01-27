@@ -36,14 +36,38 @@ func main() {
 	// Initialize repository
 	repo := graph.NewRepository(client)
 
-	// Initialize LLM client (optional - chat will still work without it)
-	llmClient := llm.NewOllamaClient(
-		cfg.OllamaURL,
-		"llama3.1:8b",
-		"mxbai-embed-large",
-		logger,
-	)
-	logger.Info("LLM client initialized", "ollama_url", cfg.OllamaURL)
+	// Initialize LLM client based on provider (optional - chat will still work without it)
+	var llmClient llm.Client
+	switch cfg.LLMProvider {
+	case "litellm":
+		logger.Info("Using LiteLLM provider",
+			"url", cfg.LiteLLMURL,
+			"completion_model", cfg.CompletionModel,
+			"embedding_model", cfg.EmbeddingModel)
+		llmClient = llm.NewLiteLLMClient(
+			cfg.LiteLLMURL,
+			cfg.CompletionModel,
+			cfg.EmbeddingModel,
+			cfg.LiteLLMAPIKey,
+			logger,
+		)
+	default:
+		// Default to Ollama
+		ollamaURL := cfg.OllamaURL
+		if ollamaURL == "" {
+			ollamaURL = "http://localhost:11434"
+		}
+		logger.Info("Using Ollama provider",
+			"url", ollamaURL,
+			"completion_model", cfg.CompletionModel,
+			"embedding_model", cfg.EmbeddingModel)
+		llmClient = llm.NewOllamaClient(
+			ollamaURL,
+			cfg.CompletionModel,
+			cfg.EmbeddingModel,
+			logger,
+		)
+	}
 
 	// Create TUI model with repository
 	model := tui.NewModel(repo)

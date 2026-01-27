@@ -85,29 +85,38 @@ func main() {
 
 	logger.Info("Connected to database")
 
-	// Initialize LLM client (optional - for semantic search)
+	// Initialize LLM client based on provider (optional - for semantic search)
 	var llmClient llm.Client
-	ollamaURL := os.Getenv("OLLAMA_URL")
-	if ollamaURL == "" {
-		ollamaURL = "http://localhost:11434"
+	switch cfg.LLMProvider {
+	case "litellm":
+		logger.Info("Using LiteLLM provider",
+			slog.String("url", cfg.LiteLLMURL),
+			slog.String("completion_model", cfg.CompletionModel),
+			slog.String("embedding_model", cfg.EmbeddingModel))
+		llmClient = llm.NewLiteLLMClient(
+			cfg.LiteLLMURL,
+			cfg.CompletionModel,
+			cfg.EmbeddingModel,
+			cfg.LiteLLMAPIKey,
+			logger,
+		)
+	default:
+		// Default to Ollama
+		ollamaURL := cfg.OllamaURL
+		if ollamaURL == "" {
+			ollamaURL = "http://localhost:11434"
+		}
+		logger.Info("Using Ollama provider",
+			slog.String("url", ollamaURL),
+			slog.String("completion_model", cfg.CompletionModel),
+			slog.String("embedding_model", cfg.EmbeddingModel))
+		llmClient = llm.NewOllamaClient(
+			ollamaURL,
+			cfg.CompletionModel,
+			cfg.EmbeddingModel,
+			logger,
+		)
 	}
-
-	completionModel := os.Getenv("OLLAMA_COMPLETION_MODEL")
-	if completionModel == "" {
-		completionModel = "llama3.1:8b"
-	}
-
-	embeddingModel := os.Getenv("OLLAMA_EMBEDDING_MODEL")
-	if embeddingModel == "" {
-		embeddingModel = "mxbai-embed-large"
-	}
-
-	llmClient = llm.NewOllamaClient(ollamaURL, completionModel, embeddingModel, logger)
-	logger.Info("Connected to Ollama LLM service",
-		slog.String("url", ollamaURL),
-		slog.String("completion_model", completionModel),
-		slog.String("embedding_model", embeddingModel),
-	)
 
 	// Create API handler
 	handler := api.NewHandlerWithLLM(repo, llmClient)
