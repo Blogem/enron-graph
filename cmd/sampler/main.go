@@ -5,6 +5,17 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/Blogem/enron-graph/internal/sampler"
+)
+
+const (
+	// Default source CSV file path (relative to repo root)
+	defaultSourcePath = "assets/enron-emails/emails.csv"
+	// Output directory for sampled files and tracking files
+	outputDir = "assets/enron-emails"
 )
 
 func main() {
@@ -26,7 +37,121 @@ func main() {
 	}
 
 	fmt.Printf("Random Email Sampler - extracting %d emails\n", *count)
-	// TODO: Wire up extraction logic in later phases
+
+	// Run extraction workflow
+	if err := runExtraction(*count); err != nil {
+		log.Fatalf("Extraction failed: %v", err)
+	}
+}
+
+// runExtraction performs the complete email extraction workflow
+func runExtraction(requestedCount int) error {
+	timestamp := time.Now()
+
+	// Step 1: Load tracking registry
+	fmt.Println("Loading tracking registry...")
+	registry, err := sampler.LoadTracking(outputDir)
+	if err != nil {
+		return fmt.Errorf("failed to load tracking: %w", err)
+	}
+
+	if registry.Count() > 0 {
+		fmt.Printf("Found %d previously extracted emails (from tracking files)\n", registry.Count())
+	}
+
+	// Step 2: Parse source CSV file (T021: error handling for missing file)
+	fmt.Printf("Parsing source CSV: %s\n", defaultSourcePath)
+	recordsChan, errsChan, err := sampler.ParseCSV(defaultSourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to open source CSV file '%s': %w\nPlease ensure the file exists and is accessible", defaultSourcePath, err)
+	}
+
+	// Collect all records (T019: progress logging)
+	var emails []sampler.EmailRecord
+	done := make(chan bool)
+
+	// Error collector goroutine
+	var parseErrors []error
+	go func() {
+		for err := range errsChan {
+			parseErrors = append(parseErrors, err)
+			log.Printf("WARNING: CSV parsing error: %v", err)
+		}
+		done <- true
+	}()
+
+	// Record collector with progress tracking
+	recordCount := 0
+	for record := range recordsChan {
+		emails = append(emails, record)
+		recordCount++
+
+		// Progress logging every 100 records (T019)
+		if recordCount%100 == 0 {
+			fmt.Printf("Processing %d emails...\n", recordCount)
+		}
+	}
+	<-done
+
+	fmt.Printf("Loaded %d total emails from source\n", len(emails))
+
+	// Report parsing errors if any occurred
+	if len(parseErrors) > 0 {
+		fmt.Printf("WARNING: Encountered %d parsing errors (continuing with valid records)\n", len(parseErrors))
+	}
+
+	// Step 3: Count available emails
+	availableCount := sampler.CountAvailable(emails, registry)
+	fmt.Printf("Available for extraction: %d emails (excluding previously extracted)\n", availableCount)
+
+	// Handle edge case: requested count exceeds available
+	actualCount := requestedCount
+	if requestedCount > availableCount {
+		fmt.Printf("WARNING: Only %d emails available, extracting all remaining\n", availableCount)
+		actualCount = availableCount
+	}
+
+	// Handle edge case: no emails available
+	if availableCount == 0 {
+		return fmt.Errorf("no emails available for extraction (all emails have been extracted)")
+	}
+
+	// Step 4: Generate random indices
+	fmt.Printf("Selecting %d random emails...\n", actualCount)
+	indices := sampler.GenerateIndices(nil, availableCount, actualCount)
+
+	// Step 5: Extract emails at selected indices
+	extracted := sampler.ExtractEmails(emails, indices, registry)
+	fmt.Printf("Extracted %d emails\n", len(extracted))
+
+	// Step 6: Generate timestamped output filename (T020)
+	outputFilename := fmt.Sprintf("sampled-emails-%s.csv", timestamp.Format("20060102-150405"))
+	outputPath := filepath.Join(outputDir, outputFilename)
+
+	// Write output CSV
+	fmt.Printf("Writing output to: %s\n", outputPath)
+	if err := sampler.WriteCSV(outputPath, extracted); err != nil {
+		return fmt.Errorf("failed to write output CSV: %w", err)
+	}
+
+	// Step 7: Create tracking file (T020: same timestamp format)
+	trackingFilename := fmt.Sprintf("extracted-%s.txt", timestamp.Format("20060102-150405"))
+
+	// Extract file IDs for tracking
+	extractedIDs := make([]string, len(extracted))
+	for i, email := range extracted {
+		extractedIDs[i] = email.File
+	}
+
+	if err := sampler.CreateTrackingFile(outputDir, timestamp.Format("20060102-150405"), extractedIDs); err != nil {
+		return fmt.Errorf("failed to create tracking file: %w", err)
+	}
+
+	// Final summary (T019)
+	fmt.Printf("\n✓ Successfully extracted %d emails to %s\n", len(extracted), outputPath)
+	fmt.Printf("✓ Tracking file created: %s\n", trackingFilename)
+
+	return nil
 }
 
 func printUsage() {
