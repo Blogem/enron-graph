@@ -1,0 +1,72 @@
+file,message
+test-email-1,"Message-ID: <test1@example.com>
+Date: Mon, 01 Jan 2026 10:00:00 -0700 (PDT)
+From: alice@example.com
+To: bob@example.com
+Subject: Test Email 1
+
+This is a test email for unit testing."
+test-email-2,"Message-ID: <test2@example.com>
+Date: Mon, 01 Jan 2026 10:01:00 -0700 (PDT)
+From: bob@example.com
+To: alice@example.com
+Subject: Test Email 2
+
+This is another test email."
+test-email-3,"Message-ID: <test3@example.com>
+Date: Mon, 01 Jan 2026 10:02:00 -0700 (PDT)
+From: charlie@example.com
+To: alice@example.com
+Subject: Test Email 3
+
+Third test email with multi-line content.
+This spans multiple lines."
+test-email-4,"Message-ID: <test4@example.com>
+Date: Mon, 01 Jan 2026 10:03:00 -0700 (PDT)
+From: alice@example.com
+To: charlie@example.com
+Subject: Test Email 4
+
+Fourth test email."
+test-email-5,"Message-ID: <test5@example.com>
+Date: Mon, 01 Jan 2026 10:04:00 -0700 (PDT)
+From: bob@example.com
+To: charlie@example.com
+Subject: Test Email 5
+
+Fifth test email."
+test-email-6,"Message-ID: <test6@example.com>
+Date: Mon, 01 Jan 2026 10:05:00 -0700 (PDT)
+From: charlie@example.com
+To: bob@example.com
+Subject: Test Email 6
+
+Sixth test email."
+test-email-7,"Message-ID: <test7@example.com>
+Date: Mon, 01 Jan 2026 10:06:00 -0700 (PDT)
+From: alice@example.com
+To: bob@example.com
+Subject: Test Email 7
+
+Seventh test email."
+test-email-8,"Message-ID: <test8@example.com>
+Date: Mon, 01 Jan 2026 10:07:00 -0700 (PDT)
+From: bob@example.com
+To: alice@example.com
+Subject: Test Email 8
+
+Eighth test email."
+test-email-9,"Message-ID: <test9@example.com>
+Date: Mon, 01 Jan 2026 10:08:00 -0700 (PDT)
+From: charlie@example.com
+To: alice@example.com
+Subject: Test Email 9
+
+Ninth test email."
+test-email-10,"Message-ID: <test10@example.com>
+Date: Mon, 01 Jan 2026 10:09:00 -0700 (PDT)
+From: alice@example.com
+To: charlie@example.com
+Subject: Test Email 10
+
+Tenth test email."

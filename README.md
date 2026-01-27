@@ -349,6 +349,29 @@ go run cmd/tui/main.go
 
 **Note**: Requires Ollama with `llama3.1:8b` model running for chat functionality.
 
+### Random Email Sampler
+
+Extract random email samples from the large Enron corpus for testing and development:
+
+```bash
+# Extract 10 random emails
+go run cmd/sampler/main.go --count 10
+
+# Extract 1000 random emails
+go run cmd/sampler/main.go --count 1000
+
+# Show help
+go run cmd/sampler/main.go --help
+```
+
+**Features**:
+- Creates timestamped CSV output files (`sampled-emails-YYYYMMDD-HHMMSS.csv`)
+- Tracks extracted emails to prevent duplicates across multiple runs
+- Maintains same CSV format as source (compatible with loader)
+- Configurable sample size via `--count` flag
+
+**Output Location**: `assets/enron-emails/`
+
 ## Dataset
 
 The POC uses the [Enron Email Dataset](https://www.kaggle.com/datasets/wcukierski/enron-email-dataset):

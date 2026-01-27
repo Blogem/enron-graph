@@ -18,10 +18,10 @@
 
 **Purpose**: Project initialization and basic Go package structure
 
-- [ ] T001 Create cmd/sampler/main.go with basic CLI flag parsing (--count flag)
-- [ ] T002 Create internal/sampler/types.go with EmailRecord and ExtractionSession structs
-- [ ] T003 [P] Create tests/fixtures/sample-small.csv with 10 test emails for unit tests
-- [ ] T004 [P] Add entry to README.md documenting new sampler utility
+- [X] T001 Create cmd/sampler/main.go with basic CLI flag parsing (--count flag)
+- [X] T002 Create internal/sampler/types.go with EmailRecord and ExtractionSession structs
+- [X] T003 [P] Create tests/fixtures/sample-small.csv with 10 test emails for unit tests
+- [X] T004 [P] Add entry to README.md documenting new sampler utility
 
 ---
 
