@@ -155,7 +155,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         <div className="detail-panel">
             <div className="detail-header">
                 <div className="detail-title">
-                    <h2>{node.label || node.id}</h2>
+                    <h2>{node.properties?.name || node.label || node.id}</h2>
                     <span className={`type-badge ${node.type.toLowerCase()}`}>
                         {node.type}
                     </span>

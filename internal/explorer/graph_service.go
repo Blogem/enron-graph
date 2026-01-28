@@ -3,6 +3,7 @@ package explorer
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -12,17 +13,20 @@ import (
 	"github.com/Blogem/enron-graph/ent/discoveredentity"
 	"github.com/Blogem/enron-graph/ent/email"
 	"github.com/Blogem/enron-graph/ent/relationship"
+	"github.com/Blogem/enron-graph/pkg/llm"
 )
 
 type GraphService struct {
-	client *ent.Client
-	db     *sql.DB
+	client    *ent.Client
+	db        *sql.DB
+	llmClient llm.Client
 }
 
-func NewGraphService(client *ent.Client, db *sql.DB) *GraphService {
+func NewGraphService(client *ent.Client, db *sql.DB, llmClient llm.Client) *GraphService {
 	return &GraphService{
-		client: client,
-		db:     db,
+		client:    client,
+		db:        db,
+		llmClient: llmClient,
 	}
 }
 
@@ -48,11 +52,21 @@ func (s *GraphService) GetRandomNodes(ctx context.Context, limit int) (*GraphRes
 	nodeIDs := make(map[string]bool)
 
 	for _, entity := range discoveredEntities {
+		// Ensure properties map exists and include the name field
+		props := entity.Properties
+		if props == nil {
+			props = make(map[string]interface{})
+		}
+		// Add name to properties if it exists
+		if entity.Name != "" {
+			props["name"] = entity.Name
+		}
+
 		node := GraphNode{
 			ID:         entity.UniqueID,
 			Type:       entity.TypeCategory,
 			Category:   "discovered",
-			Properties: entity.Properties,
+			Properties: props,
 			IsGhost:    false,
 		}
 		nodes = append(nodes, node)
@@ -94,52 +108,80 @@ func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphR
 		return s.getPromotedNodes(ctx, filter)
 	}
 
-	// Apply search query if specified
-	if filter.SearchQuery != "" {
-		// Use case-insensitive search across unique_id, name, type_category, and JSONB properties
-		searchQuery := fmt.Sprintf("%%%s%%", filter.SearchQuery)
-		query = query.Where(func(s *esql.Selector) {
-			s.Where(esql.Or(
-				esql.P(func(b *esql.Builder) {
-					b.Ident(s.C(discoveredentity.FieldUniqueID))
-					b.WriteString(" ILIKE ")
-					b.Arg(searchQuery)
-				}),
-				esql.P(func(b *esql.Builder) {
-					b.Ident(s.C(discoveredentity.FieldName))
-					b.WriteString(" ILIKE ")
-					b.Arg(searchQuery)
-				}),
-				esql.P(func(b *esql.Builder) {
-					b.Ident(s.C(discoveredentity.FieldTypeCategory))
-					b.WriteString(" ILIKE ")
-					b.Arg(searchQuery)
-				}),
-				esql.P(func(b *esql.Builder) {
-					b.WriteString("(")
-					b.Ident(s.C(discoveredentity.FieldProperties))
-					b.WriteString(" IS NOT NULL AND ")
-					b.Ident(s.C(discoveredentity.FieldProperties))
-					b.WriteString(" != 'null'::jsonb AND EXISTS (SELECT 1 FROM jsonb_each_text(")
-					b.Ident(s.C(discoveredentity.FieldProperties))
-					b.WriteString(") WHERE value ILIKE ")
-					b.Arg(searchQuery)
-					b.WriteString("))")
-				}),
-			))
-		})
-		log.Printf("[GetNodes] Applied search query: %q", filter.SearchQuery)
-	}
-
 	// Apply limit
 	limit := filter.Limit
 	if limit <= 0 {
 		limit = 100 // Default limit
 	}
-	query = query.Limit(limit)
 
-	// Execute query
-	entities, err := query.All(ctx)
+	var entities []*ent.DiscoveredEntity
+	var err error
+
+	// Apply search query if specified - try text search first, fallback to semantic if no results
+	if filter.SearchQuery != "" {
+		log.Printf("[GetNodes] Using text search for query: %q", filter.SearchQuery)
+
+		// Execute text search first
+		textQuery := s.client.DiscoveredEntity.Query()
+		if len(filter.Types) > 0 {
+			textQuery = textQuery.Where(discoveredentity.TypeCategoryIn(filter.Types...))
+		}
+		textQuery = s.applyTextSearch(textQuery, filter.SearchQuery)
+		textQuery = textQuery.Limit(limit)
+		entities, err = textQuery.All(ctx)
+
+		// If text search returned no results and we have LLM client, try semantic search
+		if err == nil && len(entities) == 0 && s.llmClient != nil {
+			log.Printf("[GetNodes] Text search returned no results, falling back to semantic search")
+
+			// Generate embedding for semantic search
+			queryEmbedding, embErr := s.llmClient.GenerateEmbedding(ctx, filter.SearchQuery)
+			if embErr != nil {
+				log.Printf("[GetNodes] Failed to generate embedding: %v", embErr)
+			} else {
+				embeddingJSON, marshalErr := json.Marshal(queryEmbedding)
+				if marshalErr != nil {
+					log.Printf("[GetNodes] Failed to marshal embedding: %v", marshalErr)
+				} else {
+					// Execute semantic search query
+					semanticQuery := s.client.DiscoveredEntity.Query()
+					if len(filter.Types) > 0 {
+						semanticQuery = semanticQuery.Where(discoveredentity.TypeCategoryIn(filter.Types...))
+					}
+					semanticQuery = semanticQuery.Where(func(s *esql.Selector) {
+						s.Where(esql.P(func(b *esql.Builder) {
+							b.Ident(s.C(discoveredentity.FieldEmbedding))
+							b.WriteString(" IS NOT NULL AND ")
+							b.Ident(s.C(discoveredentity.FieldEmbedding))
+							b.WriteString(" != 'null'::jsonb AND ")
+							b.WriteString("(1 - (")
+							b.Ident(s.C(discoveredentity.FieldEmbedding))
+							b.WriteString("::text::vector <=> '")
+							b.WriteString(string(embeddingJSON))
+							b.WriteString("'::vector)) > 0.3")
+						}))
+					})
+					semanticQuery = semanticQuery.Order(func(s *esql.Selector) {
+						s.OrderExpr(esql.Expr(fmt.Sprintf(
+							"%s::text::vector <=> '%s'::vector",
+							s.C(discoveredentity.FieldEmbedding),
+							string(embeddingJSON),
+						)))
+					})
+					semanticQuery = semanticQuery.Limit(limit)
+					entities, err = semanticQuery.All(ctx)
+
+					if err == nil {
+						log.Printf("[GetNodes] Semantic search returned %d results", len(entities))
+					}
+				}
+			}
+		}
+	} else {
+		// No search query - just apply limit
+		query = query.Limit(limit)
+		entities, err = query.All(ctx)
+	}
 	if err != nil {
 		log.Printf("[GetNodes] ERROR executing query: %v", err)
 		return nil, fmt.Errorf("failed to query filtered nodes: %w", err)
@@ -205,11 +247,21 @@ func (s *GraphService) GetNodes(ctx context.Context, filter NodeFilter) (*GraphR
 	entityIDMap := make(map[int]string) // map from ent ID to unique_id
 
 	for _, entity := range entities {
+		// Ensure properties map exists and include the name field
+		props := entity.Properties
+		if props == nil {
+			props = make(map[string]interface{})
+		}
+		// Add name to properties if it exists
+		if entity.Name != "" {
+			props["name"] = entity.Name
+		}
+
 		node := GraphNode{
 			ID:         entity.UniqueID,
 			Type:       entity.TypeCategory,
 			Category:   "discovered",
-			Properties: entity.Properties,
+			Properties: props,
 			IsGhost:    false,
 		}
 		nodes = append(nodes, node)
@@ -249,7 +301,6 @@ func (s *GraphService) GetRelationships(ctx context.Context, nodeID string, offs
 	totalOutgoing, err := s.client.Relationship.
 		Query().
 		Where(
-			relationship.FromTypeEQ("discovered_entity"),
 			relationship.FromIDEQ(entity.ID),
 		).
 		Count(ctx)
@@ -260,7 +311,6 @@ func (s *GraphService) GetRelationships(ctx context.Context, nodeID string, offs
 	totalIncoming, err := s.client.Relationship.
 		Query().
 		Where(
-			relationship.ToTypeEQ("discovered_entity"),
 			relationship.ToIDEQ(entity.ID),
 		).
 		Count(ctx)
@@ -274,7 +324,6 @@ func (s *GraphService) GetRelationships(ctx context.Context, nodeID string, offs
 	outgoingRels, err := s.client.Relationship.
 		Query().
 		Where(
-			relationship.FromTypeEQ("discovered_entity"),
 			relationship.FromIDEQ(entity.ID),
 		).
 		Offset(offset).
@@ -296,7 +345,6 @@ func (s *GraphService) GetRelationships(ctx context.Context, nodeID string, offs
 		incomingRels, err = s.client.Relationship.
 			Query().
 			Where(
-				relationship.ToTypeEQ("discovered_entity"),
 				relationship.ToIDEQ(entity.ID),
 			).
 			Offset(adjustedOffset).
@@ -310,14 +358,10 @@ func (s *GraphService) GetRelationships(ctx context.Context, nodeID string, offs
 	// Collect all connected entity IDs
 	connectedEntityIDs := make(map[int]bool)
 	for _, rel := range outgoingRels {
-		if rel.ToType == "discovered_entity" {
-			connectedEntityIDs[rel.ToID] = true
-		}
+		connectedEntityIDs[rel.ToID] = true
 	}
 	for _, rel := range incomingRels {
-		if rel.FromType == "discovered_entity" {
-			connectedEntityIDs[rel.FromID] = true
-		}
+		connectedEntityIDs[rel.FromID] = true
 	}
 
 	// Fetch connected entities
@@ -344,11 +388,20 @@ func (s *GraphService) GetRelationships(ctx context.Context, nodeID string, offs
 	// Convert to GraphNodes
 	nodes := make([]GraphNode, 0, len(connectedEntities))
 	for _, e := range connectedEntities {
+		// Ensure properties map exists and include the name field
+		props := e.Properties
+		if props == nil {
+			props = make(map[string]interface{})
+		}
+		if e.Name != "" {
+			props["name"] = e.Name
+		}
+
 		nodes = append(nodes, GraphNode{
 			ID:         e.UniqueID,
 			Type:       e.TypeCategory,
 			Category:   "discovered",
-			Properties: e.Properties,
+			Properties: props,
 			IsGhost:    false,
 		})
 	}
@@ -400,11 +453,20 @@ func (s *GraphService) GetNodeDetails(ctx context.Context, nodeID string) (*Grap
 		// Count relationships
 		degree, _ := s.getNodeDegree(ctx, entity.ID)
 
+		// Ensure properties map exists and include the name field
+		props := entity.Properties
+		if props == nil {
+			props = make(map[string]interface{})
+		}
+		if entity.Name != "" {
+			props["name"] = entity.Name
+		}
+
 		return &GraphNode{
 			ID:         entity.UniqueID,
 			Type:       entity.TypeCategory,
 			Category:   "discovered",
-			Properties: entity.Properties,
+			Properties: props,
 			IsGhost:    false,
 			Degree:     degree,
 		}, nil
@@ -463,9 +525,7 @@ func (s *GraphService) getEdgesBetweenNodes(ctx context.Context, entities []*ent
 	rels, err := s.client.Relationship.
 		Query().
 		Where(
-			relationship.FromTypeEQ("discovered_entity"),
 			relationship.FromIDIn(entityIDs...),
-			relationship.ToTypeEQ("discovered_entity"),
 			relationship.ToIDIn(entityIDs...),
 		).
 		All(ctx)
@@ -510,7 +570,6 @@ func (s *GraphService) getEdgesWithGhostNodes(ctx context.Context, entities []*e
 	rels, err := s.client.Relationship.
 		Query().
 		Where(
-			relationship.FromTypeEQ("discovered_entity"),
 			relationship.FromIDIn(entityIDs...),
 		).
 		All(ctx)
@@ -521,14 +580,12 @@ func (s *GraphService) getEdgesWithGhostNodes(ctx context.Context, entities []*e
 	// Collect target entity IDs that are NOT in the filtered set
 	ghostEntityIDs := make(map[int]bool)
 	for _, rel := range rels {
-		if rel.ToType == "discovered_entity" {
-			targetUniqueID, ok := entityIDToUniqueID[rel.ToID]
-			// If target is not in our filtered set, it's a ghost node
-			if !ok {
-				ghostEntityIDs[rel.ToID] = true
-			} else if !nodeIDSet[targetUniqueID] {
-				ghostEntityIDs[rel.ToID] = true
-			}
+		targetUniqueID, ok := entityIDToUniqueID[rel.ToID]
+		// If target is not in our filtered set, it's a ghost node
+		if !ok {
+			ghostEntityIDs[rel.ToID] = true
+		} else if !nodeIDSet[targetUniqueID] {
+			ghostEntityIDs[rel.ToID] = true
 		}
 	}
 
@@ -550,11 +607,18 @@ func (s *GraphService) getEdgesWithGhostNodes(ctx context.Context, entities []*e
 
 		// Create ghost nodes
 		for _, entity := range ghostEntities {
+			// For ghost nodes, still include name if available
+			props := map[string]interface{}{}
+			if entity.Name != "" {
+				props["name"] = entity.Name
+			}
+			props["is_ghost"] = true // Mark as ghost in properties too
+
 			ghostNodes = append(ghostNodes, GraphNode{
 				ID:         entity.UniqueID,
 				Type:       entity.TypeCategory,
 				Category:   "discovered",
-				Properties: map[string]interface{}{}, // Empty properties for ghost nodes
+				Properties: props,
 				IsGhost:    true,
 			})
 			// Add to maps for edge creation
@@ -584,7 +648,6 @@ func (s *GraphService) getNodeDegree(ctx context.Context, entityID int) (int, er
 	outgoing, err := s.client.Relationship.
 		Query().
 		Where(
-			relationship.FromTypeEQ("discovered_entity"),
 			relationship.FromIDEQ(entityID),
 		).
 		Count(ctx)
@@ -595,7 +658,6 @@ func (s *GraphService) getNodeDegree(ctx context.Context, entityID int) (int, er
 	incoming, err := s.client.Relationship.
 		Query().
 		Where(
-			relationship.ToTypeEQ("discovered_entity"),
 			relationship.ToIDEQ(entityID),
 		).
 		Count(ctx)
@@ -808,4 +870,72 @@ func (s *GraphService) queryPromotedTable(ctx context.Context, tableName string,
 	}
 
 	return nodes, nil
+}
+
+// applyTextSearch applies case-insensitive text search across multiple fields
+func (s *GraphService) applyTextSearch(query *ent.DiscoveredEntityQuery, searchText string) *ent.DiscoveredEntityQuery {
+	searchQuery := fmt.Sprintf("%%%s%%", searchText)
+	query = query.Where(func(s *esql.Selector) {
+		s.Where(esql.Or(
+			esql.P(func(b *esql.Builder) {
+				b.Ident(s.C(discoveredentity.FieldUniqueID))
+				b.WriteString(" ILIKE ")
+				b.Arg(searchQuery)
+			}),
+			esql.P(func(b *esql.Builder) {
+				b.Ident(s.C(discoveredentity.FieldName))
+				b.WriteString(" ILIKE ")
+				b.Arg(searchQuery)
+			}),
+			esql.P(func(b *esql.Builder) {
+				b.Ident(s.C(discoveredentity.FieldTypeCategory))
+				b.WriteString(" ILIKE ")
+				b.Arg(searchQuery)
+			}),
+			esql.P(func(b *esql.Builder) {
+				b.WriteString("(")
+				b.Ident(s.C(discoveredentity.FieldProperties))
+				b.WriteString(" IS NOT NULL AND ")
+				b.Ident(s.C(discoveredentity.FieldProperties))
+				b.WriteString(" != 'null'::jsonb AND EXISTS (SELECT 1 FROM jsonb_each_text(")
+				b.Ident(s.C(discoveredentity.FieldProperties))
+				b.WriteString(") WHERE value ILIKE ")
+				b.Arg(searchQuery)
+				b.WriteString("))")
+			}),
+		))
+	})
+	log.Printf("[GetNodes] Applied text search query: %q", searchText)
+	return query
+}
+
+// mergeAndDeduplicate combines semantic and text search results, removing duplicates
+// Prioritizes semantic search results (they appear first)
+func (s *GraphService) mergeAndDeduplicate(semanticResults, textResults []*ent.DiscoveredEntity, limit int) []*ent.DiscoveredEntity {
+	seen := make(map[string]bool)
+	merged := make([]*ent.DiscoveredEntity, 0, limit)
+
+	// Add semantic results first (higher priority)
+	for _, entity := range semanticResults {
+		if !seen[entity.UniqueID] {
+			seen[entity.UniqueID] = true
+			merged = append(merged, entity)
+			if len(merged) >= limit {
+				return merged
+			}
+		}
+	}
+
+	// Add text results (fill remaining slots)
+	for _, entity := range textResults {
+		if !seen[entity.UniqueID] {
+			seen[entity.UniqueID] = true
+			merged = append(merged, entity)
+			if len(merged) >= limit {
+				return merged
+			}
+		}
+	}
+
+	return merged
 }
