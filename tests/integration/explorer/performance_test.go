@@ -16,7 +16,7 @@ import (
 func setupPerformanceTestService(t *testing.T, nodeCount int) *explorer.GraphService {
 	client, db := integration.SetupTestDBWithSQL(t)
 	seedPerformanceTestData(t, client, nodeCount)
-	return explorer.NewGraphService(client, db)
+	return explorer.NewGraphService(client, db, nil)
 }
 
 func seedPerformanceTestData(t *testing.T, client *ent.Client, nodeCount int) {

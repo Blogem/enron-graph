@@ -15,7 +15,7 @@ import (
 func setupDetailTestService(t *testing.T) *explorer.GraphService {
 	client, db := integration.SetupTestDBWithSQL(t)
 	seedDetailTestData(t, client)
-	return explorer.NewGraphService(client, db)
+	return explorer.NewGraphService(client, db, nil)
 }
 
 func seedDetailTestData(t *testing.T, client *ent.Client) {

@@ -9,6 +9,12 @@ import (
 // T030: Unit tests for deduplication
 // Tests person dedup by email, org name normalization, concept similarity, edge cases
 
+// PersonEntity for testing person deduplication
+type PersonEntity struct {
+	Name  string
+	Email string
+}
+
 // TestConcept for testing (ConceptEntity in prompts.go doesn't have Embedding)
 type TestConcept struct {
 	Name      string

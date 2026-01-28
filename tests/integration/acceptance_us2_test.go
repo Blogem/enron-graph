@@ -28,8 +28,8 @@ func TestAcceptanceT069_QueryPersonByName(t *testing.T) {
 	// Setup: Create test database
 	client := SetupTestDB(t)
 	ctx := context.Background()
-	repo := graph.NewRepository(client)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)
 
 	// Pre-populate test data
@@ -87,8 +87,8 @@ func TestAcceptanceT070_QueryRelationships(t *testing.T) {
 	// Setup: Create test database
 	client := SetupTestDB(t)
 	ctx := context.Background()
-	repo := graph.NewRepository(client)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)
 
 	// Pre-populate test data
@@ -147,8 +147,8 @@ func TestAcceptanceT071_ShortestPath(t *testing.T) {
 	// Setup: Create test database
 	client := SetupTestDB(t)
 	ctx := context.Background()
-	repo := graph.NewRepository(client)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)
 
 	// Pre-populate test data
@@ -214,8 +214,8 @@ func TestAcceptanceT072_FilterByEntityType(t *testing.T) {
 	// Setup: Create test database
 	client := SetupTestDB(t)
 	ctx := context.Background()
-	repo := graph.NewRepository(client)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)
 
 	// Pre-populate test data
@@ -270,8 +270,8 @@ func TestAcceptanceT073_EntityLookupPerformance(t *testing.T) {
 	// Setup: Create test database
 	client := SetupTestDB(t)
 	ctx := context.Background()
-	repo := graph.NewRepository(client)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)
 
 	// Note: For true 100k node test, we would need to populate with much more data
@@ -338,8 +338,8 @@ func TestAcceptanceT074_ShortestPathPerformance(t *testing.T) {
 	// Setup: Create test database
 	client := SetupTestDB(t)
 	ctx := context.Background()
-	repo := graph.NewRepository(client)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)
 
 	// Pre-populate test data

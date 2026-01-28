@@ -38,10 +38,9 @@ func TestAPIIntegration(t *testing.T) {
 	ctx := context.Background()
 
 	// Create repository
-	repo := graph.NewRepository(client)
-
 	// Initialize logger
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Initialize LLM client (using Ollama)
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)

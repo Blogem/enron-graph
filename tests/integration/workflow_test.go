@@ -35,8 +35,8 @@ func TestFullWorkflow(t *testing.T) {
 	// Step 1: Setup test environment
 	t.Log("Step 1: Setting up test environment...")
 	client, db := SetupTestDBWithSQL(t)
-	repo := graph.NewRepositoryWithDB(client, db)
 	logger := utils.NewLogger()
+	repo := graph.NewRepositoryWithDB(client, db, logger)
 
 	// Step 2: Load emails from CSV
 	t.Log("Step 2: Loading emails from CSV...")

@@ -57,7 +57,7 @@ func TestSC003_NodeDetailsAppearUnder1Second(t *testing.T) {
 	// Create a test entity
 	entity := seedSingleEntity(t, client, "person", "john.doe@example.com", "John Doe")
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 
 	// Measure GetNodeDetails performance
 	start := time.Now()
@@ -86,7 +86,7 @@ func TestSC006_NodeExpansionUnder2Seconds(t *testing.T) {
 	// Create a node with 30 relationships
 	centerNode := seedEntityWithRelationships(t, client, "person", 30)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 
 	// Measure GetRelationships performance
 	start := time.Now()
@@ -118,7 +118,7 @@ func TestSC008_1000NodesLoadUnder500ms(t *testing.T) {
 	// Seed 1000 entities
 	seedSchemaData(t, client, 1000)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 
 	// Measure GetRandomNodes performance for 1000 nodes
 	start := time.Now()

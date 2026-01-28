@@ -13,7 +13,7 @@ import (
 func setupFilterTestService(t *testing.T) *explorer.GraphService {
 	client, db := integration.SetupTestDBWithSQL(t)
 	seedFilterTestData(t, client)
-	return explorer.NewGraphService(client, db)
+	return explorer.NewGraphService(client, db, nil)
 }
 
 func seedFilterTestData(t *testing.T, client *ent.Client) {

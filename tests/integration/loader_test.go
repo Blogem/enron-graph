@@ -21,8 +21,8 @@ func TestLoaderIntegration(t *testing.T) {
 	client := SetupTestDB(t)
 
 	// Create repository
-	repo := graph.NewRepository(client)
 	logger := utils.NewLogger()
+	repo := graph.NewRepository(client, logger)
 
 	// Load test CSV
 	testCSV := filepath.Join("..", "fixtures", "sample_emails.csv")
