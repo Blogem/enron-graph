@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"embed"
 	"log"
+	"log/slog"
+	"os"
 
 	"github.com/Blogem/enron-graph/ent"
+	"github.com/Blogem/enron-graph/pkg/llm"
 	"github.com/Blogem/enron-graph/pkg/utils"
 	_ "github.com/lib/pq"
 	"github.com/wailsapp/wails/v2"
@@ -37,8 +40,18 @@ func main() {
 	}
 	defer db.Close()
 
+	// Initialize LLM client
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	var llmClient llm.Client
+	if cfg.LLMProvider == "litellm" {
+		llmClient = llm.NewLiteLLMClient(cfg.LiteLLMURL, cfg.CompletionModel, cfg.EmbeddingModel, cfg.LiteLLMAPIKey, logger)
+	} else {
+		llmClient = llm.NewOllamaClient(cfg.OllamaURL, cfg.CompletionModel, cfg.EmbeddingModel, logger)
+	}
+	log.Printf("Initialized LLM client: %s (embedding model: %s)", cfg.LLMProvider, cfg.EmbeddingModel)
+
 	// Create an instance of the app structure
-	app := NewApp(client, db, cfg)
+	app := NewApp(client, db, cfg, llmClient)
 
 	// Create application with options
 	err = wails.Run(&options.App{

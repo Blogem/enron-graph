@@ -8,6 +8,15 @@ import (
 	"github.com/Blogem/enron-graph/internal/graph"
 )
 
+// createRelationship creates a single relationship between two entities
+func (e *Extractor) createRelationship(ctx context.Context, input *graph.RelationshipInput) (*ent.Relationship, error) {
+	rel, err := e.repo.CreateRelationship(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create relationship: %w", err)
+	}
+	return rel, nil
+}
+
 // createRelationships creates relationships between email and entities
 func (e *Extractor) createRelationships(ctx context.Context, email *ent.Email, entities []*ent.DiscoveredEntity) ([]*ent.Relationship, error) {
 	var relationships []*ent.Relationship

@@ -10,6 +10,7 @@ import (
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/internal/chat"
 	"github.com/Blogem/enron-graph/internal/explorer"
+	"github.com/Blogem/enron-graph/pkg/llm"
 	"github.com/Blogem/enron-graph/pkg/utils"
 )
 
@@ -25,18 +26,19 @@ type App struct {
 }
 
 // NewApp creates a new App application struct
-func NewApp(client *ent.Client, db *sql.DB, cfg *utils.Config) *App {
+func NewApp(client *ent.Client, db *sql.DB, cfg *utils.Config, llmClient llm.Client) *App {
 	// Create chat dependencies
-	llmClient := newProductionLLMClient(cfg)
+	// TODO: avoid creating multiple LLM clients
+	llmClientPrd := newProductionLLMClient(cfg)
 	// chatRepo needs context, will be initialized in startup
-	chatHandler := chat.NewHandler(llmClient, nil)
+	chatHandler := chat.NewHandler(llmClientPrd, nil)
 	chatContext := chat.NewContext()
 
 	return &App{
 		client:        client,
 		config:        cfg,
 		schemaService: explorer.NewSchemaService(client, db),
-		graphService:  explorer.NewGraphService(client, db),
+		graphService:  explorer.NewGraphService(client, db, llmClient),
 		chatHandler:   chatHandler,
 		chatContext:   chatContext,
 	}

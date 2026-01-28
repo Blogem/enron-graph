@@ -164,6 +164,15 @@ func (s *SchemaService) getDiscoveredTypes(ctx context.Context) ([]SchemaType, e
 		})
 	}
 
+	// Sort discovered types by count (descending - most to fewest)
+	for i := 0; i < len(types); i++ {
+		for j := i + 1; j < len(types); j++ {
+			if types[j].Count > types[i].Count {
+				types[i], types[j] = types[j], types[i]
+			}
+		}
+	}
+
 	return types, nil
 }
 

@@ -38,6 +38,7 @@ func (e *Extractor) ExtractFromEmail(ctx context.Context, email *ent.Email) (*Ex
 		e.logger.Warn("Failed to extract from headers", "error", err)
 	} else {
 		summary.EntitiesCreated += len(headerEntities)
+		e.logger.Debug("Header extraction complete", "entities", len(headerEntities))
 	}
 
 	// Step 2: Use LLM to extract entities from email content
@@ -49,6 +50,7 @@ func (e *Extractor) ExtractFromEmail(ctx context.Context, email *ent.Email) (*Ex
 		// Continue with header entities even if LLM fails
 	} else {
 		summary.EntitiesCreated += len(llmEntities)
+		e.logger.Debug("Content extraction complete", "entities", len(llmEntities))
 	}
 
 	// Step 3: Create relationships between entities and email
@@ -106,9 +108,16 @@ func (e *Extractor) extractFromContent(ctx context.Context, email *ent.Email) ([
 		discoveredTypes = []string{}
 	}
 
+	// Get previously discovered relationship types to enrich the prompt
+	discoveredRelationships, err := e.repo.GetDistinctRelationshipTypes(ctx)
+	if err != nil {
+		e.logger.Warn("Failed to get discovered relationships, proceeding without them", "error", err)
+		discoveredRelationships = []string{}
+	}
+
 	// Generate extraction prompt with discovered types
 	toStr := strings.Join(email.To, ", ")
-	prompt := EntityExtractionPrompt(email.From, toStr, email.Subject, email.Body, discoveredTypes)
+	prompt := EntityExtractionPrompt(email.From, toStr, email.Subject, email.Body, discoveredTypes, discoveredRelationships)
 
 	// Call LLM
 	response, err := e.llmClient.GenerateCompletion(ctx, prompt)
@@ -117,7 +126,7 @@ func (e *Extractor) extractFromContent(ctx context.Context, email *ent.Email) ([
 	}
 
 	// Parse JSON response
-	jsonStr := CleanJSONResponse(response)
+	jsonStr := CleanJSONResponse("{" + response)
 	var result ExtractionResult
 
 	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
@@ -135,19 +144,8 @@ func (e *Extractor) extractFromContent(ctx context.Context, email *ent.Email) ([
 			continue
 		}
 
-		// Generate unique ID based on type and name
-		var uniqueID string
-
 		// Special handling for persons with email
-		if entity.Type == "person" {
-			if email, ok := entity.Properties["email"].(string); ok && email != "" {
-				uniqueID = email
-			} else {
-				uniqueID = fmt.Sprintf("person:%s", strings.ToLower(strings.TrimSpace(entity.Name)))
-			}
-		} else {
-			uniqueID = fmt.Sprintf("%s:%s", entity.Type, strings.ToLower(strings.TrimSpace(entity.Name)))
-		}
+		uniqueID := generateUniqueID(entity.Type, entity.ID, entity.Properties)
 
 		created, err := e.createOrUpdateEntity(ctx, uniqueID, entity.Type, entity.Name, entity.Properties, entity.Confidence)
 		if err != nil {
@@ -160,7 +158,69 @@ func (e *Extractor) extractFromContent(ctx context.Context, email *ent.Email) ([
 		entities = append(entities, created)
 	}
 
+	for _, rel := range result.Relationships {
+		// find entity based on source and target IDs and create relationships in the graph
+		var source, target *ent.DiscoveredEntity
+
+		sourceUniqueID := generateUniqueID("", rel.SourceID, nil)
+		targetUniqueID := generateUniqueID("", rel.TargetID, nil)
+
+		for _, entity := range entities {
+			if entity.UniqueID == generateUniqueID(entity.TypeCategory, rel.SourceID, entity.Properties) {
+				source = entity
+			}
+			if entity.UniqueID == generateUniqueID(entity.TypeCategory, rel.TargetID, entity.Properties) {
+				target = entity
+			}
+		}
+
+		if source != nil && target != nil {
+			_, err := e.createRelationship(ctx, &graph.RelationshipInput{
+				Type:            rel.Predicate,
+				FromType:        source.TypeCategory,
+				FromID:          source.ID,
+				ToType:          target.TypeCategory,
+				ToID:            target.ID,
+				Timestamp:       email.Date,
+				ConfidenceScore: source.ConfidenceScore * target.ConfidenceScore,
+				Properties: map[string]interface{}{
+					"context": rel.Context,
+				},
+			})
+			if err != nil {
+				e.logger.Debug("Failed to create extracted relationship",
+					"source_id", rel.SourceID,
+					"target_id", rel.TargetID,
+					"predicate", rel.Predicate,
+					"error", err)
+			}
+		} else {
+			// Log when entities aren't matched for relationships
+			e.logger.Debug("Relationship entities not matched",
+				"predicate", rel.Predicate,
+				"source_id", rel.SourceID,
+				"target_id", rel.TargetID,
+				"source_matched", source != nil,
+				"target_matched", target != nil,
+				"looking_for_source", sourceUniqueID,
+				"looking_for_target", targetUniqueID,
+				"available_entities", len(entities))
+		}
+	}
+
 	return entities, nil
+}
+
+// generateUniqueID generates a unique ID for an entity based on its type and properties
+func generateUniqueID(typeCategory, ID string, entityProperties map[string]interface{}) string {
+	if typeCategory == "person" {
+		if email, ok := entityProperties["email"].(string); ok && email != "" {
+			return email
+		}
+		return fmt.Sprintf("person:%s", strings.ToLower(strings.TrimSpace(ID)))
+	}
+
+	return fmt.Sprintf("%s:%s", typeCategory, strings.ToLower(strings.TrimSpace(ID)))
 }
 
 // createPersonEntity creates a person entity with email as unique ID
@@ -168,6 +228,7 @@ func (e *Extractor) createPersonEntity(ctx context.Context, email, name string, 
 	// Check if entity already exists
 	existing, err := e.repo.FindEntityByUniqueID(ctx, email)
 	if err == nil && existing != nil {
+		e.logger.Debug("Found existing person entity", "email", email, "id", existing.ID)
 		return existing, nil
 	}
 
@@ -181,6 +242,7 @@ func (e *Extractor) createPersonEntity(ctx context.Context, email, name string, 
 	embedding, err := e.llmClient.GenerateEmbedding(ctx, name)
 	if err != nil {
 		e.logger.Warn("Failed to generate embedding", "name", name, "error", err)
+		// TODO: length needs to match model embedding size
 		embedding = make([]float32, 1024) // Empty embedding as fallback
 	}
 
@@ -190,7 +252,8 @@ func (e *Extractor) createPersonEntity(ctx context.Context, email, name string, 
 		TypeCategory: "person",
 		Name:         name,
 		Properties: map[string]interface{}{
-			"email": email,
+			"email":  email,
+			"source": "header",
 		},
 		Embedding:       embedding,
 		ConfidenceScore: confidence,
@@ -220,10 +283,21 @@ func (e *Extractor) createOrUpdateEntity(ctx context.Context, uniqueID, typeCate
 	embedding, err := e.llmClient.GenerateEmbedding(ctx, name)
 	if err != nil {
 		e.logger.Warn("Failed to generate embedding", "name", name, "error", err)
+		// TODO: length needs to match model embedding size
 		embedding = make([]float32, 1024) // Empty embedding as fallback
 	}
 
 	// Create new entity
+	if properties == nil {
+		properties = make(map[string]interface{})
+	}
+	properties["source"] = "content"
+
+	// TODO: we should check if the entity is created for a promoted type and then create it for that promoted type instead
+	// A promoted type is when there is generated ent code.
+	// We should have a mapping of promoted types to implementations of a Create interface for types.
+	// Then based on the type choose the right implementation to create the entity. Else fall back to discovered entity.
+	// The mapping can be generated with an ent template.
 	entity, err := e.repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
 		UniqueID:        uniqueID,
 		TypeCategory:    typeCategory,

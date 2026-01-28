@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/ent/discoveredentity"
@@ -18,22 +19,25 @@ import (
 type entRepository struct {
 	client *ent.Client
 	db     *sql.DB
+	logger *slog.Logger
 }
 
 // NewRepository creates a new ent-based repository
-func NewRepository(client *ent.Client) Repository {
+func NewRepository(client *ent.Client, logger *slog.Logger) Repository {
 	return &entRepository{
 		client: client,
 		db:     nil, // No SQL DB for raw queries
+		logger: logger,
 	}
 }
 
 // NewRepositoryWithDB creates a new ent-based repository with a direct SQL connection
 // The SQL connection is needed for raw pgvector queries
-func NewRepositoryWithDB(client *ent.Client, db *sql.DB) Repository {
+func NewRepositoryWithDB(client *ent.Client, db *sql.DB, logger *slog.Logger) Repository {
 	return &entRepository{
 		client: client,
 		db:     db,
+		logger: logger,
 	}
 }
 
@@ -95,13 +99,48 @@ func (r *entRepository) FindEntitiesByType(ctx context.Context, typeCategory str
 
 // GetDistinctEntityTypes returns all unique entity type categories
 func (r *entRepository) GetDistinctEntityTypes(ctx context.Context) ([]string, error) {
-	rows, err := r.client.DiscoveredEntity.Query().
+	discoveredTypes, err := r.client.DiscoveredEntity.Query().
 		GroupBy(discoveredentity.FieldTypeCategory).
 		Strings(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get distinct types: %w", err)
 	}
-	return rows, nil
+
+	// If no SQL DB available, return only discovered types
+	if r.db == nil {
+		r.logger.Info("No SQL DB connection, returning only discovered entity types")
+		return discoveredTypes, nil
+	}
+
+	query := `
+		SELECT table_name
+		FROM information_schema.tables
+		WHERE table_schema = 'public'
+		AND table_type = 'BASE TABLE'
+		AND table_name NOT IN ('relationships', 'discovered_entities', 'schema_promotions')
+		ORDER BY table_name
+	`
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query table names: %w", err)
+	}
+	defer rows.Close()
+
+	var promotedTypes []string
+	for rows.Next() {
+		var tableName string
+		if err := rows.Scan(&tableName); err != nil {
+			return nil, fmt.Errorf("failed to scan table name: %w", err)
+		}
+		promotedTypes = append(promotedTypes, tableName)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating table names: %w", err)
+	}
+
+	return append(discoveredTypes, promotedTypes...), nil
 }
 
 // CreateRelationship creates a new relationship
@@ -145,6 +184,17 @@ func (r *entRepository) FindRelationshipsByEntity(ctx context.Context, entityTyp
 			),
 		).
 		All(ctx)
+}
+
+// GetDistinctRelationshipTypes returns all unique relationship types
+func (r *entRepository) GetDistinctRelationshipTypes(ctx context.Context) ([]string, error) {
+	relationshipTypes, err := r.client.Relationship.Query().
+		GroupBy(relationship.FieldType).
+		Strings(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get distinct relationship types: %w", err)
+	}
+	return relationshipTypes, nil
 }
 
 // TraverseRelationships traverses relationships from an entity with BFS up to specified depth
