@@ -783,6 +783,10 @@ func (m *mockRepoWrapper) GetDistinctEntityTypes(ctx context.Context) ([]string,
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (m *mockRepoWrapper) GetDistinctRelationshipTypes(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (m *mockRepoWrapper) CreateRelationship(ctx context.Context, rel *graph.RelationshipInput) (*ent.Relationship, error) {
 	return nil, fmt.Errorf("not implemented")
 }

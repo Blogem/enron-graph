@@ -14,7 +14,7 @@ func TestGraphService_GetRandomNodes_ReturnsLimitedNodes(t *testing.T) {
 	defer client.Close()
 	SeedGraphTestData(t, client)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// When: GetRandomNodes(100)
@@ -45,7 +45,7 @@ func TestGraphService_GetRandomNodes_ValidatesNodeFields(t *testing.T) {
 	defer client.Close()
 	SeedGraphTestData(t, client)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	resp, err := service.GetRandomNodes(ctx, 100)
@@ -76,7 +76,7 @@ func TestGraphService_GetRandomNodes_EdgesReferenceReturnedNodes(t *testing.T) {
 	defer client.Close()
 	SeedGraphTestData(t, client)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	resp, err := service.GetRandomNodes(ctx, 100)
@@ -112,7 +112,7 @@ func TestGraphService_GetRelationships_PaginatesCorrectly(t *testing.T) {
 	// Create a node with exactly 120 relationships
 	nodeID := SeedNodeWithManyRelationships(t, client, 120)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// First batch: offset=0, limit=50
@@ -162,7 +162,7 @@ func TestGraphService_GetRelationships_HandlesFinalBatch(t *testing.T) {
 	// Create a node with exactly 120 relationships
 	nodeID := SeedNodeWithManyRelationships(t, client, 120)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// Final batch: offset=100, limit=50
@@ -212,7 +212,7 @@ func TestGraphService_GetNodeDetails_ReturnsCompleteInfo(t *testing.T) {
 	defer client.Close()
 	SeedGraphTestData(t, client)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// Get first entity to use as test subject
@@ -257,7 +257,7 @@ func TestGraphService_GetNodeDetails_ErrorsOnMissingNode(t *testing.T) {
 	client, db := NewTestClientWithDB(t)
 	defer client.Close()
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// When: GetNodeDetails with non-existent ID
@@ -279,7 +279,7 @@ func TestGraphService_GetNodes_FiltersByType(t *testing.T) {
 	defer client.Close()
 	SeedMixedTypeGraphData(t, client)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// When: Filter by types=["person"]
@@ -311,7 +311,7 @@ func TestGraphService_GetNodes_FiltersByCategory(t *testing.T) {
 	defer client.Close()
 	SeedMixedTypeGraphData(t, client)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// When: Filter by category="discovered"
@@ -343,7 +343,7 @@ func TestGraphService_GetNodes_SearchesByPropertyValue(t *testing.T) {
 	defer client.Close()
 	SeedMixedTypeGraphData(t, client)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// When: Search for "skilling@enron.com"
@@ -387,7 +387,7 @@ func TestGraphService_GetNodes_CombinesMultipleFilters(t *testing.T) {
 	defer client.Close()
 	SeedMixedTypeGraphData(t, client)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 	ctx := context.Background()
 
 	// When: Filter by type="person" AND search="enron.com"
@@ -476,7 +476,7 @@ func TestGraphService_GetNodes_IncludesGhostNodesForCrossFilterEdges(t *testing.
 		SetConfidenceScore(1.0).
 		Save(ctx)
 
-	service := explorer.NewGraphService(client, db)
+	service := explorer.NewGraphService(client, db, nil)
 
 	// Filter by type="person" only
 	filter := explorer.NodeFilter{

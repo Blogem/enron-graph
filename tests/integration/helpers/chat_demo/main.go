@@ -113,9 +113,9 @@ func main() {
 	}
 	defer client.Close()
 
-	repo := graph.NewRepository(client)
-	chatRepo := newChatRepo(repo)
 	logger := utils.NewLogger()
+	repo := graph.NewRepository(client, logger)
+	chatRepo := newChatRepo(repo)
 	llmClient := llm.NewOllamaClient(cfg.OllamaURL, "llama3.1:8b", "mxbai-embed-large", logger)
 
 	handler := chat.NewHandler(llmClient, chatRepo)

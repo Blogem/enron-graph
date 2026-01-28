@@ -56,7 +56,6 @@ logs/
 # Generated files
 ent/generated/
 cmd/explorer/frontend/dist/assets
-cmd/explorer/frontend/dist/index.html
 cmd/explorer/frontend/node_modules/
 cmd/explorer/frontend/wailsjs/
 

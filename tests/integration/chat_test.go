@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -19,7 +21,8 @@ func TestChatIntegration_EntityLookup(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Pre-populate test database with entities
 	jeffSkilling, err := repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{

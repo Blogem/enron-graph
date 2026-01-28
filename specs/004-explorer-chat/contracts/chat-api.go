@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 // Chat API Go Contracts
 // Location: specs/004-explorer-chat/contracts/chat-api.go
 // Purpose: Define Go method signatures for chat interface
@@ -14,6 +17,10 @@ import (
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/internal/chat"
 )
+
+// Stub types for IDE type checking - not used in actual build
+type App struct{}
+type Context struct{}
 
 // App struct methods for chat functionality
 // These methods will be added to cmd/explorer/app.go

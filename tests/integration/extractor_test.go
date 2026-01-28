@@ -30,7 +30,8 @@ func TestExtractorIntegration(t *testing.T) {
 	ctx := context.Background()
 
 	// Create repository
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Create sample emails for testing
 	date1, _ := time.Parse(time.RFC3339, "2001-01-15T10:00:00Z")
@@ -54,9 +55,6 @@ func TestExtractorIntegration(t *testing.T) {
 		Date:      date2,
 	})
 	require.NoError(t, err, "Failed to create test email 2")
-
-	// Initialize logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
 
 	// Initialize LLM client (using Ollama)
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)
@@ -193,7 +191,8 @@ func TestExtractorBatchProcessing(t *testing.T) {
 	ctx := context.Background()
 
 	// Create repository
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Create multiple emails for batch processing
 	emailIDs := make([]*ent.Email, 0, 10)
@@ -210,9 +209,6 @@ func TestExtractorBatchProcessing(t *testing.T) {
 		require.NoError(t, err, "Failed to create test email")
 		emailIDs = append(emailIDs, email)
 	}
-
-	// Initialize logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
 
 	// Initialize LLM client
 	llmClient := llm.NewOllamaClient("http://localhost:11434", "llama3.1:8b", "mxbai-embed-large", logger)

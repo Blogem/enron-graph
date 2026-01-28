@@ -90,6 +90,10 @@ func (m *MockRepository) FindRelationshipsByEntity(ctx context.Context, entityTy
 	return m.relationships, nil
 }
 
+func (m *MockRepository) GetDistinctRelationshipTypes(ctx context.Context) ([]string, error) {
+	return []string{}, nil
+}
+
 func (m *MockRepository) TraverseRelationships(ctx context.Context, fromID int, relType string, depth int) ([]*ent.DiscoveredEntity, error) {
 	return nil, nil
 }

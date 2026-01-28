@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -22,7 +24,8 @@ func TestUS5_T130_ChatProcessesNaturalLanguageQueries(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Pre-populate test database
 	testEntities := createTestEntities(t, ctx, repo)
@@ -79,7 +82,8 @@ func TestUS5_T131_EntityLookupQueries(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Pre-populate test database
 	testEntities := createTestEntities(t, ctx, repo)
@@ -140,7 +144,8 @@ func TestUS5_T132_RelationshipQueries(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Pre-populate test database with relationships
 	testEntities := createTestEntities(t, ctx, repo)
@@ -176,7 +181,8 @@ func TestUS5_T133_PathFindingQueries(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Pre-populate test database with relationships
 	testEntities := createTestEntities(t, ctx, repo)
@@ -231,7 +237,8 @@ func TestUS5_T134_ConceptSearch(t *testing.T) {
 
 	ctx := context.Background()
 	client, db := SetupTestDBWithSQL(t)
-	repo := graph.NewRepositoryWithDB(client, db)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepositoryWithDB(client, db, logger)
 
 	// Pre-populate test database
 	testEntities := createTestEntities(t, ctx, repo)
@@ -277,7 +284,8 @@ func TestUS5_T135_ConversationContextMaintenance(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Pre-populate test database
 	testEntities := createTestEntities(t, ctx, repo)
@@ -326,7 +334,8 @@ func TestUS5_T136_AmbiguityHandling(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Create entities with potential ambiguity
 	_, err := repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
@@ -373,7 +382,8 @@ func TestUS5_T137_GraphVisualizationIntegration(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Pre-populate test database
 	testEntities := createTestEntities(t, ctx, repo)
@@ -407,7 +417,8 @@ func TestUS5_T138_SC012_QueryAccuracy(t *testing.T) {
 
 	ctx := context.Background()
 	client, db := SetupTestDBWithSQL(t)
-	repo := graph.NewRepositoryWithDB(client, db)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepositoryWithDB(client, db, logger)
 
 	// Pre-populate test database
 	testEntities := createTestEntities(t, ctx, repo)
@@ -532,7 +543,8 @@ func TestUS5_T139_SC013_ContextMaintenance(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Pre-populate test database
 	testEntities := createTestEntities(t, ctx, repo)

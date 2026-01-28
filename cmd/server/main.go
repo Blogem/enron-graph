@@ -81,7 +81,7 @@ func main() {
 	defer sqlDB.Close()
 
 	// Create repository with both ent client and SQL connection
-	repo := graph.NewRepositoryWithDB(entClient, sqlDB)
+	repo := graph.NewRepositoryWithDB(entClient, sqlDB, logger)
 
 	logger.Info("Connected to database")
 

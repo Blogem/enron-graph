@@ -14,6 +14,7 @@ func TestEntityExtractionPrompt(t *testing.T) {
 		"Q4 Strategy",
 		"We need to discuss energy trading.",
 		[]string{},
+		[]string{},
 	)
 
 	if !strings.Contains(prompt, "jeff.skilling@enron.com") {
@@ -22,11 +23,11 @@ func TestEntityExtractionPrompt(t *testing.T) {
 	if !strings.Contains(prompt, "Q4 Strategy") {
 		t.Error("Prompt should contain subject")
 	}
-	if !strings.Contains(prompt, "JSON only") {
+	if !strings.Contains(prompt, "JSON") {
 		t.Error("Prompt should request JSON output")
 	}
-	if !strings.Contains(prompt, "FULL FLEXIBILITY") {
-		t.Error("Prompt should mention flexibility in types")
+	if !strings.Contains(prompt, "Knowledge Graph Extraction") {
+		t.Error("Prompt should mention knowledge graph extraction")
 	}
 }
 
@@ -40,27 +41,19 @@ func TestEntityExtractionPromptWithDiscoveredTypes(t *testing.T) {
 		"Q4 Strategy",
 		"We need to discuss energy trading.",
 		discoveredTypes,
+		[]string{},
 	)
 
-	if !strings.Contains(prompt, "Previously discovered entity types") {
-		t.Error("Prompt should include discovered types section")
+	if !strings.Contains(prompt, "Types:") {
+		t.Error("Prompt should include types section")
 	}
 
-	// Check that custom types appear in the discovered types section
+	// Check that custom types appear in the types list
 	if !strings.Contains(prompt, "project") {
 		t.Error("Prompt should include custom discovered types like 'project'")
 	}
 	if !strings.Contains(prompt, "financial_instrument") {
 		t.Error("Prompt should include custom discovered types like 'financial_instrument'")
-	}
-
-	// The discovered types section should not list common types (person, organization, concept)
-	// but they will still appear in the guidelines section
-	discoveredSection := extractDiscoveredTypesSection(prompt)
-	if discoveredSection != "" {
-		if strings.Contains(discoveredSection, "person") && !strings.Contains(discoveredSection, "financial") {
-			t.Error("Discovered types section should filter out 'person' from the list")
-		}
 	}
 }
 

@@ -34,7 +34,7 @@ func main() {
 	defer client.Close()
 
 	// Initialize repository
-	repo := graph.NewRepository(client)
+	repo := graph.NewRepository(client, logger)
 
 	// Initialize LLM client based on provider (optional - chat will still work without it)
 	var llmClient llm.Client

@@ -25,8 +25,8 @@ func TestConcurrentWrites(t *testing.T) {
 	client, db := SetupTestDBWithSQL(t)
 
 	// Create repository and logger
-	repo := graph.NewRepository(client)
 	logger := utils.NewLogger()
+	repo := graph.NewRepository(client, logger)
 
 	// Track concurrent operations
 	var wg sync.WaitGroup

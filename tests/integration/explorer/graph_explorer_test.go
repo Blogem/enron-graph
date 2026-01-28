@@ -13,19 +13,19 @@ import (
 func setupGraphTestService(t *testing.T) *explorer.GraphService {
 	client, db := integration.SetupTestDBWithSQL(t)
 	seedGraphTestData(t, client)
-	return explorer.NewGraphService(client, db)
+	return explorer.NewGraphService(client, db, nil)
 }
 
 func setupGraphTestServiceWithManyNodes(t *testing.T, nodeCount int) *explorer.GraphService {
 	client, db := integration.SetupTestDBWithSQL(t)
 	seedManyNodes(t, client, nodeCount)
-	return explorer.NewGraphService(client, db)
+	return explorer.NewGraphService(client, db, nil)
 }
 
 func setupGraphTestServiceWithHighDegreeNode(t *testing.T, relationshipCount int) (*explorer.GraphService, string) {
 	client, db := integration.SetupTestDBWithSQL(t)
 	nodeID := seedHighDegreeNode(t, client, relationshipCount)
-	return explorer.NewGraphService(client, db), nodeID
+	return explorer.NewGraphService(client, db, nil), nodeID
 }
 
 func seedGraphTestData(t *testing.T, client *ent.Client) {

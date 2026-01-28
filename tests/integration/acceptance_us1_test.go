@@ -3,6 +3,8 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -40,8 +42,8 @@ func TestAcceptance_T048_CSVParsingMetadata(t *testing.T) {
 	// Test a specific record
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
 	logger := utils.NewLogger()
+	repo := graph.NewRepository(client, logger)
 
 	processor := loader.NewProcessor(repo, logger, 5)
 	err = processor.ProcessBatch(ctx, records, errors)
@@ -72,7 +74,8 @@ func TestAcceptance_T049_ExtractorIdentifiesEntities(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Create a sample email
 	date, _ := time.Parse(time.RFC3339, "2001-01-15T10:00:00Z")
@@ -114,7 +117,8 @@ func TestAcceptance_T050_EntitiesStoredAndQueried(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Create test entities directly
 	entity1, err := repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
@@ -183,7 +187,8 @@ func TestAcceptance_T051_DeduplicationWorks(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Create the same entity twice (should be deduplicated by unique_id)
 	entity1, err := repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
@@ -275,7 +280,8 @@ func TestAcceptance_T054_LooseEntityTypesDiscovered(t *testing.T) {
 
 	ctx := context.Background()
 	client := SetupTestDB(t)
-	repo := graph.NewRepository(client)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn}))
+	repo := graph.NewRepository(client, logger)
 
 	// Create diverse entity types
 	entityTypes := []string{"person", "organization", "concept", "event", "location"}
