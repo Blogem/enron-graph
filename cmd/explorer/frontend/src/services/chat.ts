@@ -82,7 +82,9 @@ export const chatService = {
                 timeoutId = null;
             }
 
-            const originalError = error instanceof Error ? error.message : 'Unknown error';
+            const originalError = error instanceof Error
+                ? error.message
+                : (typeof error === 'string' ? error : String(error));
             const isTimeout = originalError === 'timeout';
             const canRetry = isTimeout || isRetryableError(originalError);
             const userMessage = isTimeout
@@ -105,7 +107,9 @@ export const chatService = {
         try {
             await ClearChatContext();
         } catch (error) {
-            const originalError = error instanceof Error ? error.message : 'Unknown error';
+            const originalError = error instanceof Error
+                ? error.message
+                : (typeof error === 'string' ? error : String(error));
             const userMessage = `Failed to clear conversation: ${originalError}`;
 
             throw new ChatServiceError(

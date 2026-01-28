@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/Blogem/enron-graph/internal/extractor"
 )
 
 // chatHandler implements the Handler interface for processing chat queries
@@ -54,11 +56,14 @@ func (h *chatHandler) ProcessQuery(ctx context.Context, query string, chatContex
 		return "", fmt.Errorf("LLM error: %w", err)
 	}
 
+	// Clean JSON response (remove markdown code fences if present)
+	cleanedOutput := extractor.CleanJSONResponse(llmOutput)
+
 	// Try to parse as JSON for structured query
 	var llmResp llmResponse
-	if err := json.Unmarshal([]byte(llmOutput), &llmResp); err != nil {
+	if err := json.Unmarshal([]byte(cleanedOutput), &llmResp); err != nil {
 		// If not valid JSON, treat as direct text response
-		response := llmOutput
+		response := "Unable to parse output as JSON: \n " + llmOutput
 		chatContext.AddQuery(query, response)
 		return response, nil
 	}
@@ -81,6 +86,7 @@ func (h *chatHandler) ProcessQuery(ctx context.Context, query string, chatContex
 	return response, nil
 }
 
+// TODO: replace with tools. Also make the rel_type dynamic based on actual relationships in the graph.
 // buildSystemPrompt creates the system prompt with schema information
 func (h *chatHandler) buildSystemPrompt() string {
 	return `You are a graph database assistant. You help users query a knowledge graph of emails and entities.
