@@ -6,23 +6,25 @@ import (
 )
 
 var Logger *slog.Logger
+var currentLogLevel = slog.LevelInfo
 
 func init() {
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: currentLogLevel,
 	})
 	Logger = slog.New(handler)
 }
 
-// NewLogger creates a new logger instance
+// NewLogger creates a new logger instance using the current log level
 func NewLogger() *slog.Logger {
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: currentLogLevel,
 	})
 	return slog.New(handler)
 }
 
 func SetLogLevel(level slog.Level) {
+	currentLogLevel = level
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: level,
 	})

@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -64,8 +66,16 @@ func main() {
 	}
 	defer client.Close()
 
+	// Also open a direct SQL connection for raw queries
+	sqlDB, err := sql.Open("postgres", connStr)
+	if err != nil {
+		logger.Error("Failed to open SQL database connection", slog.Any("error", err))
+		os.Exit(1)
+	}
+	defer sqlDB.Close()
+
 	// Create repository
-	repo := graph.NewRepository(client)
+	repo := graph.NewRepositoryWithDB(client, sqlDB, logger)
 
 	// Parse CSV
 	logger.Info("Parsing CSV file", "path", *csvPath)

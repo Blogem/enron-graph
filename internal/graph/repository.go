@@ -23,6 +23,7 @@ type Repository interface {
 	// Relationship operations
 	CreateRelationship(ctx context.Context, rel *RelationshipInput) (*ent.Relationship, error)
 	FindRelationshipsByEntity(ctx context.Context, entityType string, entityID int) ([]*ent.Relationship, error)
+	GetDistinctRelationshipTypes(ctx context.Context) ([]string, error)
 
 	// Graph traversal
 	TraverseRelationships(ctx context.Context, fromID int, relType string, depth int) ([]*ent.DiscoveredEntity, error)
