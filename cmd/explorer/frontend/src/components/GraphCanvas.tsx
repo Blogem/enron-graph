@@ -12,7 +12,7 @@ interface GraphCanvasProps {
     onNodeClick: (node: GraphNodeWithPosition) => void;
     onNodeRightClick: (node: GraphNodeWithPosition) => void;
     onLoadMore?: (nodeId: string) => void;
-    onRecenterRef?: (recenter: () => void) => void;
+    onRecenterRef?: (recenter: () => void) => void; onCenterNodeRef?: (centerNode: (nodeId: string) => void) => void;
 }
 
 const GraphCanvas: React.FC<GraphCanvasProps> = ({
@@ -23,7 +23,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
     onNodeClick,
     onNodeRightClick,
     onLoadMore,
-    onRecenterRef
+    onRecenterRef,
+    onCenterNodeRef
 }) => {
     const graphRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -138,12 +139,30 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
         }
     }, []);
 
+    // Center on a specific node by ID
+    const handleCenterNode = useCallback((nodeId: string) => {
+        if (graphRef.current) {
+            const node = data.nodes.find(n => n.id === nodeId);
+            if (node && node.x !== undefined && node.y !== undefined) {
+                graphRef.current.centerAt(node.x, node.y, 400);
+                graphRef.current.zoom(3, 400);
+            }
+        }
+    }, [data.nodes]);
+
     // Expose recenter function to parent component via callback ref (T109)
     useEffect(() => {
         if (onRecenterRef) {
             onRecenterRef(handleRecenter);
         }
     }, [onRecenterRef, handleRecenter]);
+
+    // Expose centerNode function to parent component via callback ref
+    useEffect(() => {
+        if (onCenterNodeRef) {
+            onCenterNodeRef(handleCenterNode);
+        }
+    }, [onCenterNodeRef, handleCenterNode]);
 
     // Auto-zoom to highlighted search results
     useEffect(() => {

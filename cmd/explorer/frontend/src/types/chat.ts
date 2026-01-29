@@ -4,6 +4,34 @@
  */
 
 /**
+ * Represents a clickable entity reference in chat responses
+ */
+export interface EntityReference {
+    /** Entity ID in the database */
+    id: number;
+
+    /** Entity name */
+    name: string;
+
+    /** Entity type/category */
+    type: string;
+
+    /** Unique identifier for the entity (used as node ID in graph) */
+    unique_id: string;
+}
+
+/**
+ * Represents a chat response with entity metadata
+ */
+export interface FormattedResponse {
+    /** The formatted text response */
+    text: string;
+
+    /** Array of entity references mentioned in the response */
+    entities: EntityReference[];
+}
+
+/**
  * Represents a single message in the chat conversation
  */
 export interface ChatMessage {
@@ -18,6 +46,9 @@ export interface ChatMessage {
 
     /** When the message was created */
     timestamp: Date;
+
+    /** Entity references in the message (for system messages) */
+    entities?: EntityReference[];
 }
 
 /**
@@ -49,6 +80,9 @@ export interface ChatPanelProps {
 
     /** Callback when panel collapse state changes */
     onCollapseChange?: (collapsed: boolean) => void;
+
+    /** Callback when an entity reference is clicked */
+    onEntityClick?: (uniqueId: string) => void;
 }
 
 /**
@@ -57,6 +91,9 @@ export interface ChatPanelProps {
 export interface ChatMessageProps {
     /** The message to display */
     message: ChatMessage;
+
+    /** Callback when an entity reference is clicked */
+    onEntityClick?: (uniqueId: string) => void;
 }
 
 /**
@@ -77,6 +114,9 @@ export interface ChatInputProps {
 
     /** Callback when input value changes (optional) */
     onChange?: (value: string) => void;
+
+    /** Callback for history navigation with arrow keys */
+    onHistoryNavigate?: (direction: 'up' | 'down') => void;
 }
 
 /**

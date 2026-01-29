@@ -44,7 +44,7 @@ export const wailsAPI = {
             types: filter.types || [],
             category: filter.category || '',
             search_query: filter.search_query || '',
-            limit: filter.limit || 100
+            limit: filter.limit || 1000
         };
         return await GetNodes(goFilter);
     },

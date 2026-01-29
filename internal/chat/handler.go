@@ -101,7 +101,13 @@ Available actions:
 Entity types: person, organization, concept
 Relationship types: SENT, RECEIVED, MENTIONS, COMMUNICATES_WITH
 
-When the query is a simple question that can be answered directly, respond with JSON: {"action": "answer", "answer": "your response"}
+IMPORTANT QUERY PATTERNS:
+- "what is X?" or "who is X?" -> entity_lookup for X
+- "what is the relationship between X and Y?" or "how are X and Y connected?" -> path_finding with source=X and target=Y
+- "what did X send?" or "who did X communicate with?" -> relationship traversal for X
+- Questions asking about connections between TWO entities should ALWAYS use path_finding
+
+When the query is a simple question that can be answered directly without database lookup, respond with JSON: {"action": "answer", "answer": "your response"}
 
 Always respond with valid JSON.`
 }
@@ -142,7 +148,23 @@ func (h *chatHandler) executeEntityLookup(entityName string, chatContext Context
 	// Track the entity for pronoun resolution
 	chatContext.TrackEntity(entity.Name, entity.Type, entity.ID)
 
-	return h.formatter.FormatEntities([]*Entity{entity}), nil
+	response := h.formatter.FormatEntities([]*Entity{entity})
+
+	fmt.Printf("[executeEntityLookup] FormattedResponse before JSON marshal:\n")
+	fmt.Printf("  Text: %q\n", response.Text[:50])
+	fmt.Printf("  Entities count: %d\n", len(response.Entities))
+	for i, e := range response.Entities {
+		fmt.Printf("  Entity[%d]: ID=%d, Name=%q, Type=%q, UniqueID=%q\n", i, e.ID, e.Name, e.Type, e.UniqueID)
+	}
+
+	jsonBytes, err := json.Marshal(response)
+	if err != nil {
+		return "", fmt.Errorf("failed to serialize response: %w", err)
+	}
+
+	fmt.Printf("[executeEntityLookup] JSON output: %s\n", string(jsonBytes))
+
+	return string(jsonBytes), nil
 }
 
 // executeRelationship finds relationships for an entity
@@ -167,7 +189,22 @@ func (h *chatHandler) executeRelationship(entityName, relType string, chatContex
 		chatContext.TrackEntity(related.Name, related.Type, related.ID)
 	}
 
-	return h.formatter.FormatEntities(relatedEntities), nil
+	response := h.formatter.FormatEntities(relatedEntities)
+
+	fmt.Printf("[executeRelationship] FormattedResponse before JSON marshal:\n")
+	fmt.Printf("  Entities count: %d\n", len(response.Entities))
+	for i, e := range response.Entities {
+		fmt.Printf("  Entity[%d]: ID=%d, Name=%q, Type=%q, UniqueID=%q\n", i, e.ID, e.Name, e.Type, e.UniqueID)
+	}
+
+	jsonBytes, err := json.Marshal(response)
+	if err != nil {
+		return "", fmt.Errorf("failed to serialize response: %w", err)
+	}
+
+	fmt.Printf("[executeRelationship] JSON output: %s\n", string(jsonBytes))
+
+	return string(jsonBytes), nil
 }
 
 // executePathFinding finds the shortest path between two entities
@@ -194,7 +231,12 @@ func (h *chatHandler) executePathFinding(sourceName, targetName string, chatCont
 		return "", fmt.Errorf("path finding failed: %w", err)
 	}
 
-	return h.formatter.FormatPath(path), nil
+	response := h.formatter.FormatPath(path)
+	jsonBytes, err := json.Marshal(response)
+	if err != nil {
+		return "", fmt.Errorf("failed to serialize response: %w", err)
+	}
+	return string(jsonBytes), nil
 }
 
 // executeSemanticSearch performs semantic search for entities
@@ -211,7 +253,12 @@ func (h *chatHandler) executeSemanticSearch(ctx context.Context, searchText stri
 		return "", fmt.Errorf("similarity search failed: %w", err)
 	}
 
-	return h.formatter.FormatEntities(entities), nil
+	response := h.formatter.FormatEntities(entities)
+	jsonBytes, err := json.Marshal(response)
+	if err != nil {
+		return "", fmt.Errorf("failed to serialize response: %w", err)
+	}
+	return string(jsonBytes), nil
 }
 
 // executeAggregation counts relationships for an entity
@@ -232,7 +279,12 @@ func (h *chatHandler) executeAggregation(entityName, relType string, chatContext
 	}
 
 	description := fmt.Sprintf("%s %s relationships for %s", relType, entity.Type, entity.Name)
-	return h.formatter.FormatCount(count, description), nil
+	response := h.formatter.FormatCount(count, description)
+	jsonBytes, err := json.Marshal(response)
+	if err != nil {
+		return "", fmt.Errorf("failed to serialize response: %w", err)
+	}
+	return string(jsonBytes), nil
 }
 
 // responseFormatter implements the ResponseFormatter interface
@@ -243,54 +295,145 @@ func NewResponseFormatter() ResponseFormatter {
 	return &responseFormatter{}
 }
 
-// FormatEntities formats a list of entities into a readable string
-func (f *responseFormatter) FormatEntities(entities []*Entity) string {
+// FormatEntities formats a list of entities into a readable string with metadata
+func (f *responseFormatter) FormatEntities(entities []*Entity) FormattedResponse {
 	if len(entities) == 0 {
-		return "No entities found."
+		return FormattedResponse{
+			Text:     "I couldn't find any matching entities.",
+			Entities: []EntityReference{},
+		}
 	}
 
 	var builder strings.Builder
+	entityRefs := make([]EntityReference, len(entities))
 
 	if len(entities) == 1 {
 		entity := entities[0]
-		builder.WriteString(fmt.Sprintf("%s (%s)\n", entity.Name, entity.Type))
-		if len(entity.Properties) > 0 {
-			builder.WriteString("Properties:\n")
-			for key, value := range entity.Properties {
-				builder.WriteString(fmt.Sprintf("  %s: %v\n", key, value))
-			}
+		fmt.Printf("[FormatEntities] Single entity: ID=%d, Name=%q, Type=%q, UniqueID=%q\n",
+			entity.ID, entity.Name, entity.Type, entity.UniqueID)
+
+		// Create a more natural description based on entity type
+		if entity.Type == "person" {
+			builder.WriteString(fmt.Sprintf("%s is a person in the Enron email dataset.", entity.Name))
+		} else if entity.Type == "organization" {
+			builder.WriteString(fmt.Sprintf("%s is an organization mentioned in the Enron emails.", entity.Name))
+		} else {
+			builder.WriteString(fmt.Sprintf("%s is a %s.", entity.Name, entity.Type))
 		}
+
+		// Add confidence score if available and meaningful
+		if confScore, ok := entity.Properties["confidence_score"].(float64); ok && confScore < 1.0 {
+			builder.WriteString(fmt.Sprintf(" (Confidence: %.0f%%)", confScore*100))
+		}
+		builder.WriteString("\n")
+
+		entityRefs[0] = EntityReference{ID: entity.ID, Name: entity.Name, Type: entity.Type, UniqueID: entity.UniqueID}
+		fmt.Printf("[FormatEntities] Created EntityReference: ID=%d, Name=%q, Type=%q, UniqueID=%q\n",
+			entityRefs[0].ID, entityRefs[0].Name, entityRefs[0].Type, entityRefs[0].UniqueID)
 	} else {
-		builder.WriteString(fmt.Sprintf("Found %d entities:\n", len(entities)))
+		builder.WriteString(fmt.Sprintf("Found %d entities:\n\n", len(entities)))
 		for i, entity := range entities {
-			builder.WriteString(fmt.Sprintf("%d. %s (%s)\n", i+1, entity.Name, entity.Type))
+			fmt.Printf("[FormatEntities] Entity %d: ID=%d, Name=%q, Type=%q, UniqueID=%q\n",
+				i+1, entity.ID, entity.Name, entity.Type, entity.UniqueID)
+			builder.WriteString(fmt.Sprintf("• %s (%s)\n", entity.Name, entity.Type))
+			entityRefs[i] = EntityReference{ID: entity.ID, Name: entity.Name, Type: entity.Type, UniqueID: entity.UniqueID}
 		}
 	}
 
-	return builder.String()
+	return FormattedResponse{
+		Text:     builder.String(),
+		Entities: entityRefs,
+	}
 }
 
-// FormatPath formats a path into a readable string
-func (f *responseFormatter) FormatPath(path []*PathNode) string {
+// FormatPath formats a path into a readable string with entity metadata
+func (f *responseFormatter) FormatPath(path []*PathNode) FormattedResponse {
 	if len(path) == 0 {
-		return "No path found."
+		return FormattedResponse{
+			Text:     "No connection found between these entities.",
+			Entities: []EntityReference{},
+		}
+	}
+
+	if len(path) == 1 {
+		// Direct connection or single entity
+		entity := path[0].Entity
+		return FormattedResponse{
+			Text: fmt.Sprintf("%s is a %s.", entity.Name, entity.Type),
+			Entities: []EntityReference{{
+				ID:       entity.ID,
+				Name:     entity.Name,
+				Type:     entity.Type,
+				UniqueID: entity.UniqueID,
+			}},
+		}
 	}
 
 	var builder strings.Builder
-	builder.WriteString("Path found:\n")
+
+	// Build a natural language description of the path
+	builder.WriteString("Here's how they're connected:\n\n")
+
+	entityRefs := make([]EntityReference, len(path))
 
 	for i, node := range path {
+		entityRefs[i] = EntityReference{
+			ID:       node.Entity.ID,
+			Name:     node.Entity.Name,
+			Type:     node.Entity.Type,
+			UniqueID: node.Entity.UniqueID,
+		}
+
 		builder.WriteString(fmt.Sprintf("%s (%s)", node.Entity.Name, node.Entity.Type))
 		if i < len(path)-1 {
-			builder.WriteString(fmt.Sprintf(" -[%s]-> ", node.Relationship))
+			// Format the relationship in a more readable way
+			relDesc := formatRelationshipDescription(node.Relationship)
+			builder.WriteString(fmt.Sprintf(" %s ", relDesc))
 		}
 	}
 	builder.WriteString("\n")
 
-	return builder.String()
+	return FormattedResponse{
+		Text:     builder.String(),
+		Entities: entityRefs,
+	}
+}
+
+// formatRelationshipDescription converts relationship types to readable descriptions
+func formatRelationshipDescription(relType string) string {
+	switch relType {
+	case "SENT":
+		return "sent email to"
+	case "RECEIVED":
+		return "received email from"
+	case "MENTIONS":
+		return "mentioned"
+	case "COMMUNICATES_WITH":
+		return "communicates with"
+	case "OPERATES":
+		return "works at"
+	case "WORKS_FOR":
+		return "works for"
+	case "EMPLOYED_BY":
+		return "is employed by"
+	case "MEMBER_OF":
+		return "is a member of"
+	case "PART_OF":
+		return "is part of"
+	case "AFFILIATED_WITH":
+		return "is affiliated with"
+	default:
+		// For unknown relationship types, convert from UPPER_SNAKE_CASE to readable format
+		// e.g., "REPORTS_TO" becomes "reports to"
+		readable := strings.ToLower(strings.ReplaceAll(relType, "_", " "))
+		return readable
+	}
 }
 
 // FormatCount formats a count result into a readable string
-func (f *responseFormatter) FormatCount(count int, description string) string {
-	return fmt.Sprintf("%s: %d\n", description, count)
+func (f *responseFormatter) FormatCount(count int, description string) FormattedResponse {
+	return FormattedResponse{
+		Text:     fmt.Sprintf("%s: %d\n", description, count),
+		Entities: []EntityReference{},
+	}
 }
