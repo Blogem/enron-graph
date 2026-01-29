@@ -3,7 +3,7 @@ import { FC, useState, useEffect, useRef } from 'react';
 import './ChatPanel.css';
 import ChatInput from './ChatInput';
 import ChatMessage from './ChatMessage';
-import type { ChatPanelProps, ChatMessage as ChatMessageType } from '../types/chat';
+import type { ChatPanelProps, ChatMessage as ChatMessageType, FormattedResponse } from '../types/chat';
 import { processChatQuery, clearChatContext, ChatServiceError } from '../services/chat';
 
 const STORAGE_KEY = 'chatPanelCollapsed';
@@ -11,6 +11,7 @@ const STORAGE_KEY = 'chatPanelCollapsed';
 const ChatPanel: FC<ChatPanelProps> = ({
     initialCollapsed = false,
     onCollapseChange,
+    onEntityClick,
 }) => {
     // FR-009: Restore collapsed state from sessionStorage
     const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -88,12 +89,31 @@ const ChatPanel: FC<ChatPanelProps> = ({
             // FR-024: Call chat service with timeout handling
             const response = await processChatQuery(query);
 
+            // Parse JSON response containing text and entities
+            let messageText = response;
+            let entities = undefined;
+
+            try {
+                const parsed: FormattedResponse = JSON.parse(response);
+                messageText = parsed.text;
+                entities = parsed.entities;
+                console.log('Parsed chat response:', {
+                    text: messageText.substring(0, 100),
+                    entityCount: entities?.length,
+                    entities: entities
+                });
+            } catch (parseErr) {
+                // If parsing fails, treat as plain text (backward compatibility)
+                console.warn('Failed to parse chat response as JSON, using as plain text:', parseErr);
+            }
+
             // Add system response to conversation
             const systemMessage: ChatMessageType = {
                 id: `system-${Date.now()}-${Math.random()}`,
-                text: response,
+                text: messageText,
                 sender: 'system',
-                timestamp: new Date()
+                timestamp: new Date(),
+                entities: entities
             };
             setMessages(prev => [...prev, systemMessage]);
             setCurrentInput(''); // Clear input on success
@@ -202,7 +222,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
                         ) : (
                             <>
                                 {messages.map((msg) => (
-                                    <ChatMessage key={msg.id} message={msg} />
+                                    <ChatMessage key={msg.id} message={msg} onEntityClick={onEntityClick} />
                                 ))}
                             </>
                         )}

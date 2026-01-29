@@ -38,6 +38,9 @@ function App() {
     // Graph recenter callback ref (T109)
     const graphRecenterRef = useRef<(() => void) | null>(null);
 
+    // Graph center node callback ref
+    const graphCenterNodeRef = useRef<((nodeId: string) => void) | null>(null);
+
     // Chat panel state (T020) - starts collapsed
     const [chatPanelCollapsed, setChatPanelCollapsed] = useState<boolean>(true);
 
@@ -46,11 +49,11 @@ function App() {
         loadSchema();
     }, []);
 
-    // Load random nodes on mount (auto-load 100 nodes) only if no filter is active
+    // Load random nodes on mount (auto-load 1000 nodes) only if no filter is active
     useEffect(() => {
         const hasActiveFilter = activeFilter.types?.length || activeFilter.category || activeFilter.search_query;
         if (!hasActiveFilter) {
-            const limit = activeFilter.limit || 100;
+            const limit = activeFilter.limit || 1000;
             loadRandomNodes(limit);
         }
     }, []);
@@ -62,7 +65,7 @@ function App() {
             applyFilters(activeFilter);
         } else {
             // When filters are cleared, reload with current limit setting
-            const limit = activeFilter.limit || 100;
+            const limit = activeFilter.limit || 1000;
             loadRandomNodes(limit);
         }
     }, [activeFilter]);
@@ -367,6 +370,72 @@ function App() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    // Handle entity click from chat - find or fetch the node and select it
+    const handleEntityClick = useCallback(async (uniqueId: string) => {
+        try {
+            console.log('Entity clicked in chat, uniqueId:', uniqueId);
+
+            // Find the node in the current graph data by its unique ID
+            const foundNode = graphData.nodes.find(node => node.id === uniqueId);
+
+            if (foundNode) {
+                // Node found in current graph, select it
+                console.log('Found node in current graph:', foundNode);
+                await handleNodeClick(foundNode);
+
+                // Center graph on this specific node
+                if (graphCenterNodeRef.current) {
+                    graphCenterNodeRef.current(foundNode.id);
+                }
+                return;
+            }
+
+            // Node not in current graph - fetch its details and add it
+            console.log(`Entity ${uniqueId} not in current graph (${graphData.nodes.length} nodes), fetching details...`);
+
+            try {
+                const details = await wailsAPI.getNodeDetails(uniqueId);
+                console.log('Fetched node details:', details);
+
+                // Create a node from the details
+                const newNode: GraphNodeWithPosition = {
+                    id: details.id,
+                    type: details.type,
+                    category: details.category,
+                    properties: details.properties,
+                    label: details.properties?.name as string || details.id,
+                };
+
+                // Add the node to the graph
+                setGraphData(prev => ({
+                    ...prev,
+                    nodes: [...prev.nodes, newNode]
+                }));
+
+                // Select the newly added node
+                await handleNodeClick(newNode);
+
+                // Center graph on the newly added node
+                if (graphCenterNodeRef.current) {
+                    // Wait a tick for the node to be rendered with coordinates
+                    setTimeout(() => {
+                        if (graphCenterNodeRef.current) {
+                            graphCenterNodeRef.current(newNode.id);
+                        }
+                    }, 100);
+                }
+            } catch (fetchErr) {
+                console.error('Failed to fetch entity details:', fetchErr);
+                const errorMsg = fetchErr instanceof Error ? fetchErr.message : 'Unknown error';
+                setGraphError(`Could not load entity "${uniqueId}": ${errorMsg}`);
+            }
+
+        } catch (err) {
+            console.error('Error handling entity click:', err);
+            setGraphError(err instanceof Error ? err.message : 'Failed to select entity');
+        }
+    }, [graphData.nodes, handleNodeClick]);
+
     return (
         <ErrorBoundary componentName="Graph Explorer Application">
             <div id="App">
@@ -408,7 +477,7 @@ function App() {
                             {graphError && (
                                 <div className="error-message">
                                     <p>⚠️ {graphError}</p>
-                                    <button onClick={() => loadRandomNodes(100)} aria-label="Retry loading nodes">Retry</button>
+                                    <button onClick={() => loadRandomNodes(1000)} aria-label="Retry loading nodes">Retry</button>
                                 </div>
                             )}
                             {!graphLoading && !graphError && graphData.nodes.length > 0 && (
@@ -421,6 +490,7 @@ function App() {
                                     onNodeRightClick={handleNodeRightClick}
                                     onLoadMore={handleLoadMore}
                                     onRecenterRef={(fn) => { graphRecenterRef.current = fn; }}
+                                    onCenterNodeRef={(fn) => { graphCenterNodeRef.current = fn; }}
                                 />
                             )}
                             {!graphLoading && !graphError && graphData.nodes.length === 0 && (
@@ -504,6 +574,7 @@ function App() {
                 <ChatPanel
                     initialCollapsed={chatPanelCollapsed}
                     onCollapseChange={setChatPanelCollapsed}
+                    onEntityClick={handleEntityClick}
                 />
                 <KeyboardHelp chatPanelCollapsed={chatPanelCollapsed} />
             </div>

@@ -51,6 +51,7 @@ type Entity struct {
 	ID         int
 	Name       string
 	Type       string
+	UniqueID   string
 	Properties map[string]interface{}
 }
 
@@ -94,9 +95,23 @@ type Handler interface {
 	ProcessQuery(ctx context.Context, query string, chatContext Context) (string, error)
 }
 
+// EntityReference represents a clickable entity reference in chat responses
+type EntityReference struct {
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	UniqueID string `json:"unique_id"`
+}
+
+// FormattedResponse represents a chat response with embedded entity metadata
+type FormattedResponse struct {
+	Text     string            `json:"text"`
+	Entities []EntityReference `json:"entities"`
+}
+
 // ResponseFormatter interface for formatting responses
 type ResponseFormatter interface {
-	FormatEntities(entities []*Entity) string
-	FormatPath(path []*PathNode) string
-	FormatCount(count int, description string) string
+	FormatEntities(entities []*Entity) FormattedResponse
+	FormatPath(path []*PathNode) FormattedResponse
+	FormatCount(count int, description string) FormattedResponse
 }

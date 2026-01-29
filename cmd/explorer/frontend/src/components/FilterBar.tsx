@@ -14,8 +14,8 @@ const FilterBar: React.FC<FilterBarProps> = ({ schema, onFilterChange, initialFi
     const [selectedTypes, setSelectedTypes] = useState<string[]>(initialFilter?.types || []);
     const [category, setCategory] = useState<string>(initialFilter?.category || 'all');
     const [searchQuery, setSearchQuery] = useState<string>(initialFilter?.search_query || '');
-    const [limit, setLimit] = useState<number>(initialFilter?.limit || 100);
-    const [limitInput, setLimitInput] = useState<string>(String(initialFilter?.limit || 100));
+    const [limit, setLimit] = useState<number>(initialFilter?.limit || 1000);
+    const [limitInput, setLimitInput] = useState<string>(String(initialFilter?.limit || 1000));
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
     // Debounce search query
@@ -72,7 +72,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ schema, onFilterChange, initialFi
         setSelectedTypes([]);
         setCategory('all');
         setSearchQuery('');
-        setLimit(100);
+        setLimit(1000);
     };
 
     const hasActiveFilters = selectedTypes.length > 0 || category !== 'all' || searchQuery !== '';
@@ -196,8 +196,8 @@ const FilterBar: React.FC<FilterBarProps> = ({ schema, onFilterChange, initialFi
                                     const value = e.target.value;
                                     const numValue = parseInt(value, 10);
                                     if (isNaN(numValue) || numValue < 10) {
-                                        setLimitInput('100');
-                                        setLimit(100);
+                                        setLimitInput('1000');
+                                        setLimit(1000);
                                     } else {
                                         // Update input to show the actual number (remove leading zeros, etc)
                                         setLimitInput(String(numValue));

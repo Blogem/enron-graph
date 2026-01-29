@@ -162,6 +162,7 @@ func (p *Promoter) CopyEntities(ctx context.Context, typeName string, schema Sch
 			}
 			count++
 		}
+		// TODO: check if need to update relationships as well
 	}
 
 	if err := tx.Commit(); err != nil {

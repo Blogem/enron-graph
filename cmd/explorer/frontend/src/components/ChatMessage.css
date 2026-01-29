@@ -54,3 +54,28 @@
 .chat-message--system .chat-message__timestamp {
     color: #8b949e;
 }
+
+/* Clickable entity links in messages */
+.chat-message__entity-link {
+    color: #58a6ff;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+    transition: color 0.2s ease, background-color 0.2s ease;
+    padding: 1px 3px;
+    border-radius: 3px;
+}
+
+.chat-message__entity-link:hover {
+    color: #79c0ff;
+    background-color: rgba(88, 166, 255, 0.1);
+}
+
+.chat-message__entity-link:active {
+    color: #a5d6ff;
+}
+
+.chat-message__entity-link:focus {
+    outline: 2px solid #58a6ff;
+    outline-offset: 2px;
+}

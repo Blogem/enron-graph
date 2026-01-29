@@ -133,14 +133,18 @@ func TestResponseFormatting(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			formatter := NewResponseFormatter()
 			response := formatter.FormatEntities(tt.entities)
-			if response == "" && tt.wantLen > 0 {
+			if response.Text == "" && tt.wantLen > 0 {
 				t.Error("FormatEntities() returned empty string for non-empty entities")
 			}
-			if tt.wantLen == 0 && response != "" {
+			if tt.wantLen == 0 && response.Text != "" {
 				// Empty result should have a "no results" message
-				if response == "" {
+				if response.Text == "" {
 					t.Error("FormatEntities() should return a message for empty results")
 				}
+			}
+			// Verify entities array matches input length
+			if len(response.Entities) != tt.wantLen {
+				t.Errorf("FormatEntities() entities length = %d, want %d", len(response.Entities), tt.wantLen)
 			}
 		})
 	}

@@ -1,6 +1,6 @@
 # Add chat interface
 
-- See if the graph can update if a certain entity is discussed (or better: make the entity in the chat output clickable).
+- Have buffer in chat input, so i can do arrow up to go to my previous inputs
 - Use tools instead of prompt to force json output from LLM.
 
 # Data lineage
