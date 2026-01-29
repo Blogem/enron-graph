@@ -4,7 +4,7 @@
 
 ### Requirement: Navigate Backward Through History
 
-Users can press ArrowUp to navigate backward through their previously submitted messages.
+The system SHALL allow users to press ArrowUp to navigate backward through their previously submitted messages.
 
 #### Scenario: Navigate to previous message
 
@@ -26,7 +26,7 @@ Users can press ArrowUp to navigate backward through their previously submitted 
 
 ### Requirement: Navigate Forward Through History
 
-Users can press ArrowDown to navigate forward through their message history.
+The system SHALL allow users to press ArrowDown to navigate forward through their message history.
 
 #### Scenario: Navigate to newer message
 
@@ -41,7 +41,7 @@ Users can press ArrowDown to navigate forward through their message history.
 
 ### Requirement: Preserve Draft Content
 
-The system preserves any partially-typed content when history navigation begins.
+The system SHALL preserve any partially-typed content when history navigation begins.
 
 #### Scenario: Save draft before navigating
 
@@ -56,7 +56,7 @@ The system preserves any partially-typed content when history navigation begins.
 
 ### Requirement: Reset History Position on Submit
 
-Submitting a new message resets history navigation to allow immediate access to the latest messages.
+The system SHALL reset history navigation when a new message is submitted to allow immediate access to the latest messages.
 
 #### Scenario: Reset after sending message
 
@@ -67,7 +67,7 @@ Submitting a new message resets history navigation to allow immediate access to 
 
 ### Requirement: Empty History Handling
 
-The system handles cases where no message history exists yet.
+The system SHALL handle cases where no message history exists yet without errors.
 
 #### Scenario: No history available
 

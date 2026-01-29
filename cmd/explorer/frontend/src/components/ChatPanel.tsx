@@ -36,6 +36,11 @@ const ChatPanel: FC<ChatPanelProps> = ({
     const [currentInput, setCurrentInput] = useState<string>('');
     const [isClearing, setIsClearing] = useState(false);
     const [showClearConfirmation, setShowClearConfirmation] = useState(false);
+    
+    // History navigation state
+    const [historyIndex, setHistoryIndex] = useState<number>(-1);
+    const [savedDraft, setSavedDraft] = useState<string>('');
+    
     const conversationRef = useRef<HTMLDivElement>(null);
 
     // FR-009: Persist collapsed state to sessionStorage
@@ -117,6 +122,10 @@ const ChatPanel: FC<ChatPanelProps> = ({
             };
             setMessages(prev => [...prev, systemMessage]);
             setCurrentInput(''); // Clear input on success
+            
+            // Reset history navigation state after successful submission
+            setHistoryIndex(-1);
+            setSavedDraft('');
         } catch (err) {
             // FR-011: User-friendly error handling
             const chatError = err as ChatServiceError;
@@ -132,6 +141,46 @@ const ChatPanel: FC<ChatPanelProps> = ({
             // Keep currentInput so it can be restored
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // Build message history from user messages only
+    const messageHistory = messages
+        .filter(m => m.sender === 'user')
+        .map(m => m.text);
+
+    // History navigation handler
+    const handleHistoryNavigate = (direction: 'up' | 'down') => {
+        if (messageHistory.length === 0) {
+            return; // No history available
+        }
+
+        if (direction === 'up') {
+            // Save current draft on first navigation
+            if (historyIndex === -1) {
+                setSavedDraft(currentInput);
+                setHistoryIndex(0);
+                setCurrentInput(messageHistory[messageHistory.length - 1]);
+            } else if (historyIndex < messageHistory.length - 1) {
+                // Navigate to older message
+                const newIndex = historyIndex + 1;
+                setHistoryIndex(newIndex);
+                setCurrentInput(messageHistory[messageHistory.length - 1 - newIndex]);
+            }
+            // At oldest message, do nothing
+        } else if (direction === 'down') {
+            if (historyIndex > 0) {
+                // Navigate to newer message
+                const newIndex = historyIndex - 1;
+                setHistoryIndex(newIndex);
+                setCurrentInput(messageHistory[messageHistory.length - 1 - newIndex]);
+            } else if (historyIndex === 0) {
+                // Restore draft and exit history mode
+                setHistoryIndex(-1);
+                setCurrentInput(savedDraft);
+                setSavedDraft('');
+            }
+            // Already at draft, do nothing
         }
     };
 
@@ -277,6 +326,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
                         disabled={isLoading} // FR-021: Disable while loading
                         value={currentInput}
                         onChange={setCurrentInput}
+                        onHistoryNavigate={handleHistoryNavigate}
                     />
                 </div>
                 <button

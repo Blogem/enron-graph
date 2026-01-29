@@ -9,6 +9,7 @@ const ChatInput: FC<ChatInputProps> = ({
     placeholder = 'Ask about the graph...',
     value: externalValue,
     onChange: externalOnChange,
+    onHistoryNavigate,
 }) => {
     const [internalQuery, setInternalQuery] = useState('');
     const query = externalValue !== undefined ? externalValue : internalQuery;
@@ -34,6 +35,15 @@ const ChatInput: FC<ChatInputProps> = ({
             handleSubmit();
         }
         // FR-004: Shift+Enter creates newline (default behavior, just don't prevent)
+        
+        // History navigation
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            onHistoryNavigate?.('up');
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            onHistoryNavigate?.('down');
+        }
     };
 
     const isButtonDisabled = disabled || !query.trim();

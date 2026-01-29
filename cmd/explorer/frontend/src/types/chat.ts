@@ -114,6 +114,9 @@ export interface ChatInputProps {
 
     /** Callback when input value changes (optional) */
     onChange?: (value: string) => void;
+
+    /** Callback for history navigation with arrow keys */
+    onHistoryNavigate?: (direction: 'up' | 'down') => void;
 }
 
 /**
