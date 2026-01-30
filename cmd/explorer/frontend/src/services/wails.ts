@@ -8,7 +8,8 @@ import {
     GetNodeDetails,
     GetNodes,
     AnalyzeEntities,
-    PromoteEntity
+    PromoteEntity,
+    RegenerateAndReload
 } from '../wailsjs/go/main/App';
 import type { explorer, main } from '../wailsjs/go/models';
 import type { NodeFilter } from '../types/graph';
@@ -58,5 +59,9 @@ export const wailsAPI = {
 
     async promoteEntity(request: main.PromotionRequest): Promise<main.PromotionResponse> {
         return await PromoteEntity(request);
+    },
+
+    async regenerateAndReload(): Promise<void> {
+        return await RegenerateAndReload();
     },
 };

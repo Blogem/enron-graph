@@ -14,6 +14,7 @@ function EntityPromotion({ typeName, onCancel, onSuccess, onViewInGraph }: Entit
     const [loading, setLoading] = useState<boolean>(false);
     const [result, setResult] = useState<main.PromotionResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [rebuilding, setRebuilding] = useState<boolean>(false);
 
     // Reset state when typeName changes
     useEffect(() => {
@@ -35,32 +36,52 @@ function EntityPromotion({ typeName, onCancel, onSuccess, onViewInGraph }: Entit
             });
 
             const response = await wailsAPI.promoteEntity(request);
-            setResult(response);
 
-            if (response.success) {
-                // Trigger success callback after a short delay to show success message
-                setTimeout(() => {
-                    onSuccess();
-                }, 2000);
+            // Check if the response indicates failure
+            if (!response.success && response.error) {
+                setError(response.error);
+                return;
             }
+
+            setResult(response);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to promote entity');
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            setError(errorMessage || 'Failed to promote entity');
             console.error('Error promoting entity:', err);
+            console.error('Error details:', JSON.stringify(err, null, 2));
         } finally {
             setLoading(false);
         }
     };
 
     const handleCancel = () => {
-        if (!loading) {
+        if (!loading && !rebuilding) {
             onCancel();
+        }
+    };
+
+    const handleRebuild = async () => {
+        try {
+            setRebuilding(true);
+            await wailsAPI.regenerateAndReload();
+            // The app will rebuild automatically, show message
+        } catch (err) {
+            console.error('Failed to trigger rebuild:', err);
+            alert('Failed to trigger rebuild. Please restart manually.');
+        } finally {
+            setRebuilding(false);
         }
     };
 
     return (
         <div className="entity-promotion">
             <div className="promotion-header">
-                <h2>Promote Entity Type</h2>
+                <div>
+                    <h2>Promote Entity Type</h2>
+                    <p className="promotion-description">
+                        Convert discovered entity type to a formal Ent schema with database migration.
+                    </p>
+                </div>
                 <button
                     className="close-button"
                     onClick={handleCancel}
@@ -93,7 +114,8 @@ function EntityPromotion({ typeName, onCancel, onSuccess, onViewInGraph }: Entit
 
                     {error && (
                         <div className="promotion-error">
-                            <p>⚠️ {error}</p>
+                            <p><strong>⚠️ Error:</strong></p>
+                            <p>{error}</p>
                         </div>
                     )}
 
@@ -165,16 +187,32 @@ function EntityPromotion({ typeName, onCancel, onSuccess, onViewInGraph }: Entit
                                 )}
                             </div>
 
+                            <div className="restart-notice">
+                                <p>⚠️ <strong>Action Required:</strong> Rebuild the application to use the new type.</p>
+                                <p className="restart-instructions">
+                                    Click the "Rebuild Now" button below to regenerate code and trigger a rebuild.
+                                    The app will automatically reload when ready.
+                                </p>
+                            </div>
+
                             <div className="success-actions">
+                                <button
+                                    className="rebuild-button"
+                                    onClick={handleRebuild}
+                                    disabled={rebuilding}
+                                >
+                                    {rebuilding ? 'Rebuilding...' : 'Rebuild Now'}
+                                </button>
                                 {onViewInGraph && (
                                     <button
                                         className="view-graph-button"
                                         onClick={() => onViewInGraph(typeName!)}
+                                        disabled={rebuilding}
                                     >
-                                        View in Graph
+                                        View in Graph (after rebuild)
                                     </button>
                                 )}
-                                <button className="done-button" onClick={handleCancel}>
+                                <button className="done-button" onClick={handleCancel} disabled={rebuilding}>
                                     Done
                                 </button>
                             </div>

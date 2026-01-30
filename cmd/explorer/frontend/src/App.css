@@ -220,8 +220,10 @@
 }
 
 .analyst-view {
+    display: flex;
     flex: 1;
     overflow: hidden;
+    gap: 0;
 }
 
 /* Toast notification */

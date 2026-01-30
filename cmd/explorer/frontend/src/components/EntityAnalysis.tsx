@@ -214,89 +214,69 @@ function EntityAnalysis({ onPromote }: EntityAnalysisProps) {
                         <p className="results-summary">
                             Found {results.candidates.length} candidates out of {results.totalTypes} total types
                         </p>
-                    </div>
-
-                    <div className="results-table-container">
-                        <table className="results-table">
-                            <thead>
-                                <tr>
-                                    <th onClick={() => handleSort('rank')} className="sortable">
-                                        Rank {sortColumn === 'rank' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th onClick={() => handleSort('typeName')} className="sortable">
-                                        Type Name {sortColumn === 'typeName' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th onClick={() => handleSort('frequency')} className="sortable">
-                                        Frequency {sortColumn === 'frequency' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th onClick={() => handleSort('density')} className="sortable">
-                                        Density {sortColumn === 'density' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th onClick={() => handleSort('consistency')} className="sortable">
-                                        Consistency {sortColumn === 'consistency' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th onClick={() => handleSort('score')} className="sortable">
-                                        Score {sortColumn === 'score' && (sortDirection === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sortedCandidates.map((candidate) => (
-                                    <tr
-                                        key={candidate.typeName}
-                                        onClick={() => handleRowClick(candidate)}
-                                        className={selectedCandidate?.typeName === candidate.typeName ? 'selected' : ''}
-                                    >
-                                        <td>{candidate.rank}</td>
-                                        <td className="type-name">{candidate.typeName}</td>
-                                        <td>{candidate.frequency}</td>
-                                        <td>{candidate.density.toFixed(2)}</td>
-                                        <td>{candidate.consistency.toFixed(2)}</td>
-                                        <td>{candidate.score.toFixed(2)}</td>
-                                        <td>
-                                            <button
-                                                className="promote-button"
-                                                onClick={(e) => handlePromoteClick(candidate, e)}
-                                                title="Promote this entity type to a formal schema"
-                                            >
-                                                Promote
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Selected Candidate Details */}
-                    {selectedCandidate && (
-                        <div className="candidate-details">
-                            <h4>Selected: {selectedCandidate.typeName}</h4>
-                            <div className="detail-grid">
-                                <div className="detail-item">
-                                    <span className="detail-label">Rank:</span>
-                                    <span className="detail-value">{selectedCandidate.rank}</span>
-                                </div>
-                                <div className="detail-item">
-                                    <span className="detail-label">Frequency:</span>
-                                    <span className="detail-value">{selectedCandidate.frequency}</span>
-                                </div>
-                                <div className="detail-item">
-                                    <span className="detail-label">Density:</span>
-                                    <span className="detail-value">{selectedCandidate.density.toFixed(3)}</span>
-                                </div>
-                                <div className="detail-item">
-                                    <span className="detail-label">Consistency:</span>
-                                    <span className="detail-value">{selectedCandidate.consistency.toFixed(3)}</span>
-                                </div>
-                                <div className="detail-item">
-                                    <span className="detail-label">Score:</span>
-                                    <span className="detail-value">{selectedCandidate.score.toFixed(3)}</span>
-                                </div>
-                            </div>
+                        <div className="sort-controls">
+                            <label htmlFor="sort-by">Sort by:</label>
+                            <select
+                                id="sort-by"
+                                value={sortColumn}
+                                onChange={(e) => handleSort(e.target.value as SortColumn)}
+                            >
+                                <option value="rank">Rank</option>
+                                <option value="typeName">Type Name</option>
+                                <option value="frequency">Frequency</option>
+                                <option value="density">Density</option>
+                                <option value="consistency">Consistency</option>
+                                <option value="score">Score</option>
+                            </select>
+                            <button
+                                className="sort-direction-button"
+                                onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                                title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+                            >
+                                {sortDirection === 'asc' ? '↑' : '↓'}
+                            </button>
                         </div>
-                    )}
+                    </div>
+
+                    <div className="results-list">
+                        {sortedCandidates.map((candidate) => (
+                            <div
+                                key={candidate.typeName}
+                                className={`candidate-card ${selectedCandidate?.typeName === candidate.typeName ? 'selected' : ''}`}
+                                onClick={() => handleRowClick(candidate)}
+                            >
+                                <div className="candidate-header">
+                                    <span className="candidate-rank">#{candidate.rank}</span>
+                                    <span className="candidate-name">{candidate.typeName}</span>
+                                </div>
+                                <div className="candidate-metrics">
+                                    <div className="metric">
+                                        <span className="metric-label">Freq</span>
+                                        <span className="metric-value">{candidate.frequency}</span>
+                                    </div>
+                                    <div className="metric">
+                                        <span className="metric-label">Density</span>
+                                        <span className="metric-value">{candidate.density.toFixed(2)}</span>
+                                    </div>
+                                    <div className="metric">
+                                        <span className="metric-label">Consistency</span>
+                                        <span className="metric-value">{candidate.consistency.toFixed(2)}</span>
+                                    </div>
+                                    <div className="metric">
+                                        <span className="metric-label">Score</span>
+                                        <span className="metric-value score">{candidate.score.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    className="promote-button"
+                                    onClick={(e) => handlePromoteClick(candidate, e)}
+                                    title="Promote this entity type to a formal schema"
+                                >
+                                    Promote
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 

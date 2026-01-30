@@ -180,8 +180,9 @@ func GenerateJSONSchema(typeName string, entities []EntitySample) SchemaDefiniti
 	}
 
 	// Infer required and optional properties
-	required := InferRequiredProperties(entities, 0.90)
-	optional := InferOptionalProperties(entities, 0.30, 0.90)
+	// For data migration safety, only mark as required if it appears in 100% of entities
+	required := InferRequiredProperties(entities, 1.0)
+	optional := InferOptionalProperties(entities, 0.30, 1.0)
 
 	requiredMap := make(map[string]bool)
 	for _, prop := range required {
