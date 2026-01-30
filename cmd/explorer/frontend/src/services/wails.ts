@@ -6,9 +6,11 @@ import {
     GetRandomNodes,
     GetRelationships,
     GetNodeDetails,
-    GetNodes
+    GetNodes,
+    AnalyzeEntities,
+    PromoteEntity
 } from '../wailsjs/go/main/App';
-import type { explorer } from '../wailsjs/go/models';
+import type { explorer, main } from '../wailsjs/go/models';
 import type { NodeFilter } from '../types/graph';
 
 export const wailsAPI = {
@@ -47,5 +49,14 @@ export const wailsAPI = {
             limit: filter.limit || 1000
         };
         return await GetNodes(goFilter);
+    },
+
+    // Analyst operations
+    async analyzeEntities(request: main.AnalysisRequest): Promise<main.AnalysisResponse> {
+        return await AnalyzeEntities(request);
+    },
+
+    async promoteEntity(request: main.PromotionRequest): Promise<main.PromotionResponse> {
+        return await PromoteEntity(request);
     },
 };

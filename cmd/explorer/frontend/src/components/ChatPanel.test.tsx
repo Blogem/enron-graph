@@ -1359,7 +1359,7 @@ describe('ChatPanel Component', () => {
       await user.click(clearButton);
 
       // Wait for confirmation dialog and click confirm
-      const confirmButton = await screen.findByRole('button', { name: /^clear$/i });
+      const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
       await user.click(confirmButton);
     };
 
@@ -1413,6 +1413,10 @@ describe('ChatPanel Component', () => {
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
 
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
+
         expect(vi.mocked(clearChatContext)).toHaveBeenCalledTimes(1);
       });
 
@@ -1433,6 +1437,10 @@ describe('ChatPanel Component', () => {
 
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
+
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
 
         // Wait for clear to complete
         await vi.waitFor(() => {
@@ -1463,6 +1471,10 @@ describe('ChatPanel Component', () => {
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
 
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
+
         // Wait for clear to complete
         await vi.waitFor(() => {
           const messagesAfterClear = within(conversationArea).queryAllByRole('article');
@@ -1485,6 +1497,10 @@ describe('ChatPanel Component', () => {
 
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
+
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
 
         // Error message should be cleared
         await vi.waitFor(() => {
@@ -1510,6 +1526,10 @@ describe('ChatPanel Component', () => {
         // Clear conversation
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
+
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
 
         await vi.waitFor(() => {
           expect(screen.queryByText(/error|failed/i)).not.toBeInTheDocument();
@@ -1547,6 +1567,10 @@ describe('ChatPanel Component', () => {
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
 
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
+
         // Then: conversation area is emptied
         await vi.waitFor(() => {
           const messagesAfterClear = within(conversationArea).queryAllByRole('article');
@@ -1570,6 +1594,10 @@ describe('ChatPanel Component', () => {
 
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
+
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
 
         await vi.waitFor(() => {
           const conversationArea = screen.getByRole('log');
@@ -1612,6 +1640,10 @@ describe('ChatPanel Component', () => {
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
 
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
+
         // Should display an error message
         const errorMessage = await screen.findByText(/failed|error/i);
         expect(errorMessage).toBeInTheDocument();
@@ -1635,6 +1667,10 @@ describe('ChatPanel Component', () => {
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
 
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
+
         // Wait for error to appear
         await screen.findByText(/failed|error/i);
 
@@ -1656,6 +1692,10 @@ describe('ChatPanel Component', () => {
 
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
+
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
 
         // Wait for error
         await screen.findByText(/failed|error/i);
@@ -1685,8 +1725,14 @@ describe('ChatPanel Component', () => {
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
 
-        // Should show some loading indication (button disabled or text change)
-        expect(clearButton).toBeDisabled();
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
+
+        // Clear button should be disabled during clearing
+        await vi.waitFor(() => {
+          expect(clearButton).toBeDisabled();
+        });
 
         // Resolve clear
         resolveClear!();
@@ -1712,16 +1758,32 @@ describe('ChatPanel Component', () => {
         const collapseButton = screen.getByRole('button', { name: /collapse/i });
         await user.click(collapseButton);
 
+        // Panel should be collapsed
+        let conversationArea = screen.queryByRole('log');
+        expect(conversationArea).not.toBeVisible();
+
+        // Expand panel to access clear button
+        const expandButton = screen.getByRole('button', { name: /expand/i });
+        await user.click(expandButton);
+
         // Clear conversation
         const clearButton = screen.getByRole('button', { name: /clear/i });
         await user.click(clearButton);
+
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
 
         await vi.waitFor(() => {
           expect(vi.mocked(clearChatContext)).toHaveBeenCalled();
         });
 
-        // Panel should still be collapsed
-        const conversationArea = screen.queryByRole('log');
+        // Collapse panel again
+        const collapseButtonAgain = screen.getByRole('button', { name: /collapse/i });
+        await user.click(collapseButtonAgain);
+
+        // Panel should be collapsed again
+        conversationArea = screen.queryByRole('log');
         expect(conversationArea).not.toBeVisible();
       });
 
@@ -1740,6 +1802,10 @@ describe('ChatPanel Component', () => {
         expect(clearButton).not.toBeDisabled();
 
         await user.click(clearButton);
+
+        // Click confirm in dialog
+        const confirmButton = await screen.findByRole('button', { name: /confirm clearing conversation/i });
+        await user.click(confirmButton);
 
         // Wait for clear to complete
         await vi.waitFor(() => {
@@ -1777,7 +1843,7 @@ describe('ChatPanel Component', () => {
         expect(confirmDialog).toBeInTheDocument();
 
         // Click confirm button
-        const confirmButton = screen.getByRole('button', { name: /^clear$/i });
+        const confirmButton = screen.getByRole('button', { name: /confirm clearing conversation/i });
         await user.click(confirmButton);
 
         // Wait for clear to complete

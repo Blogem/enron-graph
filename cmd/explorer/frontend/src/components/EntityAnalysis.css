@@ -1,0 +1,305 @@
+.entity-analysis {
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--bg-primary, #1e1e1e);
+    color: var(--text-primary, #e0e0e0);
+}
+
+.analysis-header {
+    margin-bottom: 24px;
+}
+
+.analysis-header h2 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.analysis-description {
+    margin: 0;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 14px;
+}
+
+/* Configuration Panel */
+.configuration-panel {
+    background: var(--bg-secondary, #2a2a2a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.configuration-panel h3 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.config-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.config-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.config-control label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary, #e0e0e0);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.help-text {
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.config-control input {
+    padding: 8px 12px;
+    background: var(--bg-primary, #1e1e1e);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 4px;
+    color: var(--text-primary, #e0e0e0);
+    font-size: 14px;
+}
+
+.config-control input:focus {
+    outline: none;
+    border-color: var(--accent-color, #007acc);
+}
+
+.config-control input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.analyze-button {
+    padding: 8px 24px;
+    background: var(--accent-color, #007acc);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    height: fit-content;
+}
+
+.analyze-button:hover:not(:disabled) {
+    background: var(--accent-hover, #005a9e);
+}
+
+.analyze-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Validation Errors */
+.validation-errors {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 4px;
+}
+
+.error-message {
+    color: #fca5a5;
+    font-size: 13px;
+    margin: 4px 0;
+}
+
+/* Analysis Error */
+.analysis-error {
+    padding: 16px;
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 8px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.analysis-error p {
+    margin: 0;
+    color: #fca5a5;
+}
+
+.analysis-error button {
+    padding: 6px 16px;
+    background: var(--accent-color, #007acc);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* Results Section */
+.results-section {
+    margin-top: 24px;
+}
+
+.results-header {
+    margin-bottom: 16px;
+}
+
+.results-header h3 {
+    margin: 0 0 6px 0;
+    font-size: 18px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.results-summary {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+/* Results Table */
+.results-table-container {
+    overflow-x: auto;
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 8px;
+    background: var(--bg-secondary, #2a2a2a);
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table thead {
+    background: var(--bg-primary, #1e1e1e);
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+}
+
+.results-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #e0e0e0);
+    white-space: nowrap;
+}
+
+.results-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.results-table th.sortable:hover {
+    background: var(--bg-hover, #3a3a3a);
+}
+
+.results-table tbody tr {
+    border-bottom: 1px solid var(--border-color, #3a3a3a);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.results-table tbody tr:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+.results-table tbody tr.selected {
+    background: var(--accent-bg, rgba(0, 122, 204, 0.15));
+}
+
+.results-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.results-table td.type-name {
+    font-weight: 500;
+    color: var(--accent-color, #4fc3f7);
+}
+
+.promote-button {
+    padding: 4px 12px;
+    background: var(--success-color, #10b981);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.promote-button:hover {
+    background: var(--success-hover, #059669);
+}
+
+/* Candidate Details */
+.candidate-details {
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--bg-secondary, #2a2a2a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 8px;
+}
+
+.candidate-details h4 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-label {
+    font-size: 11px;
+    color: var(--text-secondary, #a0a0a0);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary, #e0e0e0);
+}
+
+/* Empty Results */
+.empty-results {
+    padding: 48px 24px;
+    text-align: center;
+    background: var(--bg-secondary, #2a2a2a);
+    border: 1px solid var(--border-color, #3a3a3a);
+    border-radius: 8px;
+}
+
+.empty-results p {
+    margin: 8px 0;
+    color: var(--text-secondary, #a0a0a0);
+}
+
+.empty-results .help-text {
+    font-size: 13px;
+}
