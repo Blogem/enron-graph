@@ -41,6 +41,11 @@ func NewRepositoryWithDB(client *ent.Client, db *sql.DB, logger *slog.Logger) Re
 	}
 }
 
+// GetClient returns the underlying Ent client
+func (r *entRepository) GetClient() *ent.Client {
+	return r.client
+}
+
 // CreateEmail creates a new email entity
 func (r *entRepository) CreateEmail(ctx context.Context, input *EmailInput) (*ent.Email, error) {
 	return r.client.Email.Create().

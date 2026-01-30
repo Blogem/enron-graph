@@ -67,9 +67,11 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/mod v0.31.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/tools v0.40.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

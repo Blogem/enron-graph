@@ -151,6 +151,10 @@ func (m *mockRepository) Close() error {
 	return nil
 }
 
+func (m *mockRepository) GetClient() *ent.Client {
+	return nil // Mock doesn't have a real client
+}
+
 // T055: Contract tests for entity endpoints
 func TestGetEntityByID_Success(t *testing.T) {
 	repo := newMockRepository()

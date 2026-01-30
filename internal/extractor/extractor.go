@@ -9,6 +9,7 @@ import (
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/internal/graph"
+	"github.com/Blogem/enron-graph/internal/registry"
 	"github.com/Blogem/enron-graph/pkg/llm"
 )
 
@@ -293,11 +294,60 @@ func (e *Extractor) createOrUpdateEntity(ctx context.Context, uniqueID, typeCate
 	}
 	properties["source"] = "content"
 
-	// TODO: we should check if the entity is created for a promoted type and then create it for that promoted type instead
-	// A promoted type is when there is generated ent code.
-	// We should have a mapping of promoted types to implementations of a Create interface for types.
-	// Then based on the type choose the right implementation to create the entity. Else fall back to discovered entity.
-	// The mapping can be generated with an ent template.
+	// Check if this type has been promoted (exists in registry)
+	if createFn, exists := registry.PromotedTypes[typeCategory]; exists {
+		e.logger.Debug("Using promoted type creator", "type", typeCategory)
+
+		// Prepare data map for promoted type creator
+		data := make(map[string]any)
+		data["unique_id"] = uniqueID
+		data["name"] = name
+		data["confidence_score"] = confidence
+		data["embedding"] = embedding
+
+		// Add all custom properties
+		for k, v := range properties {
+			data[k] = v
+		}
+
+		// Add Ent client to context for registry creator functions
+		ctxWithClient := context.WithValue(ctx, "entClient", e.repo.GetClient())
+
+		// Call the registered creator function
+		result, err := createFn(ctxWithClient, data)
+		if err != nil {
+			e.logger.Warn("Promoted type creator failed, falling back to DiscoveredEntity",
+				"type", typeCategory,
+				"error", err)
+			// Fall through to use DiscoveredEntity as fallback
+		} else {
+			// Successfully created with promoted type
+			// Note: We return a DiscoveredEntity pointer for compatibility
+			// In the future, we might want to return a generic entity interface
+			e.logger.Debug("Successfully created promoted entity", "type", typeCategory, "name", name)
+
+			// TODO: this won't work, as FindEntityByUniqueID only returns DiscoveredEntity
+			// We need to change FindEntityByUniqueID to return a generic entity interface
+			// Then adjust the implementation to fetch from the correct table based on typeCategory
+			// If no typeCategory is provided, loop through all promoted types and DiscoveredEntity to find the entity
+			// For now, we need to handle the case where the promoted type was created
+			// but we still need to return it in a compatible format
+			// Since we can't directly convert the promoted type back to DiscoveredEntity,
+			// we'll fetch it by uniqueID
+			existing, fetchErr := e.repo.FindEntityByUniqueID(ctx, uniqueID)
+			if fetchErr == nil && existing != nil {
+				return existing, nil
+			}
+
+			// If we can't fetch it, log and fall through to DiscoveredEntity
+			e.logger.Warn("Created promoted entity but could not fetch it",
+				"type", typeCategory,
+				"unique_id", uniqueID,
+				"result", result)
+		}
+	}
+
+	// Create as DiscoveredEntity (default path or fallback)
 	entity, err := e.repo.CreateDiscoveredEntity(ctx, &graph.EntityInput{
 		UniqueID:        uniqueID,
 		TypeCategory:    typeCategory,

@@ -126,3 +126,8 @@ func (r *ReadOnlyRepository) SimilaritySearch(ctx context.Context, embedding []f
 func (r *ReadOnlyRepository) Close() error {
 	return r.base.Close()
 }
+
+// GetClient delegates to base repository
+func (r *ReadOnlyRepository) GetClient() *ent.Client {
+	return r.base.GetClient()
+}
