@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/Blogem/enron-graph/internal/registry"
+
+	"github.com/Blogem/enron-graph/ent/discoveredentity"
 )
 
 // createDiscoveredEntity creates a DiscoveredEntity entity from a property map.
@@ -225,15 +227,45 @@ func createSchemaPromotion(ctx context.Context, data map[string]any) (any, error
 	return entity, nil
 }
 
+// findDiscoveredEntity finds a DiscoveredEntity entity by unique_id.
+//
+// This function is called by the repository when performing type-aware lookups.
+// It extracts the Ent client from the context and queries the promoted table
+// by the unique_id field.
+//
+// Returns the found entity or an error (sql.ErrNoRows if not found).
+func findDiscoveredEntity(ctx context.Context, uniqueID string) (any, error) {
+	// Extract Ent client from context
+	client, ok := ctx.Value("entClient").(*Client)
+	if !ok || client == nil {
+		return nil, fmt.Errorf("ent client not found in context")
+	}
+
+	// Query by unique_id
+	entity, err := client.DiscoveredEntity.
+		Query().
+		Where(discoveredentity.UniqueIDEQ(uniqueID)).
+		Only(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 // init registers all Ent schemas with the promoted types registry.
 // This function runs automatically at application startup, populating the
-// global registry with EntityCreator functions for each schema.
+// global registry with EntityCreator and EntityFinder functions for each schema.
 //
 // The registry enables the extractor to route discovered entities to their
-// promoted schemas instead of always using the generic DiscoveredEntity table.
+// promoted schemas instead of always using the generic DiscoveredEntity table,
+// and enables the repository to find entities in promoted tables.
 func init() {
 
 	registry.Register("DiscoveredEntity", createDiscoveredEntity)
+
+	registry.RegisterFinder("DiscoveredEntity", findDiscoveredEntity)
 
 	registry.Register("Email", createEmail)
 

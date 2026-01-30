@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"sync"
 
 	"github.com/Blogem/enron-graph/ent"
 	"github.com/Blogem/enron-graph/ent/discoveredentity"
 	"github.com/Blogem/enron-graph/ent/email"
 	"github.com/Blogem/enron-graph/ent/relationship"
+	"github.com/Blogem/enron-graph/internal/registry"
 
 	_ "github.com/lib/pq"
 )
@@ -80,21 +82,162 @@ func (r *entRepository) CreateDiscoveredEntity(ctx context.Context, input *Entit
 		Save(ctx)
 }
 
-// FindEntityByID finds an entity by ID
-func (r *entRepository) FindEntityByID(ctx context.Context, id int) (*ent.DiscoveredEntity, error) {
+// isPromotedType checks if a type is registered in the promoted types registry
+func isPromotedType(typeName string) bool {
+	_, exists := registry.PromotedFinders[typeName]
+	return exists
+}
+
+// FindEntityByID finds an entity by ID.
+// Optional typeHint parameter enables direct table lookup when entity type is known.
+// Fallback strategy: type hint → relationships inference → generic discovery.
+func (r *entRepository) FindEntityByID(ctx context.Context, id int, typeHint ...string) (*ent.DiscoveredEntity, error) {
+	// TODO: Implement type-aware lookup (section 4)
+	// For now, just query discovered_entities
 	return r.client.DiscoveredEntity.Get(ctx, id)
 }
 
-// FindEntityByUniqueID finds an entity by unique ID
-func (r *entRepository) FindEntityByUniqueID(ctx context.Context, uniqueID string) (*ent.DiscoveredEntity, error) {
-	return r.client.DiscoveredEntity.Query().
+// FindEntityByUniqueID finds an entity by unique ID.
+// Optional typeHint parameter enables O(1) direct table lookup when entity type is known.
+// Fallback strategy: type hint → discovered_entities → relationships inference → parallel search.
+func (r *entRepository) FindEntityByUniqueID(ctx context.Context, uniqueID string, typeHint ...string) (*ent.DiscoveredEntity, error) {
+	// Tier 0: Try type hint if provided
+	if len(typeHint) > 0 && typeHint[0] != "" {
+		if finder, exists := registry.PromotedFinders[typeHint[0]]; exists {
+			r.logger.Debug("Using type hint for direct lookup", "type", typeHint[0], "uniqueID", uniqueID)
+
+			// Create context with ent client for finder
+			ctxWithClient := context.WithValue(ctx, "entClient", r.client)
+			entity, err := finder(ctxWithClient, uniqueID)
+			if err == nil {
+				// Found in promoted table, return as DiscoveredEntity
+				if de, ok := entity.(*ent.DiscoveredEntity); ok {
+					return de, nil
+				}
+				// TODO: Convert promoted type to DiscoveredEntity representation
+				// For now, return error indicating type mismatch
+				return nil, fmt.Errorf("type hint lookup returned non-DiscoveredEntity type")
+			}
+			// If not found with type hint, fall through to other tiers
+			r.logger.Debug("Type hint lookup failed, trying fallback", "type", typeHint[0], "error", err)
+		}
+	}
+
+	// Tier 1: Try discovered_entities table (most common case)
+	entity, err := r.client.DiscoveredEntity.Query().
 		Where(discoveredentity.UniqueIDEQ(uniqueID)).
 		Only(ctx)
+
+	if err == nil {
+		r.logger.Debug("Found entity in discovered_entities", "uniqueID", uniqueID)
+		return entity, nil
+	}
+
+	// If found but error (shouldn't happen with Only), return error
+	if !ent.IsNotFound(err) {
+		return nil, err
+	}
+
+	// Tier 2: Try relationships inference
+	// Query relationships table to infer type
+	r.logger.Debug("Entity not in discovered_entities, trying relationships inference", "uniqueID", uniqueID)
+
+	// First try as FROM entity
+	rels, err := r.client.Relationship.Query().
+		Where(relationship.FromTypeNEQ("discovered_entity")).
+		Limit(1).
+		All(ctx)
+
+	if err == nil && len(rels) > 0 {
+		// Found a relationship, try to use the type hint
+		inferredType := rels[0].FromType
+		if finder, exists := registry.PromotedFinders[inferredType]; exists {
+			ctxWithClient := context.WithValue(ctx, "entClient", r.client)
+			entity, err := finder(ctxWithClient, uniqueID)
+			if err == nil {
+				r.logger.Debug("Found entity via relationships inference", "uniqueID", uniqueID, "inferredType", inferredType)
+				if de, ok := entity.(*ent.DiscoveredEntity); ok {
+					return de, nil
+				}
+			}
+		}
+	}
+
+	// Tier 3: Parallel search across all promoted tables
+	r.logger.Debug("Trying parallel search across promoted tables", "uniqueID", uniqueID)
+
+	type result struct {
+		entity *ent.DiscoveredEntity
+		err    error
+	}
+
+	resultChan := make(chan result, len(registry.PromotedFinders))
+	searchCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, 5) // Max 5 concurrent queries
+
+	for typeName, finder := range registry.PromotedFinders {
+		wg.Add(1)
+		go func(name string, fn registry.EntityFinder) {
+			defer wg.Done()
+
+			// Acquire semaphore
+			select {
+			case semaphore <- struct{}{}:
+				defer func() { <-semaphore }()
+			case <-searchCtx.Done():
+				return
+			}
+
+			// Check if context canceled (early exit on first match)
+			select {
+			case <-searchCtx.Done():
+				return
+			default:
+			}
+
+			ctxWithClient := context.WithValue(searchCtx, "entClient", r.client)
+			entity, err := fn(ctxWithClient, uniqueID)
+
+			if err == nil {
+				if de, ok := entity.(*ent.DiscoveredEntity); ok {
+					select {
+					case resultChan <- result{entity: de, err: nil}:
+						cancel() // Cancel other searches on first match
+					case <-searchCtx.Done():
+					}
+				}
+			}
+		}(typeName, finder)
+	}
+
+	// Close result channel when all goroutines complete
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	// Wait for first result or all searches to complete
+	for res := range resultChan {
+		if res.err == nil {
+			r.logger.Debug("Found entity via parallel search", "uniqueID", uniqueID)
+			return res.entity, nil
+		}
+	}
+
+	// Not found anywhere
+	return nil, &ent.NotFoundError{}
 }
 
-// FindEntitiesByType finds entities by type category
-// If typeCategory is empty, returns all entities
-func (r *entRepository) FindEntitiesByType(ctx context.Context, typeCategory string) ([]*ent.DiscoveredEntity, error) {
+// FindEntitiesByType finds entities by type category.
+// Optional typeHint parameter enables querying promoted tables directly.
+// If type is promoted, queries promoted table; otherwise queries discovered_entities.
+// If typeCategory is empty, returns all entities from discovered_entities.
+func (r *entRepository) FindEntitiesByType(ctx context.Context, typeCategory string, typeHint ...string) ([]*ent.DiscoveredEntity, error) {
+	// TODO: Implement type-aware lookup (section 5)
+	// For now, just query discovered_entities
 	query := r.client.DiscoveredEntity.Query()
 	if typeCategory != "" {
 		query = query.Where(discoveredentity.TypeCategoryEQ(typeCategory))

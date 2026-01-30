@@ -3,13 +3,15 @@ This template generates registry initialization code for all Ent schemas.
 
 The generated code provides:
 1. EntityCreator functions for each schema that can create entities from property maps
-2. An init() function that registers all schemas with the global registry
+2. EntityFinder functions for each schema that can find entities by unique_id
+3. An init() function that registers all creators and finders with the global registry
 
 Usage in the promotion workflow:
 - When a new schema is promoted, `go generate ./ent` runs this template
 - The template generates registration code in ent/registry.go
 - The init() function runs at application startup, populating the registry
 - The extractor can then route entities to promoted tables via the registry
+- The repository can find entities in promoted tables via the finder registry
 
 Limitations:
 - Currently supports only scalar field types (string, int, float64, bool)
@@ -33,6 +35,9 @@ import (
 	"fmt"
 	
 	"github.com/Blogem/enron-graph/internal/registry"
+	{{ range $n := $.Nodes }}
+	"github.com/Blogem/enron-graph/ent/{{ lower $n.Name }}"
+	{{ end }}
 )
 
 {{/* Generate a creator function for each schema */}}
@@ -98,16 +103,64 @@ func create{{ $n.Name }}(ctx context.Context, data map[string]any) (any, error) 
 }
 {{ end }}
 
+{{/* Generate a finder function for each schema that has unique_id */}}
+{{ range $n := $.Nodes }}
+{{ $hasUniqueID := false }}
+{{ range $f := $n.Fields }}
+{{ if eq $f.Name "unique_id" }}
+{{ $hasUniqueID = true }}
+{{ end }}
+{{ end }}
+{{ if $hasUniqueID }}
+// find{{ $n.Name }} finds a {{ $n.Name }} entity by unique_id.
+//
+// This function is called by the repository when performing type-aware lookups.
+// It extracts the Ent client from the context and queries the promoted table
+// by the unique_id field.
+//
+// Returns the found entity or an error (sql.ErrNoRows if not found).
+func find{{ $n.Name }}(ctx context.Context, uniqueID string) (any, error) {
+	// Extract Ent client from context
+	client, ok := ctx.Value("entClient").(*Client)
+	if !ok || client == nil {
+		return nil, fmt.Errorf("ent client not found in context")
+	}
+	
+	// Query by unique_id
+	entity, err := client.{{ $n.Name }}.
+		Query().
+		Where({{ lower $n.Name }}.UniqueIDEQ(uniqueID)).
+		Only(ctx)
+	
+	if err != nil {
+		return nil, err
+	}
+	
+	return entity, nil
+}
+{{ end }}
+{{ end }}
+
 {{/* Generate init function that registers all schemas */}}
 // init registers all Ent schemas with the promoted types registry.
 // This function runs automatically at application startup, populating the
-// global registry with EntityCreator functions for each schema.
+// global registry with EntityCreator and EntityFinder functions for each schema.
 //
 // The registry enables the extractor to route discovered entities to their
-// promoted schemas instead of always using the generic DiscoveredEntity table.
+// promoted schemas instead of always using the generic DiscoveredEntity table,
+// and enables the repository to find entities in promoted tables.
 func init() {
 	{{ range $n := $.Nodes }}
 	registry.Register("{{ $n.Name }}", create{{ $n.Name }})
+	{{ $hasUniqueID := false }}
+	{{ range $f := $n.Fields }}
+	{{ if eq $f.Name "unique_id" }}
+	{{ $hasUniqueID = true }}
+	{{ end }}
+	{{ end }}
+	{{ if $hasUniqueID }}
+	registry.RegisterFinder("{{ $n.Name }}", find{{ $n.Name }})
+	{{ end }}
 	{{ end }}
 }
 

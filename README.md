@@ -629,13 +629,42 @@ See [DATABASE.md](DATABASE.md) for detailed database schema and query patterns.
 - **Flexible Schema**: `DiscoveredEntity` table with JSONB properties allows schema evolution
 - **Vector Search**: pgvector extension enables semantic similarity queries
 - **Relationship Model**: Polymorphic relationships support connections between any entity types
+- **Type-Aware Queries**: Repository methods accept optional type hints for O(1) promoted table lookups
+  - **With type hint**: Direct query to promoted table (e.g., `persons`, `organizations`)
+  - **Without type hint**: Three-tier fallback strategy:
+    1. Query `discovered_entities` (most common case, ~90%)
+    2. Infer type from `relationships` table metadata
+    3. Parallel search across all promoted tables (max 5 concurrent queries)
+  - **Backward compatible**: Existing code works without changes (type hint is optional)
 - **Promoted Types Registry**: Dynamic registry automatically routes entities to promoted schemas
-  - When a type is promoted, code generation creates registration functions
+  - When a type is promoted, code generation creates both `EntityCreator` and `EntityFinder` functions
   - Extractor checks registry first before falling back to `DiscoveredEntity`
+  - Repository uses registry finders for type-aware lookups
   - Registry updates automatically during the promotion workflow
   - Supports seamless transition from generic to typed entity storage
+- **Promotion Workflow Integrity**: Automatic relationship updates maintain graph consistency
+  - **ID Mapping**: PostgreSQL RETURNING clause tracks old ID → new promoted table ID
+  - **Relationship Updates**: Atomic updates to both `from_type`/`from_id` and `to_type`/`to_id`
+  - **Transaction Safety**: All promotion steps (INSERT, UPDATE, DELETE) in single transaction
+  - **Optional Cleanup**: Migrated entities can be deleted from `discovered_entities`
 - **Concurrency**: Worker pools for parallel processing of emails and extractions
 - **Testing**: Comprehensive integration tests validate data integrity and performance
+
+### Type-Aware Query Examples
+
+```go
+// Example 1: With type hint (O(1) lookup)
+person, err := repo.FindEntityByUniqueID(ctx, "john.doe@enron.com", "Person")
+
+// Example 2: Without type hint (three-tier fallback)
+entity, err := repo.FindEntityByUniqueID(ctx, "john.doe@enron.com")
+
+// Example 3: Passing type hint in extractor
+entity, err := repo.FindEntityByUniqueID(ctx, extractedEntity.UniqueID, extractedEntity.TypeCategory)
+
+// Example 4: Querying promoted tables by type
+persons, err := repo.FindEntitiesByType(ctx, "person", "Person")
+```
 
 ## Testing
 
