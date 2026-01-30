@@ -650,17 +650,19 @@ function App() {
                 {activeView === 'analyst' && (
                     <div className="app-container analyst-view">
                         <ErrorBoundary componentName="Entity Analysis">
-                            {!promotingTypeName ? (
-                                <EntityAnalysis onPromote={handlePromote} />
-                            ) : (
+                            <EntityAnalysis onPromote={handlePromote} />
+                        </ErrorBoundary>
+
+                        {promotingTypeName && (
+                            <ErrorBoundary componentName="Entity Promotion">
                                 <EntityPromotion
                                     typeName={promotingTypeName}
                                     onCancel={handlePromotionCancel}
                                     onSuccess={handlePromotionSuccess}
                                     onViewInGraph={handleViewInGraph}
                                 />
-                            )}
-                        </ErrorBoundary>
+                            </ErrorBoundary>
+                        )}
 
                         {/* Toast notification */}
                         {showToast && (

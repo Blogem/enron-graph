@@ -111,8 +111,10 @@ func GenerateFieldDefinitions(schema SchemaDefinition) []FieldDefinition {
 const entSchemaTemplate = `package schema
 
 import (
+{{- if .NeedsRegexp }}
 	"regexp"
 
+{{- end }}
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
 )
@@ -126,7 +128,8 @@ type {{ .TypeName }} struct {
 func ({{ .TypeName }}) Fields() []ent.Field {
 	return []ent.Field{
 {{- range .Fields }}
-		field.{{ .Type }}("{{ .Name }}"){{- if .Required }}.
+		field.{{ .Type }}("{{ .Name }}"){{- if not .Required }}.
+			Optional(){{- else }}.
 			NotEmpty(){{- end }}{{- range .Validators }}.
 			{{ . }}{{- end }},
 {{- end }}
@@ -141,8 +144,9 @@ func ({{ .TypeName }}) Edges() []ent.Edge {
 
 // TemplateData holds data for the ent schema template
 type TemplateData struct {
-	TypeName string
-	Fields   []struct {
+	TypeName    string
+	NeedsRegexp bool
+	Fields      []struct {
 		Name       string
 		Type       string
 		Required   bool
@@ -157,7 +161,8 @@ func GenerateEntSchemaFile(schema SchemaDefinition, outputDir string) error {
 
 	// Prepare template data
 	data := TemplateData{
-		TypeName: strings.Title(schema.Type),
+		TypeName:    strings.Title(schema.Type),
+		NeedsRegexp: false,
 		Fields: make([]struct {
 			Name       string
 			Type       string
@@ -167,6 +172,16 @@ func GenerateEntSchemaFile(schema SchemaDefinition, outputDir string) error {
 	}
 
 	for _, field := range fieldDefs {
+		validators := ConvertValidationRules(field.ValidationRules)
+
+		// Check if any validator uses regexp
+		for _, v := range validators {
+			if strings.Contains(v, "regexp.MustCompile") {
+				data.NeedsRegexp = true
+				break
+			}
+		}
+
 		templateField := struct {
 			Name       string
 			Type       string
@@ -176,7 +191,7 @@ func GenerateEntSchemaFile(schema SchemaDefinition, outputDir string) error {
 			Name:       field.Name,
 			Type:       field.Type,
 			Required:   field.Required,
-			Validators: ConvertValidationRules(field.ValidationRules),
+			Validators: validators,
 		}
 		data.Fields = append(data.Fields, templateField)
 	}

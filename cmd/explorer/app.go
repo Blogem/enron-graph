@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/Blogem/enron-graph/internal/promoter"
 	"github.com/Blogem/enron-graph/pkg/llm"
 	"github.com/Blogem/enron-graph/pkg/utils"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -338,3 +340,48 @@ func convertPropertiesToPropertyInfo(schema *analyst.SchemaDefinition) []Propert
 
 	return properties
 }
+
+// RegenerateAndReload regenerates Ent code and triggers a Wails rebuild
+// This should be called after promoting a new entity type
+func (a *App) RegenerateAndReload() error {
+	projectRoot, err := a.calculateProjectRoot()
+	if err != nil {
+		return fmt.Errorf("failed to find project root: %w", err)
+	}
+
+	// Run Ent code generator
+	entDir := filepath.Join(projectRoot, "ent")
+	cmd := exec.CommandContext(a.ctx, "go", "run", "../cmd/entgen")
+	cmd.Dir = entDir
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("ent generation failed: %w\nOutput: %s", err, string(output))
+	}
+
+	// Trigger Wails rebuild by modifying app.go
+	// This is more reliable than just touching the file
+	appFile := filepath.Join(projectRoot, "cmd", "explorer", "app.go")
+
+	// Read the current file
+	content, err := os.ReadFile(appFile)
+	if err != nil {
+		return fmt.Errorf("failed to read app.go: %w", err)
+	}
+
+	// Add a timestamp comment to trigger rebuild
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	newContent := string(content) + fmt.Sprintf("\n// Auto-rebuild triggered at %s\n", timestamp)
+
+	// Write back with the timestamp
+	if err := os.WriteFile(appFile, []byte(newContent), 0644); err != nil {
+		return fmt.Errorf("failed to write app.go: %w", err)
+	}
+
+	// Show notification to user
+	runtime.EventsEmit(a.ctx, "reload-triggered", "Application is rebuilding with new schema...")
+
+	return nil
+}
+
+// Auto-rebuild triggered at 2026-01-30 21:26:45
