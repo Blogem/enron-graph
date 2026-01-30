@@ -57,18 +57,18 @@ func (r *ReadOnlyRepository) CreateDiscoveredEntity(ctx context.Context, entity 
 }
 
 // FindEntityByID delegates to base repository (read operation)
-func (r *ReadOnlyRepository) FindEntityByID(ctx context.Context, id int) (*ent.DiscoveredEntity, error) {
-	return r.base.FindEntityByID(ctx, id)
+func (r *ReadOnlyRepository) FindEntityByID(ctx context.Context, id int, typeHint ...string) (*ent.DiscoveredEntity, error) {
+	return r.base.FindEntityByID(ctx, id, typeHint...)
 }
 
 // FindEntityByUniqueID delegates to base repository (read operation)
-func (r *ReadOnlyRepository) FindEntityByUniqueID(ctx context.Context, uniqueID string) (*ent.DiscoveredEntity, error) {
-	return r.base.FindEntityByUniqueID(ctx, uniqueID)
+func (r *ReadOnlyRepository) FindEntityByUniqueID(ctx context.Context, uniqueID string, typeHint ...string) (*ent.DiscoveredEntity, error) {
+	return r.base.FindEntityByUniqueID(ctx, uniqueID, typeHint...)
 }
 
 // FindEntitiesByType delegates to base repository (read operation)
-func (r *ReadOnlyRepository) FindEntitiesByType(ctx context.Context, typeCategory string) ([]*ent.DiscoveredEntity, error) {
-	return r.base.FindEntitiesByType(ctx, typeCategory)
+func (r *ReadOnlyRepository) FindEntitiesByType(ctx context.Context, typeCategory string, typeHint ...string) ([]*ent.DiscoveredEntity, error) {
+	return r.base.FindEntitiesByType(ctx, typeCategory, typeHint...)
 }
 
 // GetDistinctEntityTypes delegates to base repository (read operation)

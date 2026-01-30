@@ -15,9 +15,22 @@ type Repository interface {
 
 	// Entity operations
 	CreateDiscoveredEntity(ctx context.Context, entity *EntityInput) (*ent.DiscoveredEntity, error)
-	FindEntityByID(ctx context.Context, id int) (*ent.DiscoveredEntity, error)
-	FindEntityByUniqueID(ctx context.Context, uniqueID string) (*ent.DiscoveredEntity, error)
-	FindEntitiesByType(ctx context.Context, typeCategory string) ([]*ent.DiscoveredEntity, error)
+
+	// FindEntityByID finds an entity by its database ID.
+	// Optional typeHint parameter enables direct table lookup when entity type is known.
+	// Fallback strategy: type hint → relationships inference → generic discovery.
+	FindEntityByID(ctx context.Context, id int, typeHint ...string) (*ent.DiscoveredEntity, error)
+
+	// FindEntityByUniqueID finds an entity by its unique identifier.
+	// Optional typeHint parameter enables O(1) direct table lookup when entity type is known.
+	// Fallback strategy: type hint → discovered_entities → relationships inference → parallel search.
+	FindEntityByUniqueID(ctx context.Context, uniqueID string, typeHint ...string) (*ent.DiscoveredEntity, error)
+
+	// FindEntitiesByType returns all entities of a given type.
+	// Optional typeHint parameter enables querying promoted tables directly.
+	// If type is promoted, queries promoted table; otherwise queries discovered_entities.
+	FindEntitiesByType(ctx context.Context, typeCategory string, typeHint ...string) ([]*ent.DiscoveredEntity, error)
+
 	GetDistinctEntityTypes(ctx context.Context) ([]string, error)
 
 	// Relationship operations

@@ -28,14 +28,14 @@ func newMockRepository() *mockRepository {
 	}
 }
 
-func (m *mockRepository) FindEntityByID(ctx context.Context, id int) (*ent.DiscoveredEntity, error) {
+func (m *mockRepository) FindEntityByID(ctx context.Context, id int, typeHint ...string) (*ent.DiscoveredEntity, error) {
 	if entity, ok := m.entities[id]; ok {
 		return entity, nil
 	}
 	return nil, &ent.NotFoundError{}
 }
 
-func (m *mockRepository) FindEntitiesByType(ctx context.Context, typeCategory string) ([]*ent.DiscoveredEntity, error) {
+func (m *mockRepository) FindEntitiesByType(ctx context.Context, typeCategory string, typeHint ...string) ([]*ent.DiscoveredEntity, error) {
 	var results []*ent.DiscoveredEntity
 	for _, entity := range m.entities {
 		if typeCategory == "" || entity.TypeCategory == typeCategory {

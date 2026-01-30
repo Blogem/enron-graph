@@ -1,6 +1,5 @@
-# Add chat interface
+# Chat interface
 
-- Have buffer in chat input, so i can do arrow up to go to my previous inputs
 - Use tools instead of prompt to force json output from LLM.
 
 # Data lineage
@@ -10,5 +9,5 @@
 
 # Loader
 
-- Use tools instead of prompt to force json output from LLM.
 - Load inside the GUI. Show progress, scroll discovered entities and relations.
+- Use tools instead of prompt to force json output from LLM.
