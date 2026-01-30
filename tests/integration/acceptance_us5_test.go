@@ -59,11 +59,11 @@ func TestUS5_T130_ChatProcessesNaturalLanguageQueries(t *testing.T) {
 			require.NoError(t, err, "Failed to process query: %s", tc.query)
 			require.NotEmpty(t, response, "Response should not be empty")
 
-			// Verify the response is valid (contains entity type marker)
-			// Don't enforce specific entity names - mock LLM pattern matching is imperfect
-			hasEntityInfo := strings.Contains(response, "(person)") ||
-				strings.Contains(response, "(organization)") ||
-				strings.Contains(response, "Properties:")
+			// Verify the response is valid JSON with entity information
+			// The response is now JSON-formatted (FormattedResponse)
+			hasEntityInfo := strings.Contains(response, `"entities"`) &&
+				(strings.Contains(response, `"type":"person"`) ||
+					strings.Contains(response, `"type":"organization"`))
 			assert.True(t, hasEntityInfo,
 				"Response should contain entity information for query '%s'", tc.query)
 
@@ -120,11 +120,11 @@ func TestUS5_T131_EntityLookupQueries(t *testing.T) {
 			response, err := handler.ProcessQuery(ctx, tc.query, chatContext)
 			require.NoError(t, err, "Failed to process entity lookup query")
 
-			// Verify the response contains entity information (not which specific entity)
-			// Mock LLM pattern matching can be imperfect, so just verify structure
-			hasEntityInfo := strings.Contains(response, "(person)") ||
-				strings.Contains(response, "(organization)") ||
-				strings.Contains(response, "Properties:")
+			// Verify the response contains entity information (JSON format)
+			// The response is FormattedResponse JSON with entities array
+			hasEntityInfo := strings.Contains(response, `"entities"`) &&
+				(strings.Contains(response, `"type":"person"`) ||
+					strings.Contains(response, `"type":"organization"`))
 			assert.True(t, hasEntityInfo,
 				"Response should contain entity information")
 			assert.NotEmpty(t, response, "Response should not be empty")

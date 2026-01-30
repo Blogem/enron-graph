@@ -258,3 +258,24 @@ func (m *MockLLMClient) GenerateEmbeddings(ctx context.Context, texts []string) 
 func (m *MockLLMClient) Close() error {
 	return nil
 }
+
+// Note: Registry integration tests (T3.1-3.5) are implemented in tests/integration/registry_test.go
+// These tests require:
+// 1. Real database with Ent client
+// 2. Generated test schema (TestPerson) that doesn't exist in production code
+// 3. Full registry initialization via generated code
+//
+// Unit testing the registry routing in isolation would require extensive mocking of:
+// - Ent client and context
+// - Repository interface
+// - Registry map state
+// - Generated EntityCreator functions
+//
+// The integration tests provide better coverage by testing the actual workflow:
+// - TestRegistryCodegenIntegration: Verifies code generation creates registrations
+// - TestRegistryEntityCreation: Verifies registry creators work with real Ent client
+// - TestRegistryNilFieldHandling: Verifies nil/missing field handling
+// - TestRegistryErrorHandling: Verifies error cases and fallback behavior
+// - TestPromotedTypeEndToEnd: Verifies complete extract → route workflow
+//
+// Run these tests via: ./scripts/test-registry.sh

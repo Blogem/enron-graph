@@ -32,6 +32,9 @@ type Repository interface {
 	// Vector search
 	SimilaritySearch(ctx context.Context, embedding []float32, topK int, threshold float64) ([]*ent.DiscoveredEntity, error)
 
+	// Get the underlying Ent client (for registry creators)
+	GetClient() *ent.Client
+
 	// Close the database connection
 	Close() error
 }
