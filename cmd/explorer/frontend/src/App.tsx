@@ -10,11 +10,22 @@ import LoadingSkeleton from './components/LoadingSkeleton';
 import Tooltip from './components/Tooltip';
 import KeyboardHelp from './components/KeyboardHelp';
 import ChatPanel from './components/ChatPanel';
+import EntityAnalysis from './components/EntityAnalysis';
+import EntityPromotion from './components/EntityPromotion';
 import { wailsAPI } from './services/wails';
 import type { explorer } from './wailsjs/go/models';
 import type { GraphData, GraphNodeWithPosition, ExpandedNodeState, NodeFilter, GraphEdge } from './types/graph';
 
 function App() {
+    // View state - Track active view (graph, analyst, chat)
+    const [activeView, setActiveView] = useState<'graph' | 'analyst'>('graph');
+
+    // Analyst state
+    const [promotingTypeName, setPromotingTypeName] = useState<string | null>(null);
+    const [showToast, setShowToast] = useState<boolean>(false);
+    const [toastMessage, setToastMessage] = useState<string>('');
+
+
     // Schema state
     const [schema, setSchema] = useState<explorer.SchemaResponse | null>(null);
     const [schemaLoading, setSchemaLoading] = useState<boolean>(true);
@@ -69,6 +80,23 @@ function App() {
             loadRandomNodes(limit);
         }
     }, [activeFilter]);
+
+    // Keyboard shortcuts for view switching
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            // Alt+1 for Graph, Alt+2 for Analyst
+            if (e.altKey && e.key === '1') {
+                e.preventDefault();
+                setActiveView('graph');
+            } else if (e.altKey && e.key === '2') {
+                e.preventDefault();
+                setActiveView('analyst');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, []);
 
     const loadSchema = async () => {
         try {
@@ -436,147 +464,222 @@ function App() {
         }
     }, [graphData.nodes, handleNodeClick]);
 
+    // Analyst handlers
+    const handlePromote = useCallback((typeName: string) => {
+        setPromotingTypeName(typeName);
+    }, []);
+
+    const handlePromotionCancel = useCallback(() => {
+        setPromotingTypeName(null);
+    }, []);
+
+    const handlePromotionSuccess = useCallback(async () => {
+        // Show success toast
+        setToastMessage('Entity type promoted successfully!');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+
+        // Refresh schema
+        await handleRefreshSchema();
+
+        // Close promotion dialog
+        setPromotingTypeName(null);
+    }, []);
+
+    const handleViewInGraph = useCallback((typeName: string) => {
+        // Switch to graph view
+        setActiveView('graph');
+        // Close promotion dialog
+        setPromotingTypeName(null);
+        // Could optionally filter graph by this type here in the future
+    }, []);
+
     return (
         <ErrorBoundary componentName="Graph Explorer Application">
             <div id="App">
                 <div className="app-header">
                     <h1>Graph Explorer</h1>
+                    <div className="nav-tabs">
+                        <button
+                            className={`nav-tab ${activeView === 'graph' ? 'active' : ''}`}
+                            onClick={() => setActiveView('graph')}
+                            aria-label="Switch to Graph view"
+                        >
+                            Graph
+                        </button>
+                        <button
+                            className={`nav-tab ${activeView === 'analyst' ? 'active' : ''}`}
+                            onClick={() => setActiveView('analyst')}
+                            aria-label="Switch to Analyst view"
+                        >
+                            Analyst
+                        </button>
+                    </div>
                 </div>
-                <div className="app-container">
-                    <div className="sidebar">
-                        <ErrorBoundary
-                            componentName="Schema Panel"
-                            resetKeys={[schema?.promoted_types?.length || 0, schema?.discovered_types?.length || 0]}
-                        >
-                            <SchemaPanel
-                                schema={schema}
-                                loading={schemaLoading}
-                                error={schemaError}
-                                selectedTypeName={selectedTypeName}
-                                onRefresh={handleRefreshSchema}
-                                onTypeClick={handleTypeClick}
-                            />
-                        </ErrorBoundary>
-                    </div>
-                    <div className="main-content">
-                        <ErrorBoundary
-                            componentName="Filter Bar"
-                            resetKeys={[schema?.promoted_types?.length || 0]}
-                        >
-                            <FilterBar
-                                schema={schema}
-                                onFilterChange={handleFilterChange}
-                                initialFilter={activeFilter}
-                            />
-                        </ErrorBoundary>
-                        <ErrorBoundary
-                            componentName="Graph Canvas"
-                            resetKeys={[graphData.nodes.length, graphData.links.length]}
-                        >
-                            {graphLoading && <LoadingSkeleton type="graph" />}
-                            {graphError && (
-                                <div className="error-message">
-                                    <p>⚠️ {graphError}</p>
-                                    <button onClick={() => loadRandomNodes(1000)} aria-label="Retry loading nodes">Retry</button>
-                                </div>
-                            )}
-                            {!graphLoading && !graphError && graphData.nodes.length > 0 && (
-                                <GraphCanvas
-                                    data={graphData}
-                                    selectedNodeId={selectedNode?.id || null}
-                                    highlightedNodeIds={highlightedNodeIds}
-                                    expandedNodes={expandedNodes}
-                                    onNodeClick={handleNodeClick}
-                                    onNodeRightClick={handleNodeRightClick}
-                                    onLoadMore={handleLoadMore}
-                                    onRecenterRef={(fn) => { graphRecenterRef.current = fn; }}
-                                    onCenterNodeRef={(fn) => { graphCenterNodeRef.current = fn; }}
-                                />
-                            )}
-                            {!graphLoading && !graphError && graphData.nodes.length === 0 && (
-                                <div className="loading-overlay">
-                                    <p>No nodes to display</p>
-                                </div>
-                            )}
-                        </ErrorBoundary>
-                    </div>
-                    {(selectedNode || selectedType) && (
-                        <div className="sidebar-right">
+                {activeView === 'graph' && (
+                    <div className="app-container">
+                        <div className="sidebar">
                             <ErrorBoundary
-                                componentName="Detail Panel"
-                                resetKeys={[selectedNode?.id || '', selectedType?.name || '']}
+                                componentName="Schema Panel"
+                                resetKeys={[schema?.promoted_types?.length || 0, schema?.discovered_types?.length || 0]}
                             >
-                                {selectedType ? (
-                                    <div className="type-details-panel">
-                                        <div className="detail-header">
-                                            <div className="detail-title">
-                                                <h2>{selectedType.name}</h2>
-                                                <span className={`type-badge ${selectedType.name.toLowerCase()}`}>
-                                                    {selectedType.count} instances
-                                                </span>
-                                            </div>
-                                            <button className="close-button" onClick={() => { setSelectedType(null); setSelectedTypeName(null); }} title="Close (Escape)" aria-label="Close type details">
-                                                ✕
-                                            </button>
-                                        </div>
-                                        {detailsLoading ? (
-                                            <div className="detail-loading">
-                                                <div className="spinner-large"></div>
-                                                <p>Loading type details...</p>
-                                            </div>
-                                        ) : (
-                                            <div className="detail-content">
-                                                <div className="detail-section">
-                                                    <h3>Properties ({selectedType.properties?.length || 0})</h3>
-                                                    {selectedType.properties && selectedType.properties.length > 0 ? (
-                                                        <div className="properties-list">
-                                                            {selectedType.properties.map((prop: any, idx: number) => (
-                                                                <div key={idx} className="property-item">
-                                                                    <div className="property-key">{prop.name}</div>
-                                                                    <div className="property-meta">
-                                                                        <span className="property-type">{prop.data_type}</span>
-                                                                        {prop.sample_value && prop.sample_value.length > 0 && (
-                                                                            <div className="sample-values">
-                                                                                <strong>Samples:</strong>
-                                                                                <ul>
-                                                                                    {prop.sample_value.slice(0, 3).map((val: any, i: number) => (
-                                                                                        <li key={i}>{String(val)}</li>
-                                                                                    ))}
-                                                                                </ul>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <p className="empty-message">No properties defined</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
+                                <SchemaPanel
+                                    schema={schema}
+                                    loading={schemaLoading}
+                                    error={schemaError}
+                                    selectedTypeName={selectedTypeName}
+                                    onRefresh={handleRefreshSchema}
+                                    onTypeClick={handleTypeClick}
+                                />
+                            </ErrorBoundary>
+                        </div>
+                        <div className="main-content">
+                            <ErrorBoundary
+                                componentName="Filter Bar"
+                                resetKeys={[schema?.promoted_types?.length || 0]}
+                            >
+                                <FilterBar
+                                    schema={schema}
+                                    onFilterChange={handleFilterChange}
+                                    initialFilter={activeFilter}
+                                />
+                            </ErrorBoundary>
+                            <ErrorBoundary
+                                componentName="Graph Canvas"
+                                resetKeys={[graphData.nodes.length, graphData.links.length]}
+                            >
+                                {graphLoading && <LoadingSkeleton type="graph" />}
+                                {graphError && (
+                                    <div className="error-message">
+                                        <p>⚠️ {graphError}</p>
+                                        <button onClick={() => loadRandomNodes(1000)} aria-label="Retry loading nodes">Retry</button>
                                     </div>
-                                ) : (
-                                    <DetailPanel
-                                        node={selectedNode}
-                                        loading={loadingNodeId === selectedNode?.id}
-                                        expandedNodeState={selectedNode ? expandedNodes.get(selectedNode.id) || null : null}
+                                )}
+                                {!graphLoading && !graphError && graphData.nodes.length > 0 && (
+                                    <GraphCanvas
+                                        data={graphData}
+                                        selectedNodeId={selectedNode?.id || null}
+                                        highlightedNodeIds={highlightedNodeIds}
+                                        expandedNodes={expandedNodes}
+                                        onNodeClick={handleNodeClick}
+                                        onNodeRightClick={handleNodeRightClick}
                                         onLoadMore={handleLoadMore}
-                                        onClose={handleCloseDetail}
-                                        relatedEntities={relatedEntities}
-                                        onExpandRelationship={handleExpandRelationship}
+                                        onRecenterRef={(fn) => { graphRecenterRef.current = fn; }}
+                                        onCenterNodeRef={(fn) => { graphCenterNodeRef.current = fn; }}
                                     />
+                                )}
+                                {!graphLoading && !graphError && graphData.nodes.length === 0 && (
+                                    <div className="loading-overlay">
+                                        <p>No nodes to display</p>
+                                    </div>
                                 )}
                             </ErrorBoundary>
                         </div>
-                    )}
-                </div>
-                <ChatPanel
-                    initialCollapsed={chatPanelCollapsed}
-                    onCollapseChange={setChatPanelCollapsed}
-                    onEntityClick={handleEntityClick}
-                />
-                <KeyboardHelp chatPanelCollapsed={chatPanelCollapsed} />
+                        {(selectedNode || selectedType) && (
+                            <div className="sidebar-right">
+                                <ErrorBoundary
+                                    componentName="Detail Panel"
+                                    resetKeys={[selectedNode?.id || '', selectedType?.name || '']}
+                                >
+                                    {selectedType ? (
+                                        <div className="type-details-panel">
+                                            <div className="detail-header">
+                                                <div className="detail-title">
+                                                    <h2>{selectedType.name}</h2>
+                                                    <span className={`type-badge ${selectedType.name.toLowerCase()}`}>
+                                                        {selectedType.count} instances
+                                                    </span>
+                                                </div>
+                                                <button className="close-button" onClick={() => { setSelectedType(null); setSelectedTypeName(null); }} title="Close (Escape)" aria-label="Close type details">
+                                                    ✕
+                                                </button>
+                                            </div>
+                                            {detailsLoading ? (
+                                                <div className="detail-loading">
+                                                    <div className="spinner-large"></div>
+                                                    <p>Loading type details...</p>
+                                                </div>
+                                            ) : (
+                                                <div className="detail-content">
+                                                    <div className="detail-section">
+                                                        <h3>Properties ({selectedType.properties?.length || 0})</h3>
+                                                        {selectedType.properties && selectedType.properties.length > 0 ? (
+                                                            <div className="properties-list">
+                                                                {selectedType.properties.map((prop: any, idx: number) => (
+                                                                    <div key={idx} className="property-item">
+                                                                        <div className="property-key">{prop.name}</div>
+                                                                        <div className="property-meta">
+                                                                            <span className="property-type">{prop.data_type}</span>
+                                                                            {prop.sample_value && prop.sample_value.length > 0 && (
+                                                                                <div className="sample-values">
+                                                                                    <strong>Samples:</strong>
+                                                                                    <ul>
+                                                                                        {prop.sample_value.slice(0, 3).map((val: any, i: number) => (
+                                                                                            <li key={i}>{String(val)}</li>
+                                                                                        ))}
+                                                                                    </ul>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="empty-message">No properties defined</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <DetailPanel
+                                            node={selectedNode}
+                                            loading={loadingNodeId === selectedNode?.id}
+                                            expandedNodeState={selectedNode ? expandedNodes.get(selectedNode.id) || null : null}
+                                            onLoadMore={handleLoadMore}
+                                            onClose={handleCloseDetail}
+                                            relatedEntities={relatedEntities}
+                                            onExpandRelationship={handleExpandRelationship}
+                                        />
+                                    )}
+                                </ErrorBoundary>
+                            </div>
+                        )}
+                    </div>
+                )}
+                {activeView === 'analyst' && (
+                    <div className="app-container analyst-view">
+                        <ErrorBoundary componentName="Entity Analysis">
+                            {!promotingTypeName ? (
+                                <EntityAnalysis onPromote={handlePromote} />
+                            ) : (
+                                <EntityPromotion
+                                    typeName={promotingTypeName}
+                                    onCancel={handlePromotionCancel}
+                                    onSuccess={handlePromotionSuccess}
+                                    onViewInGraph={handleViewInGraph}
+                                />
+                            )}
+                        </ErrorBoundary>
+
+                        {/* Toast notification */}
+                        {showToast && (
+                            <div className="toast-notification">
+                                {toastMessage}
+                            </div>
+                        )}
+                    </div>
+                )}
+                {activeView === 'graph' && (
+                    <>
+                        <ChatPanel
+                            initialCollapsed={chatPanelCollapsed}
+                            onCollapseChange={setChatPanelCollapsed}
+                            onEntityClick={handleEntityClick}
+                        />
+                        <KeyboardHelp chatPanelCollapsed={chatPanelCollapsed} />
+                    </>
+                )}
             </div>
         </ErrorBoundary>
     );

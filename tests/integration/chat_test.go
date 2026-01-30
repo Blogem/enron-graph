@@ -176,6 +176,20 @@ func (m *mockLLMClient) GenerateEmbedding(ctx context.Context, text string) ([]f
 	return make([]float32, 768), nil
 }
 
+func (m *mockLLMClient) GenerateEmbeddings(ctx context.Context, texts []string) ([][]float32, error) {
+	// Return zero embeddings for testing
+	result := make([][]float32, len(texts))
+	for i := range texts {
+		result[i] = make([]float32, 768)
+	}
+	return result, nil
+}
+
+func (m *mockLLMClient) Close() error {
+	// No resources to clean up
+	return nil
+}
+
 // contains checks if haystack contains needle (case-insensitive)
 func contains(haystack, needle string) bool {
 	return len(haystack) >= len(needle) &&

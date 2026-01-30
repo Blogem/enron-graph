@@ -19,6 +19,7 @@ func NewAppWithStub(client *ent.Client, db *sql.DB, cfg *utils.Config, llmClient
 
 	return &App{
 		client:        client,
+		db:            db,
 		config:        cfg,
 		schemaService: explorer.NewSchemaService(client, db),
 		graphService:  explorer.NewGraphService(client, db, llmClient),

@@ -629,8 +629,55 @@ See [DATABASE.md](DATABASE.md) for detailed database schema and query patterns.
 - **Flexible Schema**: `DiscoveredEntity` table with JSONB properties allows schema evolution
 - **Vector Search**: pgvector extension enables semantic similarity queries
 - **Relationship Model**: Polymorphic relationships support connections between any entity types
+- **Promoted Types Registry**: Dynamic registry automatically routes entities to promoted schemas
+  - When a type is promoted, code generation creates registration functions
+  - Extractor checks registry first before falling back to `DiscoveredEntity`
+  - Registry updates automatically during the promotion workflow
+  - Supports seamless transition from generic to typed entity storage
 - **Concurrency**: Worker pools for parallel processing of emails and extractions
 - **Testing**: Comprehensive integration tests validate data integrity and performance
+
+## Testing
+
+### Running Tests
+
+**Unit Tests**:
+```bash
+# Run all unit tests
+go test ./...
+
+# Run specific package tests
+go test ./internal/registry -v
+```
+
+**Note**: Registry integration tests are automatically excluded from `go test ./...` runs.
+
+**Integration Tests**:
+```bash
+# Run all integration tests (excludes registry tests)
+go test ./tests/integration/... -v
+
+# Run registry integration tests (requires special setup)
+./scripts/test-registry.sh
+```
+
+**Registry Integration Tests**:
+
+The registry integration tests use a build tag (`registry`) to exclude them from normal test runs. This means you never have to think about them when running `go test ./...`.
+
+To run them explicitly:
+```bash
+./scripts/test-registry.sh
+```
+
+The script handles everything automatically:
+- Creates the TestPerson schema dynamically
+- Generates ent code with the test schema
+- Runs tests with the `-tags registry` flag
+- Cleans up the schema and regenerates production code
+- Production builds remain clean without test artifacts
+
+**Why the build tag?** The registry tests require a test schema (`TestPerson`) to be generated before compilation, which would fail in normal test runs. The build tag ensures they only run when explicitly invoked via the test script.
 
 ## Contributing
 

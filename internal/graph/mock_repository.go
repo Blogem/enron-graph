@@ -109,3 +109,7 @@ func (m *MockRepository) SimilaritySearch(ctx context.Context, embedding []float
 func (m *MockRepository) Close() error {
 	return nil
 }
+
+func (m *MockRepository) GetClient() *ent.Client {
+	return nil // Mock doesn't have a real client
+}

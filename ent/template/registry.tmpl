@@ -1,0 +1,114 @@
+{{/* 
+This template generates registry initialization code for all Ent schemas.
+
+The generated code provides:
+1. EntityCreator functions for each schema that can create entities from property maps
+2. An init() function that registers all schemas with the global registry
+
+Usage in the promotion workflow:
+- When a new schema is promoted, `go generate ./ent` runs this template
+- The template generates registration code in ent/registry.go
+- The init() function runs at application startup, populating the registry
+- The extractor can then route entities to promoted tables via the registry
+
+Limitations:
+- Currently supports only scalar field types (string, int, float64, bool)
+- Complex types (edges, relationships, arrays) are not yet supported
+- Future enhancement: Add support for edge/relationship fields
+
+Template variables:
+- $.Nodes: List of all Ent schema nodes
+- $n.Name: Schema name (e.g., "Person", "Email")
+- $f.Name: Field name in snake_case (e.g., "unique_id")
+- $f.StructField: Field name in PascalCase (e.g., "UniqueID")
+- $f.Type.String: Field type (e.g., "string", "int", "float64", "bool")
+*/}}
+{{ define "registry" }}
+
+{{ $pkg := base $.Config.Package }}
+{{ template "header" $ }}
+
+import (
+	"context"
+	"fmt"
+	
+	"github.com/Blogem/enron-graph/internal/registry"
+)
+
+{{/* Generate a creator function for each schema */}}
+{{ range $n := $.Nodes }}
+// create{{ $n.Name }} creates a {{ $n.Name }} entity from a property map.
+//
+// This function is called by the extractor when routing entities to promoted schemas.
+// It extracts the Ent client from the context and maps properties from the data map
+// to the appropriate Ent builder setter methods.
+//
+// Supported field types: string, int, float64, bool
+// TODO: Add support for edge/relationship fields, JSON fields, and time fields
+func create{{ $n.Name }}(ctx context.Context, data map[string]any) (any, error) {
+	// Extract Ent client from context
+	client, ok := ctx.Value("entClient").(*Client)
+	if !ok || client == nil {
+		return nil, fmt.Errorf("ent client not found in context")
+	}
+	
+	// Create builder
+	builder := client.{{ $n.Name }}.Create()
+	
+	{{/* Map each field from data to builder setter */}}
+	{{ range $f := $n.Fields }}
+		{{/* Skip ID field - it's auto-generated */}}
+		{{ if ne $f.Name "id" }}
+			{{/* Handle different field types */}}
+			{{ if eq $f.Type.String "string" }}
+	if val, ok := data["{{ $f.Name }}"]; ok && val != nil {
+		if strVal, ok := val.(string); ok {
+			builder.Set{{ $f.StructField }}(strVal)
+		}
+	}
+			{{ else if eq $f.Type.String "int" }}
+	if val, ok := data["{{ $f.Name }}"]; ok && val != nil {
+		if intVal, ok := val.(int); ok {
+			builder.Set{{ $f.StructField }}(intVal)
+		}
+	}
+			{{ else if eq $f.Type.String "float64" }}
+	if val, ok := data["{{ $f.Name }}"]; ok && val != nil {
+		if floatVal, ok := val.(float64); ok {
+			builder.Set{{ $f.StructField }}(floatVal)
+		}
+	}
+			{{ else if eq $f.Type.String "bool" }}
+	if val, ok := data["{{ $f.Name }}"]; ok && val != nil {
+		if boolVal, ok := val.(bool); ok {
+			builder.Set{{ $f.StructField }}(boolVal)
+		}
+	}
+			{{ end }}
+		{{ end }}
+	{{ end }}
+	
+	// Save the entity
+	entity, err := builder.Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create {{ $n.Name }}: %w", err)
+	}
+	
+	return entity, nil
+}
+{{ end }}
+
+{{/* Generate init function that registers all schemas */}}
+// init registers all Ent schemas with the promoted types registry.
+// This function runs automatically at application startup, populating the
+// global registry with EntityCreator functions for each schema.
+//
+// The registry enables the extractor to route discovered entities to their
+// promoted schemas instead of always using the generic DiscoveredEntity table.
+func init() {
+	{{ range $n := $.Nodes }}
+	registry.Register("{{ $n.Name }}", create{{ $n.Name }})
+	{{ end }}
+}
+
+{{ end }}

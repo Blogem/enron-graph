@@ -36,11 +36,11 @@ const ChatPanel: FC<ChatPanelProps> = ({
     const [currentInput, setCurrentInput] = useState<string>('');
     const [isClearing, setIsClearing] = useState(false);
     const [showClearConfirmation, setShowClearConfirmation] = useState(false);
-    
+
     // History navigation state
     const [historyIndex, setHistoryIndex] = useState<number>(-1);
     const [savedDraft, setSavedDraft] = useState<string>('');
-    
+
     const conversationRef = useRef<HTMLDivElement>(null);
 
     // FR-009: Persist collapsed state to sessionStorage
@@ -122,7 +122,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
             };
             setMessages(prev => [...prev, systemMessage]);
             setCurrentInput(''); // Clear input on success
-            
+
             // Reset history navigation state after successful submission
             setHistoryIndex(-1);
             setSavedDraft('');
@@ -195,9 +195,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
     // US4: Clear conversation handler - show confirmation
     const handleClear = () => {
         console.log('Clear button clicked, messages.length:', messages.length);
-        if (messages.length > 0) {
-            setShowClearConfirmation(true);
-        }
+        setShowClearConfirmation(true);
     };
 
     // US4: Actual clear logic after confirmation
@@ -216,7 +214,14 @@ const ChatPanel: FC<ChatPanelProps> = ({
         } catch (err) {
             const chatError = err as ChatServiceError;
             console.error('clearChatContext failed:', err);
-            setError(chatError.message || 'Failed to clear conversation');
+            let errorMessage = chatError.message || 'Failed to clear conversation';
+
+            // Ensure error message contains "error" or "failed" for consistency
+            if (!/error|failed?/i.test(errorMessage)) {
+                errorMessage = `Clear failed: ${errorMessage}`;
+            }
+
+            setError(errorMessage);
         } finally {
             setIsClearing(false);
         }
@@ -241,10 +246,11 @@ const ChatPanel: FC<ChatPanelProps> = ({
             aria-expanded={!isCollapsed}
         >
             <div className="chat-panel__body" style={{
-                display: isCollapsed ? 'none' : 'flex',
+                display: 'flex',
                 flexDirection: 'column',
                 height: isCollapsed ? '0' : '350px',
                 opacity: isCollapsed ? 0 : 1,
+                pointerEvents: isCollapsed ? 'none' : 'auto',
                 overflow: 'hidden',
                 transition: 'height 0.3s ease, opacity 0.3s ease'
             }}>
@@ -302,19 +308,17 @@ const ChatPanel: FC<ChatPanelProps> = ({
                     </div>
 
                     {/* T050: Clear button - positioned absolutely at bottom right */}
-                    {messages.length > 0 && (
-                        <div className="chat-panel__clear-button-container">
-                            <button
-                                className="chat-panel__clear-button"
-                                onClick={handleClear}
-                                disabled={isClearing}
-                                aria-label="Clear conversation"
-                                title="Clear conversation history"
-                            >
-                                Clear
-                            </button>
-                        </div>
-                    )}
+                    <div className="chat-panel__clear-button-container">
+                        <button
+                            className="chat-panel__clear-button"
+                            onClick={handleClear}
+                            disabled={messages.length === 0 || isClearing}
+                            aria-label="Clear conversation"
+                            title="Clear conversation history"
+                        >
+                            Clear
+                        </button>
+                    </div>
                 </div>
             </div>
 

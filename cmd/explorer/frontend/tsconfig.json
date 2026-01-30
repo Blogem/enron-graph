@@ -7,6 +7,10 @@
       "DOM.Iterable",
       "ESNext"
     ],
+    "types": [
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": false,
@@ -22,10 +26,6 @@
   },
   "include": [
     "src"
-  ],
-  "exclude": [
-    "**/*.test.ts",
-    "**/*.test.tsx"
   ],
   "references": [
     {
