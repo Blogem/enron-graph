@@ -49,7 +49,7 @@ func (m *MockRepository) CreateDiscoveredEntity(ctx context.Context, entity *Ent
 	return e, nil
 }
 
-func (m *MockRepository) FindEntityByID(ctx context.Context, id int) (*ent.DiscoveredEntity, error) {
+func (m *MockRepository) FindEntityByID(ctx context.Context, id int, typeHint ...string) (*ent.DiscoveredEntity, error) {
 	for _, entity := range m.entities {
 		if entity.ID == id {
 			return entity, nil
@@ -65,11 +65,11 @@ func (m *MockRepository) FindEntityByID(ctx context.Context, id int) (*ent.Disco
 	}, nil
 }
 
-func (m *MockRepository) FindEntityByUniqueID(ctx context.Context, uniqueID string) (*ent.DiscoveredEntity, error) {
+func (m *MockRepository) FindEntityByUniqueID(ctx context.Context, uniqueID string, typeHint ...string) (*ent.DiscoveredEntity, error) {
 	return nil, nil
 }
 
-func (m *MockRepository) FindEntitiesByType(ctx context.Context, typeCategory string) ([]*ent.DiscoveredEntity, error) {
+func (m *MockRepository) FindEntitiesByType(ctx context.Context, typeCategory string, typeHint ...string) ([]*ent.DiscoveredEntity, error) {
 	return m.entities, nil
 }
 

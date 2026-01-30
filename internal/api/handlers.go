@@ -701,20 +701,20 @@ type mockRepoWrapper struct {
 	mock interface{}
 }
 
-func (m *mockRepoWrapper) FindEntityByID(ctx context.Context, id int) (*ent.DiscoveredEntity, error) {
+func (m *mockRepoWrapper) FindEntityByID(ctx context.Context, id int, typeHint ...string) (*ent.DiscoveredEntity, error) {
 	if finder, ok := m.mock.(interface {
-		FindEntityByID(context.Context, int) (*ent.DiscoveredEntity, error)
+		FindEntityByID(context.Context, int, ...string) (*ent.DiscoveredEntity, error)
 	}); ok {
-		return finder.FindEntityByID(ctx, id)
+		return finder.FindEntityByID(ctx, id, typeHint...)
 	}
 	return nil, fmt.Errorf("method not implemented")
 }
 
-func (m *mockRepoWrapper) FindEntitiesByType(ctx context.Context, typeCategory string) ([]*ent.DiscoveredEntity, error) {
+func (m *mockRepoWrapper) FindEntitiesByType(ctx context.Context, typeCategory string, typeHint ...string) ([]*ent.DiscoveredEntity, error) {
 	if finder, ok := m.mock.(interface {
-		FindEntitiesByType(context.Context, string) ([]*ent.DiscoveredEntity, error)
+		FindEntitiesByType(context.Context, string, ...string) ([]*ent.DiscoveredEntity, error)
 	}); ok {
-		return finder.FindEntitiesByType(ctx, typeCategory)
+		return finder.FindEntitiesByType(ctx, typeCategory, typeHint...)
 	}
 	return nil, fmt.Errorf("method not implemented")
 }
@@ -775,7 +775,7 @@ func (m *mockRepoWrapper) CreateDiscoveredEntity(ctx context.Context, entity *gr
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (m *mockRepoWrapper) FindEntityByUniqueID(ctx context.Context, uniqueID string) (*ent.DiscoveredEntity, error) {
+func (m *mockRepoWrapper) FindEntityByUniqueID(ctx context.Context, uniqueID string, typeHint ...string) (*ent.DiscoveredEntity, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

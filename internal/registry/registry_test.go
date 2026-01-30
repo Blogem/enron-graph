@@ -92,3 +92,91 @@ func TestMultipleRegistrations(t *testing.T) {
 		}
 	}
 }
+
+// Test that RegisterFinder() function stores EntityFinder in map
+func TestRegisterFinder(t *testing.T) {
+	// Clear the registry before test
+	PromotedFinders = make(map[string]EntityFinder)
+
+	mockFinder := func(ctx context.Context, uniqueID string) (any, error) {
+		return "mock entity", nil
+	}
+
+	RegisterFinder("TestType", mockFinder)
+
+	if _, exists := PromotedFinders["TestType"]; !exists {
+		t.Error("Expected TestType to be registered in PromotedFinders map")
+	}
+}
+
+// Test looking up existing finder
+func TestLookupExistingFinder(t *testing.T) {
+	// Clear and setup registry
+	PromotedFinders = make(map[string]EntityFinder)
+
+	expectedResult := "test entity"
+	mockFinder := func(ctx context.Context, uniqueID string) (any, error) {
+		return expectedResult, nil
+	}
+
+	RegisterFinder("Person", mockFinder)
+
+	// Lookup the registered finder
+	finder, exists := PromotedFinders["Person"]
+	if !exists {
+		t.Fatal("Expected Person finder to be registered")
+	}
+
+	// Call the finder to verify it works
+	result, err := finder(context.Background(), "test-unique-id")
+	if err != nil {
+		t.Fatalf("Expected no error, got: %v", err)
+	}
+
+	if result != expectedResult {
+		t.Errorf("Expected result %v, got %v", expectedResult, result)
+	}
+}
+
+// Test looking up non-existent finder (returns nil/false)
+func TestLookupNonExistentFinder(t *testing.T) {
+	// Clear registry
+	PromotedFinders = make(map[string]EntityFinder)
+
+	_, exists := PromotedFinders["NonExistent"]
+	if exists {
+		t.Error("Expected NonExistent finder to not be in registry")
+	}
+}
+
+// Test multiple finder registrations
+func TestMultipleFinderRegistrations(t *testing.T) {
+	// Clear registry
+	PromotedFinders = make(map[string]EntityFinder)
+
+	finder1 := func(ctx context.Context, uniqueID string) (any, error) {
+		return "entity1", nil
+	}
+	finder2 := func(ctx context.Context, uniqueID string) (any, error) {
+		return "entity2", nil
+	}
+	finder3 := func(ctx context.Context, uniqueID string) (any, error) {
+		return "entity3", nil
+	}
+
+	RegisterFinder("Type1", finder1)
+	RegisterFinder("Type2", finder2)
+	RegisterFinder("Type3", finder3)
+
+	if len(PromotedFinders) != 3 {
+		t.Errorf("Expected 3 registered finders, got %d", len(PromotedFinders))
+	}
+
+	// Verify each finder is correctly registered
+	types := []string{"Type1", "Type2", "Type3"}
+	for _, typeName := range types {
+		if _, exists := PromotedFinders[typeName]; !exists {
+			t.Errorf("Expected %s finder to be registered", typeName)
+		}
+	}
+}
