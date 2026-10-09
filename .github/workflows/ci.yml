@@ -1,0 +1,61 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+      - run: go vet ./...
+      # Everything under tests/ dials a PostgreSQL instance on localhost:5432
+      # and fails without one (contract, integration, integration/explorer).
+      # Excluded until a service container + fixture setup is in place; widen
+      # this filter once it is.
+      - name: Test
+        run: go test $(go list ./... | grep -v '/tests/')
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cmd/explorer/frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cmd/explorer/frontend/package-lock.json
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      # `**/src/wailsjs/` is gitignored — the bindings are generated from the Go
+      # code — so a fresh checkout has none and `tsc` fails with
+      # "Cannot find module './wailsjs/go/models'". Regenerate before building.
+      # The GTK/WebKit headers are required to compile the Wails CLI on Linux
+      # even though `generate module` never opens a window.
+      - name: Install Wails system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.11.0
+      - name: Generate Wails bindings
+        working-directory: cmd/explorer
+        run: wails generate module
+      - run: npm ci
+      - run: npm run build
+      # `npm test` is deliberately not run: 17 tests across
+      # EntityPromotion.test.tsx and one other file already fail on main, so
+      # adding it here would make this job red on arrival. Fix those first,
+      # then add the step.
