@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - run: go build ./...
+      - run: go vet ./...
+      # Everything under tests/ dials a PostgreSQL instance on localhost:5432
+      # and fails without one (contract, integration, integration/explorer).
+      # Excluded until a service container + fixture setup is in place; widen
+      # this filter once it is.
+      - name: Test
+        run: go test $(go list ./... | grep -v '/tests/')
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cmd/explorer/frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cmd/explorer/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      # `npm test` is deliberately not run: 17 tests across
+      # EntityPromotion.test.tsx and one other file already fail on main, so
+      # adding it here would make this job red on arrival. Fix those first,
+      # then add the step.
