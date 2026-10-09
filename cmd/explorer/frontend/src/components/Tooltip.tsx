@@ -3,7 +3,11 @@ import './Tooltip.css';
 
 interface TooltipProps {
     content: string | React.ReactNode;
-    children: React.ReactElement;
+    // Parameterised so React 19's stricter cloneElement can infer the prop
+    // type. An unparameterised ReactElement resolves to ReactElement<unknown>,
+    // and cloneElement then rejects the handlers below against
+    // Partial<unknown>.
+    children: React.ReactElement<React.HTMLAttributes<HTMLElement>>;
     position?: 'top' | 'bottom' | 'left' | 'right';
     delay?: number;
     disabled?: boolean;

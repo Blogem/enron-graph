@@ -1,6 +1,8 @@
 
 /** @jsxImportSource react */
 import { FC } from 'react';
+// React 19 dropped the global JSX namespace; it now lives on the react module.
+import type { JSX } from 'react';
 import './ChatMessage.css';
 import type { ChatMessageProps } from '../types/chat';
 
