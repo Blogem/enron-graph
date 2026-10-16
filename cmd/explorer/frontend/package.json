@@ -11,7 +11,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
-    "@types/three": "^0.182.0",
+    "@types/three": "^0.186.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-force-graph": "^1.48.3",
